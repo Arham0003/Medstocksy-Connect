@@ -1,0 +1,43 @@
+node_modules
+dist
+dist-ssr
+.vite
+.cache
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artefacts
+*.tsbuildinfo
+.tmp/
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# Agent config/cache
+.agents/

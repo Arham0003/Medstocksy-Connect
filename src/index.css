@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens — match parent inventory app (#3B82F6 primary, 12 px radius)
+   plus 6-tag palette from the Connect theme spec.
+   All colours HSL so Tailwind opacity utilities work.
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 217 91% 60%;                 /* #3B82F6 — matches inventory app */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;                       /* 12 px — matches inventory app */
+
+    /* Tag palette — capped at 6 (theme rule) */
+    --tag-new-bg:      213 94% 89%;          /* primary-100 */
+    --tag-new-fg:      224 76% 33%;          /* primary-700 */
+    --tag-repeat-bg:   152 76% 88%;          /* success-100 */
+    --tag-repeat-fg:   158 64% 24%;          /* success-700 */
+    --tag-high-bg:      48 96% 89%;          /* gold-100 */
+    --tag-high-fg:      33 87% 26%;          /* gold-700 */
+    --tag-inactive-bg: 210 40% 96%;          /* surface */
+    --tag-inactive-fg: 215 16% 47%;          /* muted */
+    --tag-chronic-bg:  254 91% 95%;          /* violet-100 */
+    --tag-chronic-fg:  267 75% 36%;          /* violet-700 */
+    --tag-optout-bg:     0 93% 94%;          /* red-100 */
+    --tag-optout-fg:     0 64% 35%;          /* red-700 */
+
+    /* Custom shadows */
+    --shadow-card: 0 1px 2px hsl(222 47% 4% / 0.04), 0 1px 3px hsl(222 47% 4% / 0.06);
+    --shadow-popover: 0 8px 24px hsl(222 47% 4% / 0.08);
+    --shadow-modal: 0 24px 48px hsl(222 47% 4% / 0.18);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    /* Devanagari fallback so Hindi text renders correctly even inside
+       mostly-English UI (mixed strings, toast notifications, etc). */
+    font-family: 'Inter', 'Noto Sans Devanagari', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  /* When document language switches to Hindi, lead with Devanagari for
+     better numeric + punctuation coupling. */
+  html[lang='hi'] body {
+    font-family: 'Noto Sans Devanagari', 'Inter', system-ui, sans-serif;
+  }
+  /* Tabular numerals — keeps dashboard tiles from jittering */
+  .num, table, .mono { font-variant-numeric: tabular-nums; }
+  /* Touch targets min 44 px on mobile per theme accessibility rule */
+  button, a, [role='button'] { @apply transition-all duration-150 ease-out; }
+  /* Focus rings */
+  :focus-visible { outline: none; }
+  button:focus-visible, a:focus-visible, input:focus-visible, [role='button']:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Scrollbars (subtle) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.45); }
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, hsl(var(--muted)) 0%, hsl(var(--muted-foreground)/0.1) 50%, hsl(var(--muted)) 100%);
+  background-size: 1000px 100%;
+  @apply animate-shimmer rounded-md;
+}
+
+/* Card elevation utility */
+.card-elev { box-shadow: var(--shadow-card); }
+.popover-elev { box-shadow: var(--shadow-popover); }
+.modal-elev { box-shadow: var(--shadow-modal); }
