@@ -1,4 +1,4 @@
-# Medstocksy_Connect — Customer Relations for Pharmacies
+# medcrm — Customer Relations for Pharmacies
 
 > **Note on scope:** this is a production-quality scaffold, **not a finished product**. The schema, auth, RLS, layout, and core pages are real. The campaign wizard, reminder rule editor, and a few other interactions are marked TODO and need ~1–2 more weeks of focused work to fully ship. Read the [What's done vs what's left](#whats-done-vs-whats-left) section before deploying.
 
@@ -269,4 +269,4 @@ Proprietary — Medstocksy. Internal use only.
 
 ---
 
-Built Medstocksy Team · India · Full-Stack Web Developer
+Built by Vaibhav Singh · Lucknow, India · Full-Stack Web Developer
