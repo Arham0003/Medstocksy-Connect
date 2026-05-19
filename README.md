@@ -30,7 +30,7 @@ This app **must** share the inventory app's Supabase project so users only sign 
 
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase URL + anon key (same as Medstocksy-inventory)
+# Edit .env with your Supabase URL + anon key (same as Medstocksy-inventory) 
 ```
 
 ### 2. Apply the database migration
