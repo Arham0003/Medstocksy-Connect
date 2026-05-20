@@ -97,8 +97,8 @@ export default function Campaigns() {
                     </div>
                     <h3 className="mt-2 text-lg font-bold">{c.name}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {t('campaigns.segment')} <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase', SEGMENTS[c.segment_key]?.color ?? SEGMENTS.all.color)}>
-                        {t(SEGMENTS[c.segment_key]?.labelKey ?? SEGMENTS.all.labelKey)}
+                      {t('campaigns.segment')} <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-bold uppercase', SEGMENTS[c.segment_key]?.color ?? SEGMENTS.all!.color)}>
+                        {t(SEGMENTS[c.segment_key]?.labelKey ?? SEGMENTS.all!.labelKey)}
                       </span> ·
                       {' '}{t('campaigns.template')} <span className="font-semibold text-foreground">{c.template?.name ?? '—'}</span>
                       {' · '}<span className="font-mono">{c.total_recipients}</span> recipients

@@ -221,7 +221,7 @@ function RemindersBellInner() {
                     // blockers allow it). After this, the same WhatsApp tab gets
                     // navigated on each subsequent click — no fresh popup needed.
                     setQueue(eligible);
-                    send.mutate(eligible[0]);
+                    send.mutate(eligible[0]!);
                   }}
                   disabled={send.isPending}
                   className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
@@ -243,7 +243,7 @@ function RemindersBellInner() {
                     setQueue(null);
                   } else {
                     setQueue(remaining);
-                    send.mutate(remaining[0]);
+                    send.mutate(remaining[0]!);
                   }
                 }}
                 onStop={() => setQueue(null)}
