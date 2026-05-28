@@ -219,7 +219,7 @@ export function CampaignDialog({ open, onOpenChange, campaign }: CampaignDialogP
     <Dialog open={open} onOpenChange={(v) => { if (!save.isPending) onOpenChange(v); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t('campaigns.new')}</DialogTitle>
+          <DialogTitle>{isEdit ? t('campaigns.edit') : t('campaigns.new')}</DialogTitle>
           <DialogDescription>{t('campaigns.new_desc')}</DialogDescription>
         </DialogHeader>
 
