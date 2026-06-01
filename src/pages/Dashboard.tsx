@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { BellRing, Megaphone, Send, Users, Activity as ActivityIcon, HeartPulse, ClipboardList, AlertTriangle, FileText, Zap, MessageSquare, Smartphone, PhoneCall, IndianRupee, ArrowUpRight, ArrowDownRight, UserPlus, RefreshCcw, Clock } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
@@ -11,7 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ComposeDrawer } from '@/components/crm/ComposeDrawer';
 import { CustomerPickerDialog } from '@/components/crm/CustomerPickerDialog';
-import { cn } from '@/lib/utils';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { sendOrCompose, logManualSend } from '@/lib/api/messages';
+import { markReminderSent } from '@/lib/api/reminders';
+import { cn, renderTemplate } from '@/lib/utils';
 import type { CustomerWithStats } from '@/lib/api/customers';
 
 /**
@@ -384,6 +387,7 @@ export default function Dashboard() {
   const t = useT();
   const { pharmacyId, pharmacyName } = useActivePharmacy();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [composeFor, setComposeFor] = useState<CustomerWithStats | null>(null);
 
@@ -453,8 +457,8 @@ export default function Dashboard() {
     scheduled_for: string;
     status: string;
     variables?: Record<string, any> | null;
-    customer: { id: string; name: string; phone: string };
-    template: { name: string };
+    customer: { id: string; name: string; phone: string; whatsapp_opted_in: boolean };
+    template: { name: string; body: string };
   }
 
   const { data: upcoming, isLoading: loadingReminders } = useQuery<UpcomingRow[]>({
@@ -466,8 +470,8 @@ export default function Dashboard() {
         .from('crm_scheduled_reminders')
         .select(`
           id, scheduled_for, status, variables,
-          customer:crm_customers!inner(id, name, phone),
-          template:crm_templates!inner(name)
+          customer:crm_customers!inner(id, name, phone, whatsapp_opted_in),
+          template:crm_templates!inner(name, body)
         `)
         .eq('pharmacy_id', pharmacyId)
         .eq('status', 'pending')
@@ -477,6 +481,24 @@ export default function Dashboard() {
       return (data ?? []) as unknown as UpcomingRow[];
     },
   });
+
+  // Quick WhatsApp send for a today's-reminder row — renders the template,
+  // opens WhatsApp (bot or click-to-chat), logs the send, marks reminder sent.
+  const quickWhatsApp = async (row: UpcomingRow) => {
+    if (!row.customer.whatsapp_opted_in) return;
+    const body = renderTemplate(row.template.body, row.variables ?? {});
+    const result = await sendOrCompose({ phone: row.customer.phone, body });
+    const { messageId } = await logManualSend({
+      pharmacyId,
+      customerId: row.customer.id,
+      phone: row.customer.phone,
+      body,
+    });
+    await markReminderSent(row.id, result.messageId ?? messageId);
+    qc.invalidateQueries({ queryKey: ['upcoming-reminders', pharmacyId] });
+    qc.invalidateQueries({ queryKey: ['due-reminders', pharmacyId] });
+    qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
+  };
 
   const greeting = pharmacyName;
   const hour = new Date().getHours();
@@ -578,32 +600,50 @@ export default function Dashboard() {
               ))
             ) : upcoming && upcoming.length > 0 ? (
               upcoming.map((row) => (
-                <button
+                <div
                   key={row.id}
-                  onClick={() => navigate(`/customers/${row.customer.id}`)}
-                  className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+                  className="flex w-full items-center gap-3 p-4 transition-colors hover:bg-muted/40"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                    {row.variables?.channel === 'whatsapp' ? <MessageSquare className="h-4 w-4 text-emerald-600" />
-                      : row.variables?.channel === 'sms' ? <Smartphone className="h-4 w-4 text-blue-600" />
-                      : row.variables?.channel === 'call' ? <PhoneCall className="h-4 w-4 text-amber-600" />
-                      : <BellRing className="h-4 w-4 text-muted-foreground" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">{row.customer.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {row.variables?.medicine || 'Reminder'} · {row.template.name}
+                  <button
+                    onClick={() => navigate(`/customers/${row.customer.id}`)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                      {row.variables?.channel === 'whatsapp' ? <MessageSquare className="h-4 w-4 text-emerald-600" />
+                        : row.variables?.channel === 'sms' ? <Smartphone className="h-4 w-4 text-blue-600" />
+                        : row.variables?.channel === 'call' ? <PhoneCall className="h-4 w-4 text-amber-600" />
+                        : <BellRing className="h-4 w-4 text-muted-foreground" />}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-semibold">
-                      {new Date(row.scheduled_for).toLocaleString('en-IN', {
-                        day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-                      })}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold">{row.customer.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {row.variables?.medicine || 'Reminder'} · {row.template.name}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        {new Date(row.scheduled_for).toLocaleString('en-IN', {
+                          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+                        })}
+                      </div>
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{row.template.name}</div>
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Quick WhatsApp send */}
+                  <button
+                    type="button"
+                    onClick={() => quickWhatsApp(row)}
+                    disabled={!row.customer.whatsapp_opted_in}
+                    aria-label={t('dash.quick_whatsapp')}
+                    title={row.customer.whatsapp_opted_in ? t('dash.quick_whatsapp') : t('bell.opted_out')}
+                    className={cn(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors',
+                      row.customer.whatsapp_opted_in
+                        ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400'
+                        : 'cursor-not-allowed bg-muted text-muted-foreground/50'
+                    )}
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                  </button>
+                </div>
               ))
             ) : (
               <div className="p-8 text-center text-sm text-muted-foreground">{t('dash.upcoming.empty')}</div>

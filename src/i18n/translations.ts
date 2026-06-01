@@ -326,6 +326,7 @@ export const translations = {
     'dash.pulse.new_cust': 'New',
     'dash.pulse.msgs': 'Sent',
     'dash.pulse.due': 'Due',
+    'dash.quick_whatsapp': 'Send WhatsApp reminder now',
 
     // ── Customers ──
     'customers.title': 'Customers',
@@ -1040,6 +1041,7 @@ export const translations = {
     'dash.pulse.new_cust': 'नए',
     'dash.pulse.msgs': 'भेजे',
     'dash.pulse.due': 'लंबित',
+    'dash.quick_whatsapp': 'अभी WhatsApp रिमाइंडर भेजें',
 
     // ── Customers ──
     'customers.title': 'ग्राहक',
