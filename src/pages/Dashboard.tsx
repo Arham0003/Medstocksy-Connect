@@ -500,6 +500,12 @@ export default function Dashboard() {
     qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
   };
 
+  // Start of tomorrow — a reminder is "due today / overdue" if it's before this.
+  const endOfToday = (() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  })();
+
   const greeting = pharmacyName;
   const hour = new Date().getHours();
   const greetingPrefix = hour < 12 ? t('dash.greeting_morning') : hour < 17 ? t('dash.greeting_afternoon') : t('dash.greeting_evening');
@@ -627,22 +633,24 @@ export default function Dashboard() {
                     </div>
                   </button>
 
-                  {/* Quick WhatsApp send */}
-                  <button
-                    type="button"
-                    onClick={() => quickWhatsApp(row)}
-                    disabled={!row.customer.whatsapp_opted_in}
-                    aria-label={t('dash.quick_whatsapp')}
-                    title={row.customer.whatsapp_opted_in ? t('dash.quick_whatsapp') : t('bell.opted_out')}
-                    className={cn(
-                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors',
-                      row.customer.whatsapp_opted_in
-                        ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400'
-                        : 'cursor-not-allowed bg-muted text-muted-foreground/50'
-                    )}
-                  >
-                    <WhatsAppIcon className="h-4 w-4" />
-                  </button>
+                  {/* Quick WhatsApp send — only for reminders due today / overdue */}
+                  {new Date(row.scheduled_for) < endOfToday && (
+                    <button
+                      type="button"
+                      onClick={() => quickWhatsApp(row)}
+                      disabled={!row.customer.whatsapp_opted_in}
+                      aria-label={t('dash.quick_whatsapp')}
+                      title={row.customer.whatsapp_opted_in ? t('dash.quick_whatsapp') : t('bell.opted_out')}
+                      className={cn(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors',
+                        row.customer.whatsapp_opted_in
+                          ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400'
+                          : 'cursor-not-allowed bg-muted text-muted-foreground/50'
+                      )}
+                    >
+                      <WhatsAppIcon className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               ))
             ) : (
