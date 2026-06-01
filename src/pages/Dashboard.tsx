@@ -226,13 +226,13 @@ function PulseStat({
     amber:   'bg-amber-500/10 text-amber-700 dark:text-amber-300',
   };
   return (
-    <div className="flex items-center gap-2 rounded-lg border bg-card/40 p-2">
+    <div className="flex min-w-0 flex-col items-start gap-1.5 rounded-lg border bg-card/40 p-2.5">
       <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-md', colorMap[tone])}>
         {icon}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 max-w-full">
         <div className="text-lg font-bold leading-none tabular-nums">{value}</div>
-        <div className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
       </div>
     </div>
   );

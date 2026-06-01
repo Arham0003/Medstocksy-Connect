@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Layers, Megaphone, BellRing, FileText, Activity,
   Settings, ArrowLeftRight, LogOut, ChevronsLeft, ChevronsRight,
-  ChevronDown, ShieldCheck, ClipboardList,
+  ChevronDown, ShieldCheck, ClipboardList, X as XIcon,
 } from 'lucide-react';
 import { cn, initials } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,7 +48,6 @@ export function AppSidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileC
 
   // Mobile = full-width drawer (always expanded labels). Desktop = collapsible.
   const widthClass = collapsed ? 'md:w-16' : 'md:w-64';
-  const showLabels = !collapsed; // desktop label visibility
 
   return (
     <aside
@@ -101,10 +100,10 @@ export function AppSidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileC
             />
           </div>
 
-          {showLabels && (
-            <div className="min-w-0 flex-1">
-              {/* Pharmacy name — switcher when user has >1, plain text otherwise */}
-              {memberships.length > 1 ? (
+          {/* Brand info: always visible on mobile; hidden on desktop only when
+              collapsed. (collapsed is a desktop-only concept.) */}
+          <div className={cn('min-w-0 flex-1', collapsed && 'md:hidden')}>
+            {memberships.length > 1 ? (
                 <div className="relative -ml-1 flex items-center">
                   <select
                     value={activePharmacyId ?? ''}
@@ -126,30 +125,40 @@ export function AppSidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileC
                 </div>
               )}
 
-              {/* Role pill replaces the old "Customer Relations" tagline */}
-              <div className="mt-0.5">
-                {active
-                  ? <RoleBadge role={active.role} />
-                  : (
-                    <span className="truncate text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                      {t('app.tagline')}
-                    </span>
-                  )
-                }
-              </div>
+            {/* Role pill replaces the old "Customer Relations" tagline */}
+            <div className="mt-0.5">
+              {active
+                ? <RoleBadge role={active.role} />
+                : (
+                  <span className="truncate text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    {t('app.tagline')}
+                  </span>
+                )
+              }
             </div>
-          )}
+          </div>
 
-          {showLabels && (
-            <button
-              onClick={onToggleCollapsed}
-              aria-label={t('nav.collapse')}
-              title={t('nav.collapse')}
-              className="ml-auto hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:flex"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </button>
-          )}
+          {/* Desktop collapse toggle (hidden on mobile + when already collapsed) */}
+          <button
+            onClick={onToggleCollapsed}
+            aria-label={t('nav.collapse')}
+            title={t('nav.collapse')}
+            className={cn(
+              'ml-auto hidden h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:flex',
+              collapsed && 'md:hidden'
+            )}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
+
+          {/* Mobile close button — only on phones, lets users dismiss the drawer */}
+          <button
+            onClick={onMobileClose}
+            aria-label={t('nav.collapse')}
+            className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -250,50 +259,55 @@ export function AppSidebar({ collapsed, onToggleCollapsed, mobileOpen, onMobileC
       </nav>
 
       {/* ─── USER FOOTER ─── */}
-      <div className={cn('border-t', collapsed ? 'md:p-2' : 'p-3')}>
-        {showLabels ? (
-          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              {initials(user?.user_metadata?.['full_name'] ?? user?.email ?? 'U')}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">
-                {user?.user_metadata?.['full_name'] ?? user?.email?.split('@')[0]}
-              </div>
-              <div className="truncate text-[11px] text-muted-foreground">{user?.email}</div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => signOut()}
-              aria-label={t('nav.sign_out')}
-              className="h-8 w-8"
-              title={t('nav.sign_out')}
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+      <div className={cn('border-t p-3', collapsed && 'md:p-2')}>
+        {/* Expanded row: mobile always + desktop-expanded. */}
+        <div className={cn(
+          'flex items-center gap-3 rounded-lg bg-muted/50 p-2',
+          collapsed && 'md:hidden'
+        )}>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+            {initials(user?.user_metadata?.['full_name'] ?? user?.email ?? 'U')}
           </div>
-        ) : (
-          // Collapsed: stacked avatar + sign-out
-          <div className="hidden flex-col items-center gap-1 md:flex">
-            <div
-              title={user?.email ?? ''}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
-            >
-              {initials(user?.user_metadata?.['full_name'] ?? user?.email ?? 'U')}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">
+              {user?.user_metadata?.['full_name'] ?? user?.email?.split('@')[0]}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => signOut()}
-              aria-label={t('nav.sign_out')}
-              className="h-8 w-8"
-              title={t('nav.sign_out')}
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <div className="truncate text-[11px] text-muted-foreground">{user?.email}</div>
           </div>
-        )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => signOut()}
+            aria-label={t('nav.sign_out')}
+            className="h-8 w-8 shrink-0"
+            title={t('nav.sign_out')}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Collapsed stack: desktop-collapsed only. */}
+        <div className={cn(
+          'hidden flex-col items-center gap-1',
+          collapsed ? 'md:flex' : 'md:hidden'
+        )}>
+          <div
+            title={user?.email ?? ''}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary"
+          >
+            {initials(user?.user_metadata?.['full_name'] ?? user?.email ?? 'U')}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => signOut()}
+            aria-label={t('nav.sign_out')}
+            className="h-8 w-8"
+            title={t('nav.sign_out')}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </aside>
   );
