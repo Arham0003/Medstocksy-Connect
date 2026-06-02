@@ -55,7 +55,7 @@ function RemindersBellInner() {
 
   const { data: reminders = [], isLoading } = useQuery<DueReminder[]>({
     queryKey: ['due-reminders', pharmacyId],
-    queryFn: () => listDueReminders(pharmacyId, 24),
+    queryFn: () => listDueReminders(pharmacyId),
     enabled: !!pharmacyId,
     // Refresh every 60s so the bell catches reminders that became due while
     // the user is on another tab. Same cadence as the WhatsApp-health check.

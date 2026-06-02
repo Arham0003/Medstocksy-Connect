@@ -28,11 +28,17 @@ export interface DueReminder {
 
 /** List pending reminders whose scheduled_for is at most `withinHours` away
  *  (default: end of today). Includes joins to customer + template. */
-export async function listDueReminders(
-  pharmacyId: string,
-  withinHours = 24
-): Promise<DueReminder[]> {
-  const cutoff = new Date(Date.now() + withinHours * 60 * 60 * 1000).toISOString();
+/**
+ * List reminders that still need sending TODAY.
+ *   • status = 'pending'  → already-sent reminders never appear (they flip to
+ *     'sent' via markReminderSent and drop out automatically).
+ *   • scheduled_for < start-of-tomorrow → only today's (and any overdue) ones;
+ *     reminders scheduled for a future date stay hidden until that date.
+ * So the popup/bell only ever surfaces un-sent reminders due today.
+ */
+export async function listDueReminders(pharmacyId: string): Promise<DueReminder[]> {
+  const now = new Date();
+  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
   const { data, error } = await supabase
     .from('crm_scheduled_reminders')
     .select(`
@@ -42,7 +48,7 @@ export async function listDueReminders(
     `)
     .eq('pharmacy_id', pharmacyId)
     .eq('status', 'pending')
-    .lte('scheduled_for', cutoff)
+    .lt('scheduled_for', startOfTomorrow)
     .order('scheduled_for', { ascending: true })
     .limit(50);
   if (error) throw new Error(error.message);

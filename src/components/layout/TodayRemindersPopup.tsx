@@ -38,7 +38,7 @@ function TodayRemindersPopupInner() {
 
   const { data: reminders = [], isLoading } = useQuery<DueReminder[]>({
     queryKey: ['due-reminders', pharmacyId],
-    queryFn: () => listDueReminders(pharmacyId, 24),
+    queryFn: () => listDueReminders(pharmacyId),
     enabled: !!pharmacyId,
     refetchInterval: 60_000,
     staleTime: 30_000,
