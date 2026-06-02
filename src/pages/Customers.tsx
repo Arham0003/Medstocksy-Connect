@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Plus, Download, ArrowUpDown, Users, Receipt } from 'lucide-react';
+import { Search, Plus, Download, ArrowUpDown, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerFormDialog } from '@/components/crm/CustomerFormDialog';
-import { AddFromBillDialog } from '@/components/crm/AddFromBillDialog';
 
 type Segment = 'all' | 'new' | 'repeat' | 'inactive' | 'high_value' | 'chronic' | 'optout';
 const VALID_SEGMENTS: Segment[] = ['all', 'new', 'repeat', 'inactive', 'high_value', 'chronic', 'optout'];
@@ -41,7 +40,6 @@ export default function Customers() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<CustomerSort>('newest');
   const [newOpen, setNewOpen] = useState(false);
-  const [billOpen, setBillOpen] = useState(false);
 
   const SORT_OPTIONS: { value: CustomerSort; labelKey: TranslationKey }[] = useMemo(() => ([
     { value: 'newest',        labelKey: 'customers.sort.newest' },
@@ -113,16 +111,12 @@ export default function Customers() {
               : '—'}
           </p>
         </div>
-        {/* On phones: 3 buttons share the row, each grows to fill. On
+        {/* On phones: 2 buttons share the row, each grows to fill. On
             tablet+: natural sizes. */}
-        <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Button variant="outline" onClick={exportCsv} disabled={!data?.rows.length} className="min-w-0">
             <Download className="h-4 w-4" />
             <span className="truncate">{t('btn.export')}</span>
-          </Button>
-          <Button variant="outline" onClick={() => setBillOpen(true)} className="min-w-0">
-            <Receipt className="h-4 w-4" />
-            <span className="truncate">{t('add_bill.button')}</span>
           </Button>
           <Button onClick={() => setNewOpen(true)} className="min-w-0">
             <Plus className="h-4 w-4" />
@@ -338,12 +332,6 @@ export default function Customers() {
         open={newOpen}
         onOpenChange={setNewOpen}
         mode="create"
-        onCreated={(customer) => navigate(`/customers/${customer.id}`)}
-      />
-
-      <AddFromBillDialog
-        open={billOpen}
-        onOpenChange={setBillOpen}
         onCreated={(customer) => navigate(`/customers/${customer.id}`)}
       />
     </div>

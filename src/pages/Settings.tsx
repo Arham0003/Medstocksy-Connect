@@ -6,7 +6,7 @@ import {
   Loader2, CheckCircle2, AlertTriangle, LogOut, Trash2,
   Building2, MessageCircle, User as UserIcon, ShieldAlert, Sliders, Globe,
   ImagePlus, X as XIcon, Sun, Moon, Monitor, Palette,
-  Info, Mail,
+  Info, Mail, BellRing,
 } from 'lucide-react';
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,7 @@ import { useLanguage, useT } from '@/contexts/LanguageContext';
 import { useTheme, type Theme } from '@/contexts/ThemeContext';
 import { SUPPORTED_LANGUAGES, type Lang } from '@/i18n/translations';
 import { supabase, type Tables } from '@/lib/supabase';
+import { getNotifyInterval, setNotifyInterval, NOTIFY_INTERVAL_OPTIONS } from '@/lib/notify';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -285,6 +286,7 @@ function PreferencesSection() {
   const t = useT();
   const { lang, setLang } = useLanguage();
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const [notifyInterval, setNotifyIntervalState] = useState<number>(() => getNotifyInterval());
 
   const themeOptions: { value: Theme; icon: typeof Sun; labelKey: 'settings.prefs.theme_light' | 'settings.prefs.theme_dark' | 'settings.prefs.theme_system' }[] = [
     { value: 'light', icon: Sun, labelKey: 'settings.prefs.theme_light' },
@@ -354,6 +356,32 @@ function PreferencesSection() {
               );
             })}
           </SegmentedControl>
+        </PreferenceTile>
+
+        {/* ── Reminder pop-ups tile ── */}
+        <PreferenceTile
+          icon={BellRing}
+          label={t('settings.prefs.notify')}
+          hint={notifyInterval === 0
+            ? t('settings.prefs.notify_off_hint')
+            : t('settings.prefs.notify_on_hint')}
+        >
+          <select
+            value={notifyInterval}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setNotifyIntervalState(v);
+              setNotifyInterval(v);
+            }}
+            aria-label={t('settings.prefs.notify')}
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {NOTIFY_INTERVAL_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {t(o.labelKey as Parameters<typeof t>[0])}
+              </option>
+            ))}
+          </select>
         </PreferenceTile>
       </div>
     </Card>
