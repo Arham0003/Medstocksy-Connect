@@ -45,6 +45,8 @@ export interface MedicineInput {
   instructions: string | null;
   substitution_allowed: boolean;
   medicine_notes: string | null;
+  /** Optional per-line price (₹) — used by the Quick-Rx upload tiles. */
+  price?: number | null;
 }
 
 export interface PrescriptionInput {
@@ -194,6 +196,7 @@ export async function createPrescription(args: {
     instructions: m.instructions?.trim() || null,
     substitution_allowed: m.substitution_allowed,
     medicine_notes: m.medicine_notes?.trim() || null,
+    price: m.price ?? null,
   }));
   const { data: meds, error: medsErr } = await supabase
     .from('crm_prescription_medicines')
@@ -259,6 +262,7 @@ export async function updatePrescription(args: {
       instructions: m.instructions?.trim() || null,
       substitution_allowed: m.substitution_allowed,
       medicine_notes: m.medicine_notes?.trim() || null,
+      price: m.price ?? null,
     }));
     const { error: insErr } = await supabase
       .from('crm_prescription_medicines')
@@ -300,6 +304,7 @@ export async function renewPrescription(id: string): Promise<PrescriptionWithMed
       instructions: m.instructions,
       substitution_allowed: m.substitution_allowed,
       medicine_notes: m.medicine_notes,
+      price: m.price,
     })),
   });
 }

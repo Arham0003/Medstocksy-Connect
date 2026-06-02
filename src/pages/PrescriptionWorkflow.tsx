@@ -4,13 +4,13 @@
  * Step 2: Upload bill or enter manually → OCR extract → editable fields
  * Step 3: Set reminder
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Camera, Check, ChevronRight, Clock, FileText,
   Image as ImageIcon, Loader2, Pencil, Pill, Receipt, Search,
-  Stethoscope, Upload, User, Users, X as XIcon, Bell, ClipboardPaste, Plus,
+  Stethoscope, Upload, User, Users, X as XIcon, Bell, Plus,
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { supabase } from '@/lib/supabase';
@@ -164,9 +164,10 @@ function CustomerStep({ onSelected }: { onSelected: (c: Customer) => void }) {
             <div className="flex">
               <span className="flex select-none items-center rounded-l-md border border-r-0 bg-muted px-2.5 text-sm font-mono text-muted-foreground">+91</span>
               <Input type="tel" inputMode="numeric" className="rounded-l-none font-mono"
-                value={phone} onChange={e => { setPhone(e.target.value); setPhoneErr(null); }}
+                value={phone}
+                onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setPhoneErr(null); }}
                 onBlur={() => { if (phone.trim()) { const v = validateIndianPhone(phone); setPhoneErr(v.ok ? null : v.error); } }}
-                maxLength={15} placeholder="98765 43210" />
+                maxLength={10} placeholder="9876543210" />
             </div>
             {phoneErr && <p className="mt-1 text-xs text-destructive">{phoneErr}</p>}
           </div>
@@ -193,7 +194,7 @@ function PrescriptionStep({
 }: { customer: Customer; pharmacyId: string; onSaved: (prescriptionId: string, firstMed: string) => void }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  const [mode, setMode] = useState<Mode>('upload');
+  const [mode, setMode] = useState<Mode>('manual');
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
@@ -201,20 +202,42 @@ function PrescriptionStep({
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
-  // Rx fields
+  // Rx header fields (manual mode)
   const [doctor, setDoctor] = useState('');
   const [rxDate, setRxDate] = useState(today);
   const [diagnosis, setDiagnosis] = useState('');
-  const [totalCost, setTotalCost] = useState('');
-  const [medsText, setMedsText] = useState('');
   const [rxErr, setRxErr] = useState<string | null>(null);
 
-  // Convert textarea lines → MedicineInput array
-  const parsedMeds: MedicineInput[] = medsText
-    .split('\n')
-    .map(l => l.trim())
-    .filter(Boolean)
-    .map(name => ({ ...EMPTY_MED, medicine_name: name }));
+  // Medicine + price tiles — used by BOTH manual and upload modes.
+  const [medItems, setMedItems] = useState<{ name: string; price: string }[]>([]);
+  const [draftName, setDraftName] = useState('');
+  const [draftPrice, setDraftPrice] = useState('');
+
+  const addMedItem = () => {
+    const name = draftName.trim();
+    if (!name) return;
+    setMedItems((arr) => [...arr, { name, price: draftPrice.trim() }]);
+    setDraftName('');
+    setDraftPrice('');
+  };
+  const removeMedItem = (i: number) => setMedItems((arr) => arr.filter((_, idx) => idx !== i));
+
+  // Sum of all entered medicine prices.
+  const medsTotal = medItems.reduce((s, m) => s + (parseFloat(m.price) || 0), 0);
+
+  // Total cost auto-mirrors the medicine sum, but stays editable: once the
+  // owner types their own value (totalEdited), we stop auto-overwriting it.
+  const [totalCost, setTotalCost] = useState('');
+  const [totalEdited, setTotalEdited] = useState(false);
+  useEffect(() => {
+    if (!totalEdited) setTotalCost(medsTotal > 0 ? medsTotal.toFixed(2) : '');
+  }, [medsTotal, totalEdited]);
+
+  const medicines: MedicineInput[] = medItems.map((m) => ({
+    ...EMPTY_MED,
+    medicine_name: m.name,
+    price: m.price ? parseFloat(m.price) : null,
+  }));
 
   const handleFile = async (file: File) => {
     setUploadErr(null);
@@ -229,7 +252,7 @@ function PrescriptionStep({
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from('crm-bill-attachments').getPublicUrl(path);
       setAttachment({ url: pub.publicUrl, name: file.name, type: file.type });
-      setMode('manual'); // show fields after upload
+      // Stay in upload mode — show the simplified medicine + price tiles below.
     } catch (err) {
       setUploadErr(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
@@ -242,20 +265,25 @@ function PrescriptionStep({
 
   const save = useMutation<string, Error>({
     mutationFn: async () => {
-      if (parsedMeds.length === 0) throw new Error('Paste at least one medicine name.');
+      if (medItems.length === 0) throw new Error('Add at least one medicine.');
+      const isUpload = mode === 'upload' && !!attachment;
+      // total_cost = owner-entered value if present, else the medicine sum.
+      const total = totalCost ? parseFloat(totalCost) : (medsTotal > 0 ? medsTotal : null);
+
       const rx = await createPrescription({
         pharmacyId,
         customerId: customer.id,
         rx: {
-          doctor_name: doctor.trim() || null,
+          // Upload mode keeps it lean — only the scan + medicines + price.
+          doctor_name: isUpload ? null : (doctor.trim() || null),
           prescription_date: rxDate,
           follow_up_date: null,
-          diagnosis: diagnosis.trim() || null,
+          diagnosis: isUpload ? null : (diagnosis.trim() || null),
           notes: null,
           attachment_url: attachment?.url ?? null,
-          total_cost: totalCost ? parseFloat(totalCost) : null,
+          total_cost: total,
         },
-        medicines: parsedMeds.length > 0 ? parsedMeds : [{ ...EMPTY_MED, medicine_name: '(see attached)' }],
+        medicines,
       });
       return rx.id;
     },
@@ -264,10 +292,93 @@ function PrescriptionStep({
       await qc.invalidateQueries({ queryKey: ['customer-activity', customer.id] });
       await qc.invalidateQueries({ queryKey: ['customers'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
-      onSaved(rxId, parsedMeds[0]?.medicine_name ?? '');
+      onSaved(rxId, medItems[0]?.name ?? '');
     },
     onError: (err) => setRxErr(err.message),
   });
+
+  // Shared medicine + price entry with an auto-summed, editable total.
+  const medEntry = (
+    <div className="rounded-xl border bg-card/40 p-4 space-y-3">
+      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="flex items-center gap-1.5"><Pill className="h-3.5 w-3.5 text-primary" /> Medicines &amp; price *</span>
+        {medItems.length > 0 && (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-primary">{medItems.length}</span>
+        )}
+      </div>
+
+      {/* Add row: name + price + add */}
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Medicine</label>
+          <Input
+            value={draftName}
+            onChange={e => setDraftName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
+            placeholder="Crocin 500mg"
+            maxLength={120}
+          />
+        </div>
+        <div className="w-24">
+          <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Price ₹</label>
+          <Input
+            type="number" min="0" step="0.01" inputMode="decimal"
+            value={draftPrice}
+            onChange={e => setDraftPrice(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
+            placeholder="0.00"
+            className="font-mono"
+          />
+        </div>
+        <Button type="button" variant="outline" onClick={addMedItem} disabled={!draftName.trim()}>
+          <Plus className="h-4 w-4" /> Add
+        </Button>
+      </div>
+
+      {/* Tiles: name + price */}
+      {medItems.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {medItems.map((m, i) => (
+            <span key={i} className="inline-flex items-center gap-2 rounded-lg border bg-background px-2.5 py-1.5 text-sm">
+              <Pill className="h-3.5 w-3.5 text-primary" />
+              <span className="font-medium">{m.name}</span>
+              {m.price && <span className="font-mono text-emerald-600">₹{m.price}</span>}
+              <button type="button" onClick={() => removeMedItem(i)}
+                className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                <XIcon className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Editable total — auto-mirrors the medicine sum until the owner edits it */}
+      <div className="border-t pt-3">
+        <div className="mb-1 flex items-center justify-between">
+          <label className="text-sm font-medium">Total cost (₹)</label>
+          {totalEdited && medsTotal > 0 && (
+            <button
+              type="button"
+              onClick={() => { setTotalEdited(false); setTotalCost(medsTotal.toFixed(2)); }}
+              className="text-[11px] font-medium text-primary hover:underline"
+            >
+              ↺ Auto ₹{medsTotal.toFixed(2)}
+            </button>
+          )}
+        </div>
+        <Input
+          type="number" min="0" step="0.01" inputMode="decimal"
+          value={totalCost}
+          onChange={e => { setTotalEdited(true); setTotalCost(e.target.value); }}
+          placeholder="0.00"
+          className="font-mono text-base font-bold"
+        />
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {totalEdited ? 'Manually set — overrides the medicine sum.' : 'Auto-summed from medicine prices. Edit to override.'}
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -344,8 +455,8 @@ function PrescriptionStep({
         </div>
       )}
 
-      {/* Prescription fields — show in manual mode or after upload */}
-      {(mode === 'manual' || attachment) && (
+      {/* ── MANUAL MODE: consultation details (doctor / date / diagnosis) ── */}
+      {mode === 'manual' && (
         <div className="rounded-xl border bg-card/40 p-4 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Receipt className="h-3.5 w-3.5 text-primary" /> Prescription details
@@ -366,43 +477,21 @@ function PrescriptionStep({
             <label className="mb-1 block text-sm font-medium">Diagnosis</label>
             <Input value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="e.g. Hypertension" maxLength={240} />
           </div>
-
-          {/* Medicines — paste zone */}
-          <div className="rounded-lg border bg-background p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Pill className="h-3.5 w-3.5" /> Medicines *</span>
-              {parsedMeds.length > 0 && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-primary">{parsedMeds.length}</span>
-              )}
-            </div>
-            <textarea
-              value={medsText}
-              onChange={e => setMedsText(e.target.value)}
-              placeholder={`Paste prescription here — one medicine per line:\n\nCrocin 500mg\nAzithromycin 250mg\nPan-D`}
-              rows={5}
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            {parsedMeds.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {parsedMeds.map((m, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    <ClipboardPaste className="h-3 w-3 opacity-60" />
-                    {m.medicine_name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Total Cost of Prescription (₹)</label>
-            <Input type="number" min="0" step="0.01" value={totalCost} onChange={e => setTotalCost(e.target.value)} placeholder="0.00" />
-          </div>
         </div>
       )}
 
+      {/* Medicines + price tiles + editable total — shown once a scan is
+          attached (upload mode) or always in manual mode. */}
+      {(mode === 'manual' || attachment) && medEntry}
+
       {rxErr && <p className="text-xs text-destructive">{rxErr}</p>}
 
-      <Button onClick={() => save.mutate()} disabled={save.isPending || (mode === 'upload' && !attachment && parsedMeds.length === 0)} className="w-full" size="lg">
+      <Button
+        onClick={() => save.mutate()}
+        disabled={save.isPending || medItems.length === 0 || (mode === 'upload' && !attachment)}
+        className="w-full"
+        size="lg"
+      >
         {save.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Check className="h-4 w-4" /> Save prescription</>}
       </Button>
     </div>

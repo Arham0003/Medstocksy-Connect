@@ -4,6 +4,94 @@
  * `sendMessage()` in `messages.ts` (which respects rate limits + opt-out).
  */
 import { supabase } from '@/lib/supabase';
+import { renderTemplate } from '@/lib/utils';
+
+/**
+ * Merge tags the system can auto-fill (a.k.a. template variables / placeholders).
+ * Anything not in this list still resolves if present in the reminder's stored
+ * variables; otherwise it's blanked so customers never see a raw "{token}".
+ *   Customer : {name} {customer_name} {phone} {customer_phone}
+ *   Pharmacy : {pharmacy_name} {pharmacy_phone} {pharmacy_address} {pharmacy_whatsapp}
+ *   Date     : {today} {date}
+ *   Stored   : {medicine} {amount} {discount} {category} … (set when scheduled)
+ */
+export const KNOWN_MERGE_TAGS = [
+  'name', 'customer_name', 'phone', 'customer_phone',
+  'pharmacy_name', 'pharmacy_phone', 'pharmacy_address', 'pharmacy_whatsapp',
+  'today', 'date', 'medicine', 'amount', 'discount', 'category',
+] as const;
+
+interface PharmacyInfo {
+  name: string;
+  phone: string | null;
+  address: string | null;
+  whatsapp_number: string | null;
+}
+// Per-session cache so we don't re-fetch pharmacy fields on every send.
+const pharmacyInfoCache = new Map<string, PharmacyInfo>();
+
+/**
+ * Render a reminder's WhatsApp body with EVERY known merge tag filled.
+ * Priority (later wins): customer fields → pharmacy fields → date → the
+ * reminder's stored variables. Any still-unknown {token} is blanked.
+ */
+export async function renderReminderMessage(args: {
+  body: string;
+  customerName?: string;
+  customerPhone?: string;
+  storedVars?: Record<string, unknown> | null;
+  pharmacyId: string;
+}): Promise<string> {
+  const vars: Record<string, string> = {};
+
+  // 1. Customer fields (+ aliases).
+  if (args.customerName) { vars.name = args.customerName; vars.customer_name = args.customerName; }
+  if (args.customerPhone) { vars.phone = args.customerPhone; vars.customer_phone = args.customerPhone; }
+
+  // 2. Pharmacy fields — fetch (cached) only if the template uses any of them.
+  if (/\{pharmacy_\w+\}/.test(args.body)) {
+    let info = pharmacyInfoCache.get(args.pharmacyId);
+    if (!info) {
+      const { data } = await supabase
+        .from('crm_pharmacies')
+        .select('name, phone, address, whatsapp_number')
+        .eq('id', args.pharmacyId)
+        .maybeSingle();
+      const d = (data ?? {}) as Partial<PharmacyInfo>;
+      info = {
+        name: d.name ?? '',
+        phone: d.phone ?? null,
+        address: d.address ?? null,
+        whatsapp_number: d.whatsapp_number ?? null,
+      };
+      pharmacyInfoCache.set(args.pharmacyId, info);
+    }
+    vars.pharmacy_name = info.name;
+    vars.pharmacy_phone = info.phone ?? '';
+    vars.pharmacy_address = info.address ?? '';
+    vars.pharmacy_whatsapp = info.whatsapp_number ?? '';
+  }
+
+  // 3. Date helpers.
+  const todayStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  vars.today = todayStr;
+  vars.date = todayStr;
+
+  // 4. Stored vars override everything above (medicine, amount, custom date…).
+  for (const [k, v] of Object.entries(args.storedVars ?? {})) {
+    if (v != null && v !== '') vars[k] = String(v);
+  }
+
+  // Fill, then strip any STILL-unknown {token} so no raw placeholder leaks.
+  const filled = renderTemplate(args.body, vars);
+  return filled.replace(/\{\w+\}/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+}
+
+/** Invalidate the cached pharmacy fields (call after editing pharmacy info). */
+export function clearPharmacyInfoCache(pharmacyId?: string): void {
+  if (pharmacyId) pharmacyInfoCache.delete(pharmacyId);
+  else pharmacyInfoCache.clear();
+}
 
 export interface DueReminder {
   id: string;
@@ -28,11 +116,17 @@ export interface DueReminder {
 
 /** List pending reminders whose scheduled_for is at most `withinHours` away
  *  (default: end of today). Includes joins to customer + template. */
-export async function listDueReminders(
-  pharmacyId: string,
-  withinHours = 24
-): Promise<DueReminder[]> {
-  const cutoff = new Date(Date.now() + withinHours * 60 * 60 * 1000).toISOString();
+/**
+ * List reminders that still need sending TODAY.
+ *   • status = 'pending'  → already-sent reminders never appear (they flip to
+ *     'sent' via markReminderSent and drop out automatically).
+ *   • scheduled_for < start-of-tomorrow → only today's (and any overdue) ones;
+ *     reminders scheduled for a future date stay hidden until that date.
+ * So the popup/bell only ever surfaces un-sent reminders due today.
+ */
+export async function listDueReminders(pharmacyId: string): Promise<DueReminder[]> {
+  const now = new Date();
+  const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
   const { data, error } = await supabase
     .from('crm_scheduled_reminders')
     .select(`
@@ -42,7 +136,7 @@ export async function listDueReminders(
     `)
     .eq('pharmacy_id', pharmacyId)
     .eq('status', 'pending')
-    .lte('scheduled_for', cutoff)
+    .lt('scheduled_for', startOfTomorrow)
     .order('scheduled_for', { ascending: true })
     .limit(50);
   if (error) throw new Error(error.message);

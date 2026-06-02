@@ -242,19 +242,52 @@ EXCEPTION
       ADD CONSTRAINT crm_templates_language_chk CHECK (language IN ('en','hi'));
 END $$;
 
--- De-dupe templates (same pharmacy + name + language) before adding UNIQUE
-WITH ranked AS (
-  SELECT id,
-         row_number() OVER (PARTITION BY COALESCE(pharmacy_id, '00000000-0000-0000-0000-000000000000'::uuid), name, language ORDER BY created_at DESC, id) AS rn
-    FROM public.crm_templates
-)
-DELETE FROM public.crm_templates WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+-- De-dupe templates (same pharmacy + name + language), keeping the newest.
+-- Before deleting a duplicate, REPOINT any rows that reference it to the
+-- survivor — otherwise FKs (scheduled_reminders / reminder_rules / campaigns /
+-- messages, all ON DELETE RESTRICT) block the delete with a 23503 error.
+-- On a fresh DB crm_templates is empty so the loop body never runs.
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    WITH ranked AS (
+      SELECT id,
+             first_value(id) OVER (
+               PARTITION BY COALESCE(pharmacy_id, '00000000-0000-0000-0000-000000000000'::uuid), name, language
+               ORDER BY created_at DESC, id
+             ) AS keep_id,
+             row_number() OVER (
+               PARTITION BY COALESCE(pharmacy_id, '00000000-0000-0000-0000-000000000000'::uuid), name, language
+               ORDER BY created_at DESC, id
+             ) AS rn
+        FROM public.crm_templates
+    )
+    SELECT id AS dup_id, keep_id FROM ranked WHERE rn > 1
+  LOOP
+    -- Repoint references (guard each table in case it doesn't exist yet).
+    IF to_regclass('public.crm_scheduled_reminders') IS NOT NULL THEN
+      UPDATE public.crm_scheduled_reminders SET template_id = r.keep_id WHERE template_id = r.dup_id;
+    END IF;
+    IF to_regclass('public.crm_reminder_rules') IS NOT NULL THEN
+      UPDATE public.crm_reminder_rules SET template_id = r.keep_id WHERE template_id = r.dup_id;
+    END IF;
+    IF to_regclass('public.crm_campaigns') IS NOT NULL THEN
+      UPDATE public.crm_campaigns SET template_id = r.keep_id WHERE template_id = r.dup_id;
+    END IF;
+    IF to_regclass('public.crm_messages') IS NOT NULL THEN
+      UPDATE public.crm_messages SET template_id = r.keep_id WHERE template_id = r.dup_id;
+    END IF;
+    DELETE FROM public.crm_templates WHERE id = r.dup_id;
+  END LOOP;
+END $$;
 
 DO $$ BEGIN
   ALTER TABLE public.crm_templates
     ADD CONSTRAINT crm_templates_pharmacy_name_lang_unique UNIQUE (pharmacy_id, name, language);
 EXCEPTION
-  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_object THEN NULL;  -- constraint already present
+  WHEN duplicate_table  THEN NULL;  -- backing index already present (42P07)
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_crm_templates_pharmacy ON public.crm_templates(pharmacy_id);
@@ -466,6 +499,7 @@ ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS strength 
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS route text;
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS substitution_allowed boolean NOT NULL DEFAULT true;
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS medicine_notes text;
+ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS price numeric(10,2) CHECK (price IS NULL OR price >= 0);
 CREATE INDEX IF NOT EXISTS idx_crm_rx_meds_prescription ON public.crm_prescription_medicines(prescription_id, position);
 
 -- Per-medicine refill log — drives "Refilled X times · last 5d ago · next 25d"
