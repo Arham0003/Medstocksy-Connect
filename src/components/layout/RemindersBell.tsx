@@ -165,14 +165,24 @@ function RemindersBellInner() {
                     : t('bell.subtitle_count').replace('{n}', String(count))}
                 </div>
               </div>
-              <Link
-                to="/reminders"
-                onClick={() => setOpen(false)}
-                className="inline-flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
-              >
-                {t('bell.view_all')}
-                <ChevronRight className="h-3 w-3" />
-              </Link>
+              <div className="flex items-center gap-1">
+                <Link
+                  to="/reminders"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
+                >
+                  {t('bell.view_all')}
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label={t('btn.cancel')}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* Rate-limit / window banner */}

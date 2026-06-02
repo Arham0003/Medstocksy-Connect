@@ -1,8 +1,7 @@
 /**
- * Proactive top-5 reminders popup. Auto-opens once per day on app load when
- * there's at least one reminder due, prompting staff to send right away.
- * Dismissal is per-session-per-day (sessionStorage); the bell is always
- * available afterwards for the same actions.
+ * Proactive top-5 reminders popup. Auto-opens when reminders are due, then
+ * re-appears on a configurable cadence (Settings → Preferences → Reminder
+ * pop-ups) after each dismiss — as long as reminders remain pending.
  */
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -17,15 +16,10 @@ import {
   listDueReminders, markReminderSent, cancelReminder, type DueReminder,
 } from '@/lib/api/reminders';
 import { canSendNow, sendOrCompose, logManualSend } from '@/lib/api/messages';
+import { getSnoozedUntil, snoozePopup } from '@/lib/notify';
 import { cn, initials, renderTemplate } from '@/lib/utils';
 
 const TOP_N = 5;
-
-function dismissKey(): string {
-  const d = new Date();
-  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return `medcrm.today_popup_dismissed.${stamp}`;
-}
 
 export function TodayRemindersPopup() {
   const { activePharmacyId } = usePharmacy();
@@ -39,6 +33,8 @@ function TodayRemindersPopupInner() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [queue, setQueue] = useState<DueReminder[] | null>(null);
+  // Bumps every 30s to re-evaluate the snooze window without a full refetch.
+  const [tick, setTick] = useState(0);
 
   const { data: reminders = [], isLoading } = useQuery<DueReminder[]>({
     queryKey: ['due-reminders', pharmacyId],
@@ -55,17 +51,24 @@ function TodayRemindersPopupInner() {
     staleTime: 30_000,
   });
 
-  // Auto-open once per day per session, only if there ARE reminders pending.
+  // Heartbeat: re-check the snooze window every 30s so the popup re-appears
+  // once the configured interval has elapsed.
   useEffect(() => {
-    if (isLoading) return;
-    if (reminders.length === 0) return;
-    const dismissed = sessionStorage.getItem(dismissKey()) === '1';
-    if (dismissed) return;
-    setOpen(true);
-  }, [isLoading, reminders.length]);
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
-  const close = (markDismissed = true) => {
-    if (markDismissed) sessionStorage.setItem(dismissKey(), '1');
+  // Open whenever: there are pending reminders AND the snooze window has passed
+  // AND it's not already open. Re-evaluated on data change + every heartbeat.
+  useEffect(() => {
+    if (isLoading || open) return;
+    if (reminders.length === 0) return;
+    if (Date.now() < getSnoozedUntil()) return;
+    setOpen(true);
+  }, [isLoading, reminders.length, open, tick]);
+
+  const close = (markSnoozed = true) => {
+    if (markSnoozed) snoozePopup();
     setOpen(false);
     setQueue(null);
   };
@@ -229,7 +232,7 @@ function TodayRemindersPopupInner() {
               <div className="flex flex-wrap items-center justify-between gap-2 border-t bg-muted/30 px-5 py-3">
                 <Link
                   to="/reminders"
-                  onClick={() => close(false)}
+                  onClick={() => close()}
                   className="inline-flex items-center gap-0.5 text-xs font-medium text-primary hover:underline"
                 >
                   {t('bell.view_all')} <ChevronRight className="h-3 w-3" />
