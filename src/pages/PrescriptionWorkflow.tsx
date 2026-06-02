@@ -1,16 +1,15 @@
 /**
  * PrescriptionWorkflow — streamlined 3-step POS flow
  * Step 1: Select/create customer
- * Step 2: Upload bill or enter manually → OCR extract → editable fields
+ * Step 2: Enter prescription details (doctor, diagnosis, medicines, cost)
  * Step 3: Set reminder
  */
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft, Camera, Check, ChevronRight, Clock, FileText,
-  Image as ImageIcon, Loader2, Pencil, Pill, Receipt, Search,
-  Stethoscope, Upload, User, Users, X as XIcon, Bell, ClipboardPaste, Plus,
+  ArrowLeft, Check, ChevronRight, Clock, Loader2, Pill, Receipt, Search,
+  Stethoscope, User, Users, Bell, ClipboardPaste, Plus,
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { supabase } from '@/lib/supabase';
@@ -24,7 +23,6 @@ import { QuickReminderDialog } from '@/components/crm/QuickReminderDialog';
 
 /* ─── types ──────────────────────────────────────────────────────────────── */
 type Step = 1 | 2 | 3;
-type Mode = 'upload' | 'manual';
 
 const EMPTY_MED: MedicineInput = {
   medicine_name: '', form: '', strength: '', dosage: '', route: '',
@@ -186,23 +184,13 @@ function CustomerStep({ onSelected }: { onSelected: (c: Customer) => void }) {
 }
 
 /* ─── Step 2: Prescription entry ──────────────────────────────────────────── */
-const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-const MAX_BYTES = 10 * 1024 * 1024;
-
 function PrescriptionStep({
   customer, pharmacyId, onSaved,
 }: { customer: Customer; pharmacyId: string; onSaved: (prescriptionId: string, firstMed: string) => void }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  const [mode, setMode] = useState<Mode>('manual');
-  const [uploading, setUploading] = useState(false);
-  const [uploadErr, setUploadErr] = useState<string | null>(null);
-  const [attachment, setAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
 
-  // Rx fields (manual mode)
+  // Rx fields
   const [doctor, setDoctor] = useState('');
   const [rxDate, setRxDate] = useState(today);
   const [diagnosis, setDiagnosis] = useState('');
@@ -210,87 +198,29 @@ function PrescriptionStep({
   const [medsText, setMedsText] = useState('');
   const [rxErr, setRxErr] = useState<string | null>(null);
 
-  // Upload mode: medicine + price tiles entered by staff from the scan.
-  const [medItems, setMedItems] = useState<{ name: string; price: string }[]>([]);
-  const [draftName, setDraftName] = useState('');
-  const [draftPrice, setDraftPrice] = useState('');
-
-  const addMedItem = () => {
-    const name = draftName.trim();
-    if (!name) return;
-    setMedItems((arr) => [...arr, { name, price: draftPrice.trim() }]);
-    setDraftName('');
-    setDraftPrice('');
-  };
-  const removeMedItem = (i: number) => setMedItems((arr) => arr.filter((_, idx) => idx !== i));
-  const uploadTotal = medItems.reduce((s, m) => s + (parseFloat(m.price) || 0), 0);
-
-  // Convert textarea lines → MedicineInput array (manual mode)
+  // Convert textarea lines → MedicineInput array
   const parsedMeds: MedicineInput[] = medsText
     .split('\n')
     .map(l => l.trim())
     .filter(Boolean)
     .map(name => ({ ...EMPTY_MED, medicine_name: name }));
 
-  const handleFile = async (file: File) => {
-    setUploadErr(null);
-    if (!ALLOWED.includes(file.type)) { setUploadErr('Only PDF, JPG, PNG, WEBP allowed.'); return; }
-    if (file.size > MAX_BYTES) { setUploadErr('File over 10 MB limit.'); return; }
-    setUploading(true);
-    try {
-      const ext = (file.name.split('.').pop() ?? 'bin').toLowerCase();
-      const path = `${pharmacyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('crm-bill-attachments')
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('crm-bill-attachments').getPublicUrl(path);
-      setAttachment({ url: pub.publicUrl, name: file.name, type: file.type });
-      // Stay in upload mode — show the simplified medicine + price tiles below.
-    } catch (err) {
-      setUploadErr(err instanceof Error ? err.message : 'Upload failed.');
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
-  };
-
-
-
   const save = useMutation<string, Error>({
     mutationFn: async () => {
-      const isUpload = mode === 'upload' && !!attachment;
-
-      // Build medicines + total depending on the mode.
-      let medicines: MedicineInput[];
-      let total: number | null;
-      if (isUpload) {
-        if (medItems.length === 0) throw new Error('Add at least one medicine with its price.');
-        medicines = medItems.map((m) => ({
-          ...EMPTY_MED,
-          medicine_name: m.name,
-          price: m.price ? parseFloat(m.price) : null,
-        }));
-        total = uploadTotal > 0 ? uploadTotal : null;
-      } else {
-        if (parsedMeds.length === 0) throw new Error('Paste at least one medicine name.');
-        medicines = parsedMeds;
-        total = totalCost ? parseFloat(totalCost) : null;
-      }
-
+      if (parsedMeds.length === 0) throw new Error('Add at least one medicine name.');
       const rx = await createPrescription({
         pharmacyId,
         customerId: customer.id,
         rx: {
-          // Upload mode keeps it lean — only the scan + medicines + price.
-          doctor_name: isUpload ? null : (doctor.trim() || null),
+          doctor_name: doctor.trim() || null,
           prescription_date: rxDate,
           follow_up_date: null,
-          diagnosis: isUpload ? null : (diagnosis.trim() || null),
+          diagnosis: diagnosis.trim() || null,
           notes: null,
-          attachment_url: attachment?.url ?? null,
-          total_cost: total,
+          attachment_url: null,
+          total_cost: totalCost ? parseFloat(totalCost) : null,
         },
-        medicines,
+        medicines: parsedMeds,
       });
       return rx.id;
     },
@@ -299,10 +229,7 @@ function PrescriptionStep({
       await qc.invalidateQueries({ queryKey: ['customer-activity', customer.id] });
       await qc.invalidateQueries({ queryKey: ['customers'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
-      const firstMed = (mode === 'upload' && attachment)
-        ? (medItems[0]?.name ?? '')
-        : (parsedMeds[0]?.medicine_name ?? '');
-      onSaved(rxId, firstMed);
+      onSaved(rxId, parsedMeds[0]?.medicine_name ?? '');
     },
     onError: (err) => setRxErr(err.message),
   });
@@ -321,135 +248,8 @@ function PrescriptionStep({
         <Check className="ml-auto h-4 w-4 text-emerald-500" />
       </div>
 
-      {/* Mode switch */}
-      <div role="radiogroup" className="inline-flex w-full rounded-lg border bg-muted/60 p-1">
-        {([['upload', <Upload className="h-3.5 w-3.5" />, 'Upload scan'], ['manual', <Pencil className="h-3.5 w-3.5" />, 'Enter manually']] as const).map(([m, icon, label]) => (
-          <button key={m} type="button" role="radio" aria-checked={mode === m}
-            onClick={() => setMode(m as Mode)}
-            className={cn('inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-all',
-              mode === m ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-background/60')}>
-            {icon}{label}
-          </button>
-        ))}
-      </div>
-
-      {/* Upload zone */}
-      {mode === 'upload' && !attachment && (
-        <div
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
-          onClick={() => fileRef.current?.click()}
-          className={cn('flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 text-center transition-colors',
-            dragOver ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/40',
-            uploading && 'pointer-events-none opacity-60')}>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload className="h-6 w-6" />}
-          </div>
-          <div>
-            <div className="font-medium">{uploading ? 'Uploading…' : 'Drop bill or prescription here'}</div>
-            <div className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, WEBP · up to 10 MB</div>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>
-              <ImageIcon className="h-3.5 w-3.5" /> Browse files
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={e => { e.stopPropagation(); cameraRef.current?.click(); }}>
-              <Camera className="h-3.5 w-3.5" /> Camera
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <input ref={fileRef} type="file" hidden accept={ALLOWED.join(',')} onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-      <input ref={cameraRef} type="file" hidden accept="image/*" capture="environment" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-      {uploadErr && <p className="text-xs text-destructive">{uploadErr}</p>}
-
-      {/* Attached preview */}
-      {attachment && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 rounded-xl border bg-card/50 p-3">
-            <FileText className="h-5 w-5 text-primary shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium truncate">{attachment.name}</div>
-              <div className="text-xs text-emerald-600">Uploaded ✓</div>
-            </div>
-            <button onClick={() => { setAttachment(null); setMode('upload'); }}
-              className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-              <XIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── UPLOAD MODE: simplified medicine + price tiles ── */}
-      {mode === 'upload' && attachment && (
-        <div className="rounded-xl border bg-card/40 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Pill className="h-3.5 w-3.5 text-primary" /> Medicines &amp; price
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Read the medicines off the scan above and add each with its price.
-          </p>
-
-          {/* Add row: name + price + add */}
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Medicine</label>
-              <Input
-                value={draftName}
-                onChange={e => setDraftName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
-                placeholder="Crocin 500mg"
-                maxLength={120}
-              />
-            </div>
-            <div className="w-24">
-              <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Price ₹</label>
-              <Input
-                type="number" min="0" step="0.01" inputMode="decimal"
-                value={draftPrice}
-                onChange={e => setDraftPrice(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
-                placeholder="0.00"
-                className="font-mono"
-              />
-            </div>
-            <Button type="button" variant="outline" onClick={addMedItem} disabled={!draftName.trim()}>
-              <Plus className="h-4 w-4" /> Add
-            </Button>
-          </div>
-
-          {/* Tiles: name + price */}
-          {medItems.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {medItems.map((m, i) => (
-                <span key={i} className="inline-flex items-center gap-2 rounded-lg border bg-background px-2.5 py-1.5 text-sm">
-                  <Pill className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-medium">{m.name}</span>
-                  {m.price && <span className="font-mono text-emerald-600">₹{m.price}</span>}
-                  <button type="button" onClick={() => removeMedItem(i)}
-                    className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                    <XIcon className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Auto total */}
-          {uploadTotal > 0 && (
-            <div className="flex items-center justify-between border-t pt-3 text-sm">
-              <span className="font-medium text-muted-foreground">Total</span>
-              <span className="font-mono text-lg font-bold">₹{uploadTotal.toFixed(2)}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── MANUAL MODE: full prescription form ── */}
-      {mode === 'manual' && (
-        <div className="rounded-xl border bg-card/40 p-4 space-y-4">
+      {/* Prescription form */}
+      <div className="rounded-xl border bg-card/40 p-4 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Receipt className="h-3.5 w-3.5 text-primary" /> Prescription details
           </div>
@@ -500,18 +300,13 @@ function PrescriptionStep({
             <label className="mb-1 block text-sm font-medium">Total Cost of Prescription (₹)</label>
             <Input type="number" min="0" step="0.01" value={totalCost} onChange={e => setTotalCost(e.target.value)} placeholder="0.00" />
           </div>
-        </div>
-      )}
+      </div>
 
       {rxErr && <p className="text-xs text-destructive">{rxErr}</p>}
 
       <Button
         onClick={() => save.mutate()}
-        disabled={save.isPending || (
-          mode === 'upload'
-            ? !attachment || medItems.length === 0
-            : parsedMeds.length === 0
-        )}
+        disabled={save.isPending || parsedMeds.length === 0}
         className="w-full"
         size="lg"
       >
