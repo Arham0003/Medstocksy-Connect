@@ -15,7 +15,6 @@ import { useTheme, type Theme } from '@/contexts/ThemeContext';
 import { SUPPORTED_LANGUAGES, type Lang } from '@/i18n/translations';
 import { supabase, type Tables } from '@/lib/supabase';
 import { getNotifyInterval, setNotifyInterval, NOTIFY_INTERVAL_OPTIONS } from '@/lib/notify';
-import { clearPharmacyInfoCache } from '@/lib/api/reminders';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -222,9 +221,6 @@ function PharmacySection({ pharmacy, canEdit }: SectionProps) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['pharmacy', pharmacy.id] });
       qc.invalidateQueries({ queryKey: ['memberships'] });
-      // Drop the cached pharmacy merge-tag values so reminders sent this
-      // session pick up the edited name/phone/address immediately.
-      clearPharmacyInfoCache(pharmacy.id);
       setSavedAt(Date.now());
       setTimeout(() => setSavedAt(null), 2400);
     },

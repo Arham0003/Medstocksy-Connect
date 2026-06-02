@@ -286,8 +286,7 @@ DO $$ BEGIN
   ALTER TABLE public.crm_templates
     ADD CONSTRAINT crm_templates_pharmacy_name_lang_unique UNIQUE (pharmacy_id, name, language);
 EXCEPTION
-  WHEN duplicate_object THEN NULL;  -- constraint already present
-  WHEN duplicate_table  THEN NULL;  -- backing index already present (42P07)
+  WHEN duplicate_object THEN NULL;
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_crm_templates_pharmacy ON public.crm_templates(pharmacy_id);
