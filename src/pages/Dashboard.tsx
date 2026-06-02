@@ -13,8 +13,8 @@ import { ComposeDrawer } from '@/components/crm/ComposeDrawer';
 import { CustomerPickerDialog } from '@/components/crm/CustomerPickerDialog';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { sendOrCompose, logManualSend } from '@/lib/api/messages';
-import { markReminderSent } from '@/lib/api/reminders';
-import { cn, renderTemplate } from '@/lib/utils';
+import { markReminderSent, renderReminderMessage } from '@/lib/api/reminders';
+import { cn } from '@/lib/utils';
 import type { CustomerWithStats } from '@/lib/api/customers';
 
 /**
@@ -486,7 +486,13 @@ export default function Dashboard() {
   // opens WhatsApp (bot or click-to-chat), logs the send, marks reminder sent.
   const quickWhatsApp = async (row: UpcomingRow) => {
     if (!row.customer.whatsapp_opted_in) return;
-    const body = renderTemplate(row.template.body, row.variables ?? {});
+    const body = await renderReminderMessage({
+      body: row.template.body,
+      customerName: row.customer.name,
+      customerPhone: row.customer.phone,
+      storedVars: row.variables,
+      pharmacyId,
+    });
     const result = await sendOrCompose({ phone: row.customer.phone, body });
     const { messageId } = await logManualSend({
       pharmacyId,

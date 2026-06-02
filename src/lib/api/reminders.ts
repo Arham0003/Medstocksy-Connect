@@ -4,6 +4,56 @@
  * `sendMessage()` in `messages.ts` (which respects rate limits + opt-out).
  */
 import { supabase } from '@/lib/supabase';
+import { renderTemplate } from '@/lib/utils';
+
+// Small per-session cache so we don't re-fetch pharmacy name/phone on every send.
+const pharmacyInfoCache = new Map<string, { name: string; phone: string | null }>();
+
+/**
+ * Render a reminder's WhatsApp body with all variables filled.
+ * Merges, in priority order (later wins):
+ *   1. {name}/{phone} from the reminder's customer
+ *   2. {pharmacy_name}/{pharmacy_phone} from the pharmacy (fetched + cached)
+ *   3. the reminder's own stored variables (e.g. {medicine})
+ * Anything still unknown is left blank rather than showing a raw "{token}".
+ */
+export async function renderReminderMessage(args: {
+  body: string;
+  customerName?: string;
+  customerPhone?: string;
+  storedVars?: Record<string, unknown> | null;
+  pharmacyId: string;
+}): Promise<string> {
+  const vars: Record<string, string> = {};
+  if (args.customerName) vars.name = args.customerName;
+  if (args.customerPhone) vars.phone = args.customerPhone;
+
+  // Only hit the DB if the template actually references pharmacy fields.
+  if (/\{pharmacy_(name|phone)\}/.test(args.body)) {
+    let info = pharmacyInfoCache.get(args.pharmacyId);
+    if (!info) {
+      const { data } = await supabase
+        .from('crm_pharmacies')
+        .select('name, phone')
+        .eq('id', args.pharmacyId)
+        .maybeSingle();
+      info = { name: (data as { name?: string } | null)?.name ?? '', phone: (data as { phone?: string | null } | null)?.phone ?? null };
+      pharmacyInfoCache.set(args.pharmacyId, info);
+    }
+    vars.pharmacy_name = info.name;
+    vars.pharmacy_phone = info.phone ?? '';
+  }
+
+  // Stored vars override the defaults above.
+  for (const [k, v] of Object.entries(args.storedVars ?? {})) {
+    if (v != null && v !== '') vars[k] = String(v);
+  }
+
+  // Fill the body; replace any STILL-unknown {token} with empty string so
+  // customers never see a raw placeholder.
+  const filled = renderTemplate(args.body, vars);
+  return filled.replace(/\{\w+\}/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+}
 
 export interface DueReminder {
   id: string;
