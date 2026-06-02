@@ -22,10 +22,12 @@ interface CampaignDialogProps {
   onOpenChange: (open: boolean) => void;
   /** When provided, dialog opens in edit mode pre-filled */
   campaign?: Campaign | null;
+  /** Pre-select a segment when creating a new campaign from the Segments page */
+  initialSegmentKey?: string;
 }
 
 
-export function CampaignDialog({ open, onOpenChange, campaign }: CampaignDialogProps) {
+export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey }: CampaignDialogProps) {
   const t = useT();
   const { user } = useAuth();
   const { pharmacyId } = useActivePharmacy();
@@ -130,7 +132,7 @@ export function CampaignDialog({ open, onOpenChange, campaign }: CampaignDialogP
       setScheduledFor(campaign.scheduled_for ? campaign.scheduled_for.slice(0, 16) : '');
     } else {
       setName('');
-      setSegmentKey('all');
+      setSegmentKey(initialSegmentKey ?? 'all');
       setTemplateId(templates[0]?.id ?? '');
       setScheduledFor('');
     }
