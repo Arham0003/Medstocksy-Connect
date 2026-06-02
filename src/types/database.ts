@@ -171,6 +171,7 @@ export interface Database {
           instructions: string | null;
           substitution_allowed: boolean;
           medicine_notes: string | null;
+          price: number | null;
         };
         Insert: {
           prescription_id: string; medicine_name: string; position?: number;
@@ -184,6 +185,7 @@ export interface Database {
           instructions?: string | null;
           substitution_allowed?: boolean;
           medicine_notes?: string | null;
+          price?: number | null;
         };
         Update: Partial<Database['public']['Tables']['crm_prescription_medicines']['Insert']>;
       };

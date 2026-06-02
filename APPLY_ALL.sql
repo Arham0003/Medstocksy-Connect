@@ -466,6 +466,7 @@ ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS strength 
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS route text;
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS substitution_allowed boolean NOT NULL DEFAULT true;
 ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS medicine_notes text;
+ALTER TABLE public.crm_prescription_medicines ADD COLUMN IF NOT EXISTS price numeric(10,2) CHECK (price IS NULL OR price >= 0);
 CREATE INDEX IF NOT EXISTS idx_crm_rx_meds_prescription ON public.crm_prescription_medicines(prescription_id, position);
 
 -- Per-medicine refill log — drives "Refilled X times · last 5d ago · next 25d"
