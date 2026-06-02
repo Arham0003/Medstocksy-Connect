@@ -6,34 +6,16 @@
 import { supabase } from '@/lib/supabase';
 import { renderTemplate } from '@/lib/utils';
 
-/**
- * Merge tags the system can auto-fill (a.k.a. template variables / placeholders).
- * Anything not in this list still resolves if present in the reminder's stored
- * variables; otherwise it's blanked so customers never see a raw "{token}".
- *   Customer : {name} {customer_name} {phone} {customer_phone}
- *   Pharmacy : {pharmacy_name} {pharmacy_phone} {pharmacy_address} {pharmacy_whatsapp}
- *   Date     : {today} {date}
- *   Stored   : {medicine} {amount} {discount} {category} … (set when scheduled)
- */
-export const KNOWN_MERGE_TAGS = [
-  'name', 'customer_name', 'phone', 'customer_phone',
-  'pharmacy_name', 'pharmacy_phone', 'pharmacy_address', 'pharmacy_whatsapp',
-  'today', 'date', 'medicine', 'amount', 'discount', 'category',
-] as const;
-
-interface PharmacyInfo {
-  name: string;
-  phone: string | null;
-  address: string | null;
-  whatsapp_number: string | null;
-}
-// Per-session cache so we don't re-fetch pharmacy fields on every send.
-const pharmacyInfoCache = new Map<string, PharmacyInfo>();
+// Small per-session cache so we don't re-fetch pharmacy name/phone on every send.
+const pharmacyInfoCache = new Map<string, { name: string; phone: string | null }>();
 
 /**
- * Render a reminder's WhatsApp body with EVERY known merge tag filled.
- * Priority (later wins): customer fields → pharmacy fields → date → the
- * reminder's stored variables. Any still-unknown {token} is blanked.
+ * Render a reminder's WhatsApp body with all variables filled.
+ * Merges, in priority order (later wins):
+ *   1. {name}/{phone} from the reminder's customer
+ *   2. {pharmacy_name}/{pharmacy_phone} from the pharmacy (fetched + cached)
+ *   3. the reminder's own stored variables (e.g. {medicine})
+ * Anything still unknown is left blank rather than showing a raw "{token}".
  */
 export async function renderReminderMessage(args: {
   body: string;
@@ -43,54 +25,34 @@ export async function renderReminderMessage(args: {
   pharmacyId: string;
 }): Promise<string> {
   const vars: Record<string, string> = {};
+  if (args.customerName) vars.name = args.customerName;
+  if (args.customerPhone) vars.phone = args.customerPhone;
 
-  // 1. Customer fields (+ aliases).
-  if (args.customerName) { vars.name = args.customerName; vars.customer_name = args.customerName; }
-  if (args.customerPhone) { vars.phone = args.customerPhone; vars.customer_phone = args.customerPhone; }
-
-  // 2. Pharmacy fields — fetch (cached) only if the template uses any of them.
-  if (/\{pharmacy_\w+\}/.test(args.body)) {
+  // Only hit the DB if the template actually references pharmacy fields.
+  if (/\{pharmacy_(name|phone)\}/.test(args.body)) {
     let info = pharmacyInfoCache.get(args.pharmacyId);
     if (!info) {
       const { data } = await supabase
         .from('crm_pharmacies')
-        .select('name, phone, address, whatsapp_number')
+        .select('name, phone')
         .eq('id', args.pharmacyId)
         .maybeSingle();
-      const d = (data ?? {}) as Partial<PharmacyInfo>;
-      info = {
-        name: d.name ?? '',
-        phone: d.phone ?? null,
-        address: d.address ?? null,
-        whatsapp_number: d.whatsapp_number ?? null,
-      };
+      info = { name: (data as { name?: string } | null)?.name ?? '', phone: (data as { phone?: string | null } | null)?.phone ?? null };
       pharmacyInfoCache.set(args.pharmacyId, info);
     }
     vars.pharmacy_name = info.name;
     vars.pharmacy_phone = info.phone ?? '';
-    vars.pharmacy_address = info.address ?? '';
-    vars.pharmacy_whatsapp = info.whatsapp_number ?? '';
   }
 
-  // 3. Date helpers.
-  const todayStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  vars.today = todayStr;
-  vars.date = todayStr;
-
-  // 4. Stored vars override everything above (medicine, amount, custom date…).
+  // Stored vars override the defaults above.
   for (const [k, v] of Object.entries(args.storedVars ?? {})) {
     if (v != null && v !== '') vars[k] = String(v);
   }
 
-  // Fill, then strip any STILL-unknown {token} so no raw placeholder leaks.
+  // Fill the body; replace any STILL-unknown {token} with empty string so
+  // customers never see a raw placeholder.
   const filled = renderTemplate(args.body, vars);
   return filled.replace(/\{\w+\}/g, '').replace(/[ \t]{2,}/g, ' ').trim();
-}
-
-/** Invalidate the cached pharmacy fields (call after editing pharmacy info). */
-export function clearPharmacyInfoCache(pharmacyId?: string): void {
-  if (pharmacyId) pharmacyInfoCache.delete(pharmacyId);
-  else pharmacyInfoCache.clear();
 }
 
 export interface DueReminder {
