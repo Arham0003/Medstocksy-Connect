@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "20260527_124451",
+  "email": "singh12521vaibhav@gmail.com",
+  "base_url": "http://localhost:5180",
+  "bugs": [
+    {
+      "title": "Uncaught test exception: Locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_label(\"Email\")\n",
+      "severity": "Critical",
+      "module": "Test Runner",
+      "steps": [
+        "Running QA suite"
+      ],
+      "expected": "Suite completes",
+      "actual": "Locator.fill: Timeout 30000ms exceeded.\nCall log:\n  - waiting for get_by_label(\"Email\")\n",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124451_uncaught_exception.png",
+      "api_error": "",
+      "console_error": ""
+    }
+  ],
+  "passed_checks": [],
+  "console_errors": [],
+  "api_failures": [],
+  "summary": {
+    "total_bugs": 1,
+    "critical": 1,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "passed": 0,
+    "console_errors": 0,
+    "api_failures": 0
+  }
+}

@@ -95,48 +95,67 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-      {/* ─── Brand panel ─── */}
-      <div className="relative hidden flex-col justify-between bg-foreground p-12 text-background lg:flex">
+      {/* ─── Brand panel — dark sidebar-bg color (consistent with app sidebar) ─── */}
+      <div
+        className="relative hidden flex-col justify-between p-12 lg:flex"
+        style={{ background: 'hsl(var(--sidebar-bg))' }}
+      >
+        {/* Brand mark */}
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-lg font-bold">M</span>
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+            style={{ background: 'hsl(226 71% 55%)' }}
+          >
+            <span className="text-base font-bold tracking-tight">M</span>
           </div>
-          <span className="text-lg font-bold">Medstocksy Connect</span>
+          <span className="text-[15px] font-bold" style={{ color: 'hsl(var(--sidebar-fg-active))' }}>Medstocksy Connect</span>
         </div>
 
+        {/* Hero copy */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-6"
+          className="space-y-5"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'hsl(152 69% 45%)' }}>
             {t('login.eyebrow')}
           </p>
-          <h1 className="text-5xl font-bold leading-[1.05] tracking-tight">
+          <h1 className="text-[3.25rem] font-bold leading-[1.08] tracking-tight" style={{ color: 'hsl(var(--sidebar-fg-active))' }}>
             {t('login.headline_1')}
             <br />
-            <span className="text-primary">{t('login.headline_2')}</span>
+            <span style={{ color: 'hsl(226 71% 65%)' }}>{t('login.headline_2')}</span>
           </h1>
-          <p className="max-w-md text-base text-muted-foreground">{t('login.tagline')}</p>
+          <p className="max-w-md text-[15px] leading-relaxed" style={{ color: 'hsl(var(--sidebar-fg))' }}>
+            {t('login.tagline')}
+          </p>
         </motion.div>
 
-        <div className="rounded-lg bg-card/10 p-5 backdrop-blur-sm">
-          <p className="text-sm leading-relaxed text-muted-foreground">{t('login.testimonial')}</p>
+        {/* Testimonial card */}
+        <div
+          className="rounded-xl p-5"
+          style={{ background: 'hsl(var(--sidebar-hover-bg))', border: '1px solid hsl(var(--sidebar-border))' }}
+        >
+          <p className="text-sm leading-relaxed" style={{ color: 'hsl(var(--sidebar-fg))' }}>
+            {t('login.testimonial')}
+          </p>
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+              style={{ background: 'hsl(226 71% 55% / 0.3)', color: 'hsl(226 71% 72%)' }}
+            >
               RA
             </div>
             <div>
-              <div className="text-sm font-medium">{t('login.testimonial_author')}</div>
-              <div className="text-xs text-muted-foreground">{t('login.testimonial_pharmacy')}</div>
+              <div className="text-sm font-semibold" style={{ color: 'hsl(var(--sidebar-fg-active))' }}>{t('login.testimonial_author')}</div>
+              <div className="text-xs" style={{ color: 'hsl(var(--sidebar-fg) / 0.65)' }}>{t('login.testimonial_pharmacy')}</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* ─── Form panel ─── */}
-      <div className="flex items-center justify-center p-6 lg:p-12">
+      <div className="flex items-center justify-center bg-background p-6 sm:p-8 lg:p-12">
         <AnimatePresence mode="wait">
           {confirmSentTo ? (
             <ConfirmEmailPanel
@@ -149,128 +168,149 @@ export default function Login() {
           ) : (
             <motion.div
               key="form"
-              className="w-full max-w-sm space-y-6"
+              className="w-full max-w-sm"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Mode tabs */}
-              <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted/60 p-1">
-                {(['signin', 'signup'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => switchMode(m)}
-                    className={cn(
-                      'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                      mode === m
-                        ? 'bg-background text-foreground shadow-card'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {m === 'signin' ? t('login.tab.signin') : t('login.tab.signup')}
-                  </button>
-                ))}
-              </div>
+              {/* Card wrapper — white card on neutral bg, consistent with app cards */}
+              <div className="rounded-2xl border bg-card p-8 card-elev space-y-6">
 
-              <div className="text-center">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {mode === 'signin' ? t('login.welcome_back') : ''}
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                  {mode === 'signin' ? t('login.title') : t('login.signup_title')}
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {mode === 'signin' ? t('login.subtitle') : t('login.signup_subtitle')}
-                </p>
-              </div>
-
-              {googleEnabled && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full gap-3"
-                    onClick={onGoogle}
-                    disabled={pending}
-                    type="button"
-                  >
-                    <GoogleIcon />
-                    {t('login.continue_google')}
-                  </Button>
-
-                  <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-xs text-muted-foreground">{t('login.or_email')}</span>
-                    <div className="h-px flex-1 bg-border" />
-                  </div>
-                </>
-              )}
-
-              {/* Info notice (e.g. auto-switched to sign-up) */}
-              {notice && (
-                <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-primary">
-                  {notice}
+                {/* Mode tabs */}
+                <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                  {(['signin', 'signup'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => switchMode(m)}
+                      className={cn(
+                        'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        mode === m
+                          ? 'bg-background text-foreground shadow-card'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {m === 'signin' ? t('login.tab.signin') : t('login.tab.signup')}
+                    </button>
+                  ))}
                 </div>
-              )}
 
-              <form onSubmit={onSubmit} className="space-y-3">
-                {mode === 'signup' && (
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">{t('login.full_name')}</label>
-                    <Input
-                      type="text"
-                      placeholder="Vaibhav Singh"
-                      required
-                      autoComplete="name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                {/* Heading */}
+                <div>
+                  <p className="text-[10.5px] font-bold uppercase tracking-widest text-muted-foreground">
+                    {mode === 'signin' ? t('login.welcome_back') : ''}
+                  </p>
+                  <h2 className="mt-1 text-2xl font-bold tracking-tight">
+                    {mode === 'signin' ? t('login.title') : t('login.signup_title')}
+                  </h2>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    {mode === 'signin' ? t('login.subtitle') : t('login.signup_subtitle')}
+                  </p>
+                </div>
+
+                {googleEnabled && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full gap-3"
+                      onClick={onGoogle}
                       disabled={pending}
+                      type="button"
+                    >
+                      <GoogleIcon />
+                      {t('login.continue_google')}
+                    </Button>
+
+                    <div className="flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border" />
+                      <span className="text-xs text-muted-foreground">{t('login.or_email')}</span>
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
+                  </>
+                )}
+
+                {/* Notice */}
+                {notice && (
+                  <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5 text-xs text-primary">
+                    {notice}
+                  </div>
+                )}
+
+                {/* Form fields — labels are small-caps above inputs (not placeholder-only) */}
+                <form onSubmit={onSubmit} className="space-y-4">
+                  {mode === 'signup' && (
+                    <div className="space-y-1.5">
+                      <label className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {t('login.full_name')}
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Vaibhav Singh"
+                        required
+                        autoComplete="name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        disabled={pending}
+                        className="h-11"
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {t('login.email')}
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="you@pharmacy.com"
+                      required
+                      autoComplete={mode === 'signin' ? 'email' : 'username'}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={pending}
+                      className="h-11"
                     />
                   </div>
-                )}
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('login.email')}</label>
-                  <Input
-                    type="email"
-                    placeholder="you@pharmacy.com"
-                    required
-                    autoComplete={mode === 'signin' ? 'email' : 'username'}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={pending}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium">{t('login.password')}</label>
-                  <Input
-                    type="password"
-                    placeholder={mode === 'signin' ? '••••••••' : 'min. 8 characters'}
-                    required
-                    minLength={mode === 'signup' ? 8 : undefined}
-                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={pending}
-                  />
-                </div>
-                {error && (
-                  <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>
-                )}
-                <Button type="submit" size="lg" className="w-full" disabled={pending}>
-                  {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {pending
-                    ? mode === 'signin'
-                      ? t('btn.signing_in')
-                      : t('login.creating')
-                    : mode === 'signin'
-                      ? t('login.signin')
-                      : t('login.signup')}
-                </Button>
-              </form>
+                  <div className="space-y-1.5">
+                    <label className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {t('login.password')}
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder={mode === 'signin' ? '••••••••' : 'min. 8 characters'}
+                      required
+                      minLength={mode === 'signup' ? 8 : undefined}
+                      autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={pending}
+                      className="h-11"
+                    />
+                  </div>
 
-              <p className="text-center text-xs text-muted-foreground">{t('login.terms')}</p>
+                  {/* Error state */}
+                  {error && (
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/8 px-3 py-2.5 text-xs text-destructive">
+                      <span className="mt-0.5 shrink-0">⚠</span>
+                      {error}
+                    </div>
+                  )}
+
+                  <Button type="submit" size="lg" className="w-full h-11 text-sm font-semibold" disabled={pending}>
+                    {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {pending
+                      ? mode === 'signin'
+                        ? t('btn.signing_in')
+                        : t('login.creating')
+                      : mode === 'signin'
+                        ? t('login.signin')
+                        : t('login.signup')}
+                  </Button>
+                </form>
+
+                <p className="text-center text-xs text-muted-foreground">{t('login.terms')}</p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

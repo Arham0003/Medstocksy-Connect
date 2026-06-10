@@ -16,6 +16,7 @@ import { sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { markReminderSent, renderReminderMessage } from '@/lib/api/reminders';
 import { cn } from '@/lib/utils';
 import type { CustomerWithStats } from '@/lib/api/customers';
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
 /**
  * Compact stat tile: icon chip + label + value + subtitle on a tight rhythm.
@@ -40,121 +41,103 @@ function StatTile({
   const Wrapper = interactive ? 'button' : 'div';
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.16, delay }}
+      transition={{ duration: 0.18, delay }}
     >
       <Wrapper
         onClick={onClick}
         type={interactive ? 'button' : undefined}
         className={cn(
-          'group flex w-full items-center gap-3 rounded-xl border bg-card p-3.5 text-left card-elev transition-all',
+          // KarigarCred-style: left-color-accent bar + white card + clean shadow
+          'group flex w-full items-center gap-3.5 rounded-xl border-l-4 bg-card px-4 py-3.5 text-left card-elev transition-all',
+          'rounded-l-none rounded-r-xl', // left side is flat for the accent bar
           interactive &&
-            'cursor-pointer hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-popover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            'cursor-pointer hover:-translate-y-0.5 hover:shadow-popover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         )}
+        style={{ borderLeftColor: dotColor }}
       >
-        {/* Icon chip — colored background = quick scan affordance */}
+        {/* Icon chip — 48px for pre-attentive scan affordance */}
         <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
           style={{
-            backgroundColor: `${dotColor}1A`,  // ~10% alpha
+            backgroundColor: `${dotColor}15`,
             color: dotColor,
-            // ring color matches dot at low alpha
-            boxShadow: `inset 0 0 0 1px ${dotColor}33`,
           }}
           aria-hidden
         >
-          <Icon className="h-4 w-4" strokeWidth={2.25} />
+          <Icon className="h-5 w-5" strokeWidth={2} />
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          {/* Label — small-caps, muted, reads as category not value */}
+          <div className="truncate text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground" title={label}>
             {label}
           </div>
-          <div className="mt-0.5 flex items-baseline gap-2">
+          {/* Value — JetBrains Mono for data (Cognitive Load Theory: distinct visual channels) */}
+          <div className="mt-1 flex items-baseline gap-2">
             <span
-              className={cn('text-2xl font-bold leading-none tabular-nums', !valueColor && 'text-foreground')}
+              className={cn(
+                'mono-num truncate text-[28px] font-bold leading-none',
+                !valueColor && 'text-foreground'
+              )}
               style={valueColor ? { color: valueColor } : undefined}
             >
               {value ?? '—'}
             </span>
           </div>
-          <div className="mt-1 truncate text-[11px] text-muted-foreground">{sub}</div>
+          <div className="mt-1 truncate text-[11px] text-muted-foreground" title={sub}>{sub}</div>
         </div>
+
+        {/* Arrow hint on interactive tiles */}
+        {interactive && (
+          <span className="shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground/70">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </span>
+        )}
       </Wrapper>
     </motion.div>
   );
 }
 
-// Legacy palette from medcrm-app — kept verbatim so the visual feel matches.
+// Updated palette — more vibrant, better contrast against white cards
 const TILE_COLORS = {
-  greenDot: '#1D9E75',
-  orangeDot: '#EF9F27',
-  purpleDot: '#7F77DD',
-  coralDot: '#D85A30',
+  greenDot:  '#0D9488',  // teal-600 — trust + health
+  orangeDot: '#D97706',  // amber-600 — urgency + attention
+  purpleDot: '#7C3AED',  // violet-600 — analytics
+  coralDot:  '#DC2626',  // red-600 — chronic / alerts
 } as const;
 
-/* ─── Today's Pulse widget — replaces the WhatsApp health card ───────────── */
-function TodaysPulse({ pharmacyId }: { pharmacyId: string }) {
+/* ─── Today's Pulse widget — driven by unified dashboard RPC ─────────── */
+function TodaysPulse({
+  pharmacyId,
+  dash,
+  isLoading,
+}: {
+  pharmacyId: string;
+  dash: DashboardCounts | undefined;
+  isLoading: boolean;
+}) {
   const t = useT();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['todays-pulse', pharmacyId],
-    enabled: !!pharmacyId,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
-    queryFn: async () => {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
-      const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
-
-      const [salesToday, refillsToday, salesYesterday, refillsYesterday, newCustomers, msgsOut, remindersDue] =
-        await Promise.all([
-          supabase.from('crm_customer_sales').select('bill_amount')
-            .eq('pharmacy_id', pharmacyId)
-            .gte('sold_at', todayStart).lt('sold_at', tomorrowStart),
-          supabase.from('crm_prescription_refills').select('bill_amount')
-            .eq('pharmacy_id', pharmacyId)
-            .gte('refilled_at', todayStart).lt('refilled_at', tomorrowStart),
-          supabase.from('crm_customer_sales').select('bill_amount')
-            .eq('pharmacy_id', pharmacyId)
-            .gte('sold_at', yesterdayStart).lt('sold_at', todayStart),
-          supabase.from('crm_prescription_refills').select('bill_amount')
-            .eq('pharmacy_id', pharmacyId)
-            .gte('refilled_at', yesterdayStart).lt('refilled_at', todayStart),
-          supabase.from('crm_customers').select('id', { count: 'exact', head: true })
-            .eq('pharmacy_id', pharmacyId)
-            .gte('created_at', todayStart).lt('created_at', tomorrowStart),
-          supabase.from('crm_messages').select('id', { count: 'exact', head: true })
-            .eq('pharmacy_id', pharmacyId).eq('direction', 'outbound')
-            .gte('created_at', todayStart).lt('created_at', tomorrowStart),
-          supabase.from('crm_scheduled_reminders').select('id', { count: 'exact', head: true })
-            .eq('pharmacy_id', pharmacyId).eq('status', 'pending')
-            .gte('scheduled_for', todayStart).lt('scheduled_for', tomorrowStart),
-        ]);
-
-      const sum = (rows: { bill_amount?: number | null }[] | null | undefined) =>
-        (rows ?? []).reduce((acc, r) => acc + Number(r.bill_amount ?? 0), 0);
-      const revenueToday = sum(salesToday.data as never) + sum(refillsToday.data as never);
-      const revenueYesterday = sum(salesYesterday.data as never) + sum(refillsYesterday.data as never);
-      const refillsCount = (refillsToday.data ?? []).length;
-
-      return {
-        revenueToday,
-        revenueYesterday,
-        refillsToday: refillsCount,
-        newCustomersToday: newCustomers.count ?? 0,
-        messagesSentToday: msgsOut.count ?? 0,
-        remindersDueToday: remindersDue.count ?? 0,
-      };
-    },
-  });
+  const data = dash ? {
+    revenueToday:      dash.revenue_today,
+    revenueYesterday:  dash.revenue_yesterday,
+    refillsToday:      dash.refills_today,
+    newCustomersToday: dash.new_customers_today,
+    messagesSentToday: dash.msgs_out_today,
+    remindersDueToday: dash.reminders_due_today,
+  } : undefined;
 
   const delta = data && data.revenueYesterday > 0
     ? Math.round(((data.revenueToday - data.revenueYesterday) / data.revenueYesterday) * 100)
     : null;
   const trendUp = delta != null && delta >= 0;
+
+  // pharmacyId unused here but kept for component interface consistency
+  void pharmacyId;
 
   return (
     <Card className="p-5">
@@ -222,20 +205,22 @@ function PulseStat({
   icon: React.ReactNode; value: number; label: string;
   tone: 'primary' | 'emerald' | 'sky' | 'amber';
 }) {
-  const colorMap: Record<typeof tone, string> = {
-    primary: 'bg-primary/10 text-primary',
-    emerald: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-    sky:     'bg-sky-500/10 text-sky-700 dark:text-sky-300',
-    amber:   'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  const colorMap: Record<typeof tone, { chip: string; val: string }> = {
+    primary: { chip: 'bg-primary/10 text-primary',                               val: 'hsl(226 71% 45%)' },
+    emerald: { chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300', val: '#059669' },
+    sky:     { chip: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',             val: '#0284C7' },
+    amber:   { chip: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',       val: '#B45309' },
   };
+  const { chip, val } = colorMap[tone];
   return (
-    <div className="flex min-w-0 flex-col items-start gap-1.5 rounded-lg border bg-card/40 p-2.5">
-      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-md', colorMap[tone])}>
+    <div className="flex min-w-0 flex-col items-start gap-2 rounded-lg border bg-card/60 p-3">
+      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', chip)}>
         {icon}
       </span>
       <div className="min-w-0 max-w-full">
-        <div className="text-lg font-bold leading-none tabular-nums">{value}</div>
-        <div className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        {/* JetBrains Mono for pulse stats — same visual channel as KPI tiles */}
+        <div className="mono-num truncate text-xl font-bold leading-none" style={{ color: val }}>{value}</div>
+        <div className="mt-0.5 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground" title={label}>{label}</div>
       </div>
     </div>
   );
@@ -383,6 +368,23 @@ function FailedReminders({
   );
 }
 
+/** Type for the crm_dashboard_counts() RPC response. */
+interface DashboardCounts {
+  total_customers:     number;
+  this_week:           number;
+  today_pending:       number;
+  today_sent:          number;
+  visits_month:        number;
+  chronic_count:       number;
+  upcoming_7d:         number;
+  revenue_today:       number;
+  revenue_yesterday:   number;
+  new_customers_today: number;
+  msgs_out_today:      number;
+  refills_today:       number;
+  reminders_due_today: number;
+}
+
 export default function Dashboard() {
   const t = useT();
   const { pharmacyId, pharmacyName } = useActivePharmacy();
@@ -391,66 +393,26 @@ export default function Dashboard() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [composeFor, setComposeFor] = useState<CustomerWithStats | null>(null);
 
-  const { data: counts } = useQuery({
-    queryKey: ['dashboard-counts', pharmacyId],
+  // ── Single RPC call replaces all 14 individual queries ──────────────
+  const { data: counts, isLoading: loadingCounts } = useQuery<DashboardCounts>({
+    queryKey: ['dashboard', pharmacyId],
     enabled: !!pharmacyId,
     staleTime: 60_000,
+    refetchInterval: 60_000,
     queryFn: async () => {
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const next7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const [
-        customers, customersThisWeek,
-        todayPending, todaySent,
-        visitsMonth,
-        chronic,
-        upcoming,
-      ] = await Promise.all([
-        // 1. Total customers
-        supabase.from('crm_customers').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId),
-        // 2. New customers this week (for "+X this week" subtitle)
-        supabase.from('crm_customers').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).gte('created_at', sevenDaysAgo),
-        // 3a. Today's reminders — pending
-        supabase.from('crm_scheduled_reminders').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).eq('status', 'pending')
-          .gte('scheduled_for', startOfToday).lt('scheduled_for', endOfToday),
-        // 3b. Today's reminders — sent
-        supabase.from('crm_scheduled_reminders').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).eq('status', 'sent')
-          .gte('sent_at', startOfToday).lt('sent_at', endOfToday),
-        // 4. Visits this month (sales count, each sale = a visit)
-        supabase.from('crm_customer_sales').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).gte('sold_at', startOfMonth),
-        // 5. Chronic patients (manual tag)
-        supabase.from('crm_tags').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).eq('tag_key', 'chronic'),
-        // 6. Upcoming reminders next 7 days (still used by the right rail counter)
-        supabase.from('crm_scheduled_reminders').select('id', { count: 'exact', head: true })
-          .eq('pharmacy_id', pharmacyId).eq('status', 'pending')
-          .lte('scheduled_for', next7Days),
-      ]);
-
-      const total = customers.count ?? 0;
-      const chronicCount = chronic.count ?? 0;
-      return {
-        totalCustomers: total,
-        thisWeek: customersThisWeek.count ?? 0,
-        todayPending: todayPending.count ?? 0,
-        todaySent: todaySent.count ?? 0,
-        todayTotal: (todayPending.count ?? 0) + (todaySent.count ?? 0),
-        visitsMonth: visitsMonth.count ?? 0,
-        chronicCount,
-        chronicPercent: total > 0 ? Math.round((chronicCount / total) * 100) : 0,
-        upcomingReminders: upcoming.count ?? 0,
-      };
+      const { data, error } = await (supabase as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }).rpc('crm_dashboard_counts', { p_pharmacy_id: pharmacyId });
+      if (error) throw new Error(error.message);
+      return data as DashboardCounts;
     },
   });
+
+  // ── Realtime: invalidate dashboard on any relevant table change ──────
+  useRealtimeInvalidate({ table: 'crm_customers',           pharmacyId, queryKeys: [['dashboard', pharmacyId], ['customers', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_scheduled_reminders', pharmacyId, queryKeys: [['dashboard', pharmacyId], ['upcoming-reminders', pharmacyId], ['due-reminders', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_customer_sales',      pharmacyId, queryKeys: [['dashboard', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_prescription_refills',pharmacyId, queryKeys: [['dashboard', pharmacyId]] });
 
   interface UpcomingRow {
     id: string;
@@ -517,43 +479,50 @@ export default function Dashboard() {
   const greetingPrefix = hour < 12 ? t('dash.greeting_morning') : hour < 17 ? t('dash.greeting_afternoon') : t('dash.greeting_evening');
   const subtitleText = counts
     ? t('dash.subtitle_template')
-        .replace('{count}', String(counts.totalCustomers))
-        .replace('{reminders}', String(counts.upcomingReminders))
+        .replace('{count}', String(counts.total_customers))
+        .replace('{reminders}', String(counts.upcoming_7d))
     : '—';
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-6">
+      {/* ── Header ──────────────────────────────────────────────────────
+          Date + greeting (left) / action buttons (right)
+          Gestalt: related items grouped, primary action visually dominant
+      ── */}
+      <header className="flex flex-wrap items-start justify-between gap-4 pb-2 border-b">
         <div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())}
           </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">{greetingPrefix}, {greeting}</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-tight text-foreground">{greetingPrefix}, {greeting}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitleText}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="lg" onClick={() => setPickerOpen(true)}>
-            <Send className="h-4 w-4" />
+        {/* Action strip — Quick Rx primary (most-used), others secondary */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="gap-2">
+            <Send className="h-3.5 w-3.5" />
             {t('btn.new_message')}
           </Button>
-          <Button variant="outline" size="lg" onClick={() => navigate('/campaigns')}>
-            <Megaphone className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={() => navigate('/campaigns')} className="gap-2">
+            <Megaphone className="h-3.5 w-3.5" />
             {t('btn.new_campaign')}
           </Button>
-          <Button size="lg" onClick={() => navigate('/rx')} className="gap-2 bg-primary">
-            <ClipboardList className="h-4 w-4" />
+          <Button size="sm" onClick={() => navigate('/rx')} className="gap-2">
+            <ClipboardList className="h-3.5 w-3.5" />
             Quick Rx
           </Button>
         </div>
       </header>
 
-      {/* Stat tiles — compact icon-led layout, palette from legacy medcrm-app */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* ── KPI tiles ───────────────────────────────────────────────────
+          Left-accent border pattern (KarigarCred-inspired)
+          2-up on phones → 4-up on desktop (pre-attentive color + number scan)
+      ── */}
+      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatTile
           label={t('dash.kpi.customers')}
-          value={counts?.totalCustomers != null ? counts.totalCustomers.toLocaleString() : '—'}
-          sub={`+${counts?.thisWeek ?? 0} ${t('dash.this_week')}`}
+          value={counts?.total_customers != null ? counts.total_customers.toLocaleString() : '—'}
+          sub={`+${counts?.this_week ?? 0} ${t('dash.this_week')}`}
           icon={Users}
           dotColor={TILE_COLORS.greenDot}
           onClick={() => navigate('/customers')}
@@ -561,8 +530,8 @@ export default function Dashboard() {
         />
         <StatTile
           label={t('dash.kpi.today_reminders')}
-          value={counts?.todayTotal ?? '—'}
-          sub={`${counts?.todaySent ?? 0} ${t('dash.sent')} · ${counts?.todayPending ?? 0} ${t('dash.pending')}`}
+          value={counts ? (counts.today_pending + counts.today_sent) : '—'}
+          sub={`${counts?.today_sent ?? 0} ${t('dash.sent')} · ${counts?.today_pending ?? 0} ${t('dash.pending')}`}
           icon={BellRing}
           dotColor={TILE_COLORS.orangeDot}
           valueColor={TILE_COLORS.orangeDot}
@@ -571,7 +540,7 @@ export default function Dashboard() {
         />
         <StatTile
           label={t('dash.kpi.visits_month')}
-          value={counts?.visitsMonth != null ? counts.visitsMonth.toLocaleString() : '—'}
+          value={counts?.visits_month != null ? counts.visits_month.toLocaleString() : '—'}
           sub={t('dash.total_visits')}
           icon={ActivityIcon}
           dotColor={TILE_COLORS.purpleDot}
@@ -580,8 +549,8 @@ export default function Dashboard() {
         />
         <StatTile
           label={t('dash.kpi.chronic')}
-          value={counts?.chronicCount ?? '—'}
-          sub={`${counts?.chronicPercent ?? 0}% ${t('dash.of_total')}`}
+          value={counts?.chronic_count ?? '—'}
+          sub={`${counts && counts.total_customers > 0 ? Math.round((counts.chronic_count / counts.total_customers) * 100) : 0}% ${t('dash.of_total')}`}
           icon={HeartPulse}
           dotColor={TILE_COLORS.coralDot}
           valueColor={TILE_COLORS.coralDot}
@@ -590,8 +559,8 @@ export default function Dashboard() {
         />
       </section>
 
-      {/* Two-col: upcoming + health */}
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      {/* Two-col: upcoming + health — on tablets and up side by side */}
+      <div className="grid gap-4 md:grid-cols-[1.5fr_1fr]">
         <Card>
           <div className="flex items-center justify-between border-b px-5 py-4">
             <h2 className="text-base font-semibold">{t('dash.upcoming.title')}</h2>
@@ -665,11 +634,11 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <TodaysPulse pharmacyId={pharmacyId} />
+        <TodaysPulse pharmacyId={pharmacyId} dash={counts} isLoading={loadingCounts} />
       </div>
 
       {/* Bottom row: recent prescriptions + failed reminders */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Recent Prescriptions */}
         <RecentPrescriptions pharmacyId={pharmacyId} onNavigate={navigate} />
         {/* Failed Reminders */}

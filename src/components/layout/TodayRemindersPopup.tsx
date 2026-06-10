@@ -140,7 +140,7 @@ function TodayRemindersPopupInner() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-[10vh] z-50 w-[calc(100vw-2rem)] max-w-[460px] -translate-x-1/2 overflow-hidden rounded-2xl border bg-card shadow-modal"
+            className="fixed inset-x-4 top-16 z-50 overflow-hidden rounded-2xl border bg-card shadow-modal sm:inset-x-auto sm:left-1/2 sm:top-[10vh] sm:w-[calc(100vw-2rem)] sm:max-w-[460px] sm:-translate-x-1/2"
           >
             {/* Header */}
             <div className="relative flex items-start gap-3 border-b bg-gradient-to-br from-primary/10 via-transparent to-transparent px-5 py-4">
@@ -167,8 +167,8 @@ function TodayRemindersPopupInner() {
               </button>
             </div>
 
-            {/* Body */}
-            <div className="max-h-[60vh] overflow-y-auto">
+            {/* Body — shorter max-height on small phones */}
+            <div className="max-h-[55vh] overflow-y-auto sm:max-h-[60vh]">
               {top.length === 0 ? (
                 <div className="px-5 py-8 text-center text-sm text-muted-foreground">
                   {t('popup.empty')}

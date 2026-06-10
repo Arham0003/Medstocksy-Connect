@@ -1,0 +1,153 @@
+{
+  "run_timestamp": "20260527_125612",
+  "email": "singh12521vaibhav@gmail.com",
+  "base_url": "http://localhost:5180",
+  "bugs": [
+    {
+      "title": "Console error on dashboard: Failed to load resource: the server responded with a status of 400 ()",
+      "severity": "Medium",
+      "module": "Dashboard",
+      "steps": [
+        "Load dashboard"
+      ],
+      "expected": "No console errors",
+      "actual": "Failed to load resource: the server responded with a status of 400 ()",
+      "screenshot": "",
+      "api_error": "",
+      "console_error": ""
+    },
+    {
+      "title": "Clicking customer row doesn't navigate to profile",
+      "severity": "Medium",
+      "module": "Customers",
+      "steps": [
+        "Navigate to /customers",
+        "Click first row"
+      ],
+      "expected": "Navigate to /customers/:id",
+      "actual": "Still on https://app.medstocksy.in/auth?mode=login",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customer_profile_no_nav.png",
+      "api_error": "",
+      "console_error": ""
+    },
+    {
+      "title": "Logout doesn't redirect to /login",
+      "severity": "High",
+      "module": "Auth",
+      "steps": [
+        "Click logout"
+      ],
+      "expected": "Redirect to /login",
+      "actual": "Stayed on http://localhost:5180/login",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_auth_logout_no_redirect.png",
+      "api_error": "",
+      "console_error": ""
+    }
+  ],
+  "passed_checks": [
+    "Invalid credentials -> error shown",
+    "Empty form submit -- browser/JS validation checked",
+    "Login success -> redirected to http://localhost:5180/",
+    "Session persists after reload",
+    "Protected route /customers loads for authenticated user",
+    "Protected route /segments loads for authenticated user",
+    "Protected route /campaigns loads for authenticated user",
+    "Protected route /reminders loads for authenticated user",
+    "Protected route /templates loads for authenticated user",
+    "Protected route /activity loads for authenticated user",
+    "Protected route /settings loads for authenticated user",
+    "Protected route /rx loads for authenticated user",
+    "Dashboard heading found: 'Good afternoon, php'",
+    "Dashboard stat cards present",
+    "Navigation element present",
+    "Customer list/table renders",
+    "Search input accepts text",
+    "XSS payload sanitized in search",
+    "SQL injection string entered in search (no crash)",
+    "Add Customer dialog opens",
+    "Submit button pre-disabled until fields filled (good UX guard)",
+    "Add Customer dialog closed after submit (likely success)",
+    "Segments page loads: Segments",
+    "Campaigns page loaded",
+    "Create Campaign dialog opens",
+    "Reminders page loaded",
+    "Templates page loaded",
+    "Create Template dialog opens",
+    "Activity page loaded",
+    "RX page loads: Quick Prescription",
+    "Settings page loads: Settings",
+    "404 page renders correctly",
+    "Mobile hamburger menu present",
+    "Protected route /customers redirects to /login after logout"
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:5180/login"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers/c6444a7f-aae5-4b4d-8eee-236e4041ebcd"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers/c6444a7f-aae5-4b4d-8eee-236e4041ebcd"
+    },
+    {
+      "type": "warning",
+      "text": "GoTrueClient@sb-yuqvtucvqivvvpcfflhq-auth-token:1 (2.90.1) 2026-05-27T07:26:53.317Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "url": "https://app.medstocksy.in/"
+    }
+  ],
+  "api_failures": [
+    {
+      "url": "https://ypeopwzkemqlgvvgyhcw.supabase.co/auth/v1/token?grant_type=password",
+      "status": 400,
+      "method": "POST",
+      "page": "http://localhost:5180/login"
+    }
+  ],
+  "summary": {
+    "total_bugs": 3,
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 0,
+    "passed": 34,
+    "console_errors": 10,
+    "api_failures": 1
+  }
+}

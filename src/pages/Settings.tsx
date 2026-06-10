@@ -116,7 +116,7 @@ function SideNav({
       className="lg:sticky lg:top-4"
     >
       {/* Mobile: horizontal scrollable */}
-      <div className="flex gap-1 overflow-x-auto pb-1 lg:hidden">
+      <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:px-0 lg:hidden">
         {sections.map((s) => {
           const Icon = s.icon;
           const active = s.key === section;
@@ -579,19 +579,21 @@ function AccountSection() {
     <Card className="p-6">
       <SectionHeader title={t('settings.account.heading')} description={t('settings.account.desc')} canEdit={false} />
 
-      <div className="mt-5 flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary">
-          {initials(fullName || 'U')}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-medium">{fullName}</div>
-          <div className="truncate text-sm text-muted-foreground">{user?.email}</div>
-          <div className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">
-            {t('settings.account.role')}: <span className="font-semibold text-foreground">{activeRole}</span>
-            {memberships.length > 1 && <> · {memberships.length} pharmacies</>}
+      <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-base font-bold text-primary">
+            {initials(fullName || 'U')}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium">{fullName}</div>
+            <div className="truncate text-sm text-muted-foreground">{user?.email}</div>
+            <div className="mt-1 truncate text-[11px] uppercase tracking-wider text-muted-foreground">
+              {t('settings.account.role')}: <span className="font-semibold text-foreground">{activeRole}</span>
+              {memberships.length > 1 && <> · {memberships.length} pharmacies</>}
+            </div>
           </div>
         </div>
-        <Button variant="outline" onClick={onSignOut}>
+        <Button variant="outline" onClick={onSignOut} className="w-full sm:w-auto">
           <LogOut className="h-4 w-4" />
           {t('nav.sign_out')}
         </Button>
@@ -897,8 +899,8 @@ function SectionFooter({
 }) {
   const t = useT();
   return (
-    <div className="mt-6 flex items-center justify-between border-t pt-4">
-      <div className="text-xs">
+    <div className="mt-6 flex flex-col justify-between gap-4 border-t pt-4 sm:flex-row sm:items-center">
+      <div className="order-2 text-xs sm:order-1">
         <AnimatePresence>
           {savedAt && (
             <motion.span key="saved" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -915,9 +917,9 @@ function SectionFooter({
           )}
         </AnimatePresence>
       </div>
-      <div className="flex gap-2">
-        <Button variant="ghost" onClick={onReset} disabled={!dirty || isPending}>{t('btn.reset')}</Button>
-        <Button onClick={onSave} disabled={!dirty || isPending}>
+      <div className="order-1 flex w-full gap-2 sm:order-2 sm:w-auto">
+        <Button variant="ghost" onClick={onReset} disabled={!dirty || isPending} className="flex-1 sm:flex-none">{t('btn.reset')}</Button>
+        <Button onClick={onSave} disabled={!dirty || isPending} className="flex-1 sm:flex-none">
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           {isPending ? t('btn.saving') : t('btn.save')}
         </Button>
