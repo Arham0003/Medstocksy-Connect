@@ -13,7 +13,7 @@ import {
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import {
-  listDueReminders, markReminderSent, cancelReminder, type DueReminder,
+  listDueReminders, markReminderSent, cancelReminder, renderReminderMessage, type DueReminder,
 } from '@/lib/api/reminders';
 import { canSendNow, sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { cn, initials, renderTemplate } from '@/lib/utils';
@@ -55,7 +55,7 @@ function RemindersBellInner() {
 
   const { data: reminders = [], isLoading } = useQuery<DueReminder[]>({
     queryKey: ['due-reminders', pharmacyId],
-    queryFn: () => listDueReminders(pharmacyId, 24),
+    queryFn: () => listDueReminders(pharmacyId),
     enabled: !!pharmacyId,
     // Refresh every 60s so the bell catches reminders that became due while
     // the user is on another tab. Same cadence as the WhatsApp-health check.
@@ -76,10 +76,14 @@ function RemindersBellInner() {
       if (!r.template || !r.customer) throw new Error('Reminder missing template or customer.');
       if (!r.customer.whatsapp_opted_in) throw new Error('Customer is opted out of WhatsApp.');
 
-      // 1. Render the body locally with variables.
-      const variables: Record<string, string> = {};
-      Object.entries(r.variables || {}).forEach(([k, v]) => { variables[k] = String(v); });
-      const body = renderTemplate(r.template.body, variables);
+      // 1. Render the body with {name}/{pharmacy_*}/{medicine} all filled.
+      const body = await renderReminderMessage({
+        body: r.template.body,
+        customerName: r.customer.name,
+        customerPhone: r.customer.phone,
+        storedVars: r.variables,
+        pharmacyId,
+      });
 
       // 2. Route through the bot if configured + online, else click-to-chat.
       const result = await sendOrCompose({ phone: r.customer.phone, body });
@@ -289,9 +293,13 @@ function ReminderRow({
     hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short',
   });
 
-  // Render the template body locally for the preview line.
+  // Preview line — merge the customer name so {name} shows filled here too
+  // (pharmacy_* are resolved at send time; blank them in the preview).
   const preview = reminder.template
-    ? renderTemplate(reminder.template.body, reminder.variables || {})
+    ? renderTemplate(reminder.template.body, {
+        name: reminder.customer?.name ?? '',
+        ...(reminder.variables ?? {}),
+      }).replace(/\{\w+\}/g, '').replace(/[ \t]{2,}/g, ' ').trim()
     : '';
 
   return (

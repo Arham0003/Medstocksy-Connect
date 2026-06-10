@@ -13,7 +13,7 @@ import {
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import {
-  listDueReminders, markReminderSent, cancelReminder, type DueReminder,
+  listDueReminders, markReminderSent, cancelReminder, renderReminderMessage, type DueReminder,
 } from '@/lib/api/reminders';
 import { canSendNow, sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { getSnoozedUntil, snoozePopup } from '@/lib/notify';
@@ -38,7 +38,7 @@ function TodayRemindersPopupInner() {
 
   const { data: reminders = [], isLoading } = useQuery<DueReminder[]>({
     queryKey: ['due-reminders', pharmacyId],
-    queryFn: () => listDueReminders(pharmacyId, 24),
+    queryFn: () => listDueReminders(pharmacyId),
     enabled: !!pharmacyId,
     refetchInterval: 60_000,
     staleTime: 30_000,
@@ -78,9 +78,13 @@ function TodayRemindersPopupInner() {
       if (!r.template || !r.customer) throw new Error('Reminder missing template or customer.');
       if (!r.customer.whatsapp_opted_in) throw new Error('Customer is opted out of WhatsApp.');
 
-      const variables: Record<string, string> = {};
-      Object.entries(r.variables || {}).forEach(([k, v]) => { variables[k] = String(v); });
-      const body = renderTemplate(r.template.body, variables);
+      const body = await renderReminderMessage({
+        body: r.template.body,
+        customerName: r.customer.name,
+        customerPhone: r.customer.phone,
+        storedVars: r.variables,
+        pharmacyId,
+      });
 
       const result = await sendOrCompose({ phone: r.customer.phone, body });
 
@@ -322,7 +326,12 @@ function PopupRow({
               reminder.template?.language === 'hi' && 'font-["Noto_Sans_Devanagari",Inter,system-ui]'
             )}
           >
-            {reminder.template ? renderTemplate(reminder.template.body, reminder.variables || {}) : ''}
+            {reminder.template
+              ? renderTemplate(reminder.template.body, {
+                  name: reminder.customer?.name ?? '',
+                  ...(reminder.variables ?? {}),
+                }).replace(/\{\w+\}/g, '').replace(/[ \t]{2,}/g, ' ').trim()
+              : ''}
           </p>
 
           {optedOut && (
