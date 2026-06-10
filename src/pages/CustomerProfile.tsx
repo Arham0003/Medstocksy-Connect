@@ -24,6 +24,7 @@ import { PrescriptionDialog } from '@/components/crm/PrescriptionDialog';
 import { RefillDialog } from '@/components/crm/RefillDialog';
 import { BatchRefillDialog } from '@/components/crm/BatchRefillDialog';
 import { CustomerActivityTimeline } from '@/components/crm/CustomerActivityTimeline';
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
 export default function CustomerProfile() {
   const t = useT();
@@ -41,13 +42,27 @@ export default function CustomerProfile() {
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
     enabled: !!id,
+    staleTime: 2 * 60_000,
     queryFn: () => getCustomer(id!),
   });
 
   const { data: manualTags = [] } = useQuery<string[]>({
     queryKey: ['customer-tags', id],
     enabled: !!id,
+    staleTime: 2 * 60_000,
     queryFn: () => listManualTags(id!),
+  });
+
+  // Realtime: auto-refresh profile when customer record or prescriptions change
+  useRealtimeInvalidate({
+    table: 'crm_customers',
+    pharmacyId,
+    queryKeys: [['customer', id], ['customers', pharmacyId]],
+  });
+  useRealtimeInvalidate({
+    table: 'crm_prescription_refills',
+    pharmacyId,
+    queryKeys: [['prescriptions', id], ['customer', id]],
   });
 
   const isChronic = manualTags.includes('chronic');
@@ -68,6 +83,7 @@ export default function CustomerProfile() {
   const { data: prescriptions = [] } = useQuery<PrescriptionWithMeds[]>({
     queryKey: ['prescriptions', id],
     enabled: !!id,
+    staleTime: 2 * 60_000,
     queryFn: () => listPrescriptions(id!),
   });
 

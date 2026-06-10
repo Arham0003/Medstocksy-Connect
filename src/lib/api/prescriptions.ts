@@ -60,36 +60,22 @@ export interface PrescriptionInput {
 }
 
 export async function listPrescriptions(customerId: string): Promise<PrescriptionWithMeds[]> {
-  const { data: rxs, error } = await supabase
-    .from('crm_prescriptions')
-    .select('*')
-    .eq('customer_id', customerId)
-    .order('prescription_date', { ascending: false })
-    .limit(50);
-  if (error) throw new Error(error.message);
-  const headers = ((rxs ?? []) as unknown) as Prescription[];
-  if (headers.length === 0) return [];
+  // Single RPC call replaces the 3-level waterfall:
+  // prescriptions → medicines → refills (sequential)
+  // Now: 1 DB call with LATERAL joins returns nested JSON.
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 
-  const ids = headers.map((r) => r.id);
-  const { data: meds, error: medsErr } = await supabase
-    .from('crm_prescription_medicines')
-    .select('*')
-    .in('prescription_id', ids)
-    .order('position');
-  if (medsErr) throw new Error(medsErr.message);
-  const medRows = ((meds ?? []) as unknown) as PrescriptionMedicine[];
-
-  // Fetch refills for these medicines in one shot.
-  const medIds = medRows.map((m) => m.id);
-  const refillsByMed = await fetchRefillsByMedicine(medIds);
-  const medsByRx = new Map<string, MedicineWithRefills[]>();
-  medRows.forEach((m) => {
-    const arr = medsByRx.get(m.prescription_id) ?? [];
-    arr.push(attachRefillStats(m, refillsByMed.get(m.id) ?? []));
-    medsByRx.set(m.prescription_id, arr);
+  const { data, error } = await rpc('crm_get_prescriptions_for_customer', {
+    p_customer_id: customerId,
   });
+  if (error) throw new Error(error.message);
 
-  return headers.map((h) => ({ ...h, medicines: medsByRx.get(h.id) ?? [] }));
+  // The RPC returns a jsonb array — parse it back into our typed interface.
+  const rows = (data as unknown[] | null) ?? [];
+  return rows as PrescriptionWithMeds[];
 }
 
 async function fetchRefillsByMedicine(medIds: string[]): Promise<Map<string, PrescriptionRefill[]>> {
@@ -339,10 +325,8 @@ export async function recordRefill(args: RefillInput): Promise<PrescriptionRefil
     .single();
   if (error) throw new Error(error.message);
 
-  // Schedule the next reminder. Fire (refill_interval_days - 5) from now at
-  // 09:00 IST, matching the create-prescription scheduler's offset.
-  await scheduleNextRefillReminder(args.medicineId, args.pharmacyId, args.customerId)
-    .catch((e) => console.warn('[refill] next reminder skipped:', e));
+  // The DB trigger `trg_crm_refill_schedule` (migration 06) now handles
+  // scheduling the next reminder automatically — no extra client query needed.
 
   return (data as unknown) as PrescriptionRefill;
 }

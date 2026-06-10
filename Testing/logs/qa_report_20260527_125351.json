@@ -1,0 +1,104 @@
+{
+  "run_timestamp": "20260527_125351",
+  "email": "singh12521vaibhav@gmail.com",
+  "base_url": "http://localhost:5180",
+  "bugs": [
+    {
+      "title": "No error shown for invalid credentials",
+      "severity": "High",
+      "module": "Auth",
+      "steps": [
+        "Go to /login",
+        "Enter bad@test.com / wrongpass",
+        "Click Sign In"
+      ],
+      "expected": "Error message visible",
+      "actual": "No error displayed",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_auth_invalid_creds_no_error.png",
+      "api_error": "",
+      "console_error": ""
+    },
+    {
+      "title": "Login with valid credentials failed / no redirect",
+      "severity": "Critical",
+      "module": "Auth",
+      "steps": [
+        "Go to /login",
+        "Enter singh12521vaibhav@gmail.com",
+        "Enter password",
+        "Click Sign In"
+      ],
+      "expected": "Redirect to dashboard",
+      "actual": "Stayed on /login or error",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_auth_login_failed.png",
+      "api_error": "",
+      "console_error": "[]"
+    },
+    {
+      "title": "Uncaught test exception: 'Locator' object has no attribute 'dispatchEvent'",
+      "severity": "Critical",
+      "module": "Test Runner",
+      "steps": [
+        "Running QA suite"
+      ],
+      "expected": "Suite completes",
+      "actual": "'Locator' object has no attribute 'dispatchEvent'",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_uncaught_exception.png",
+      "api_error": "",
+      "console_error": ""
+    }
+  ],
+  "passed_checks": [
+    "Empty form submit -- browser/JS validation checked",
+    "Protected route /customers loads for authenticated user",
+    "Protected route /segments loads for authenticated user",
+    "Protected route /campaigns loads for authenticated user",
+    "Protected route /reminders loads for authenticated user",
+    "Protected route /templates loads for authenticated user",
+    "Protected route /activity loads for authenticated user",
+    "Protected route /settings loads for authenticated user",
+    "Protected route /rx loads for authenticated user",
+    "Dashboard heading found: 'Good afternoon, php'",
+    "Dashboard stat cards present",
+    "Navigation element present",
+    "Customer list/table renders",
+    "Search input accepts text",
+    "XSS payload sanitized in search",
+    "SQL injection string entered in search (no crash)",
+    "Add Customer dialog opens",
+    "Submit button pre-disabled until fields filled (good UX guard)"
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    }
+  ],
+  "api_failures": [],
+  "summary": {
+    "total_bugs": 3,
+    "critical": 2,
+    "high": 1,
+    "medium": 0,
+    "low": 0,
+    "passed": 18,
+    "console_errors": 4,
+    "api_failures": 0
+  }
+}

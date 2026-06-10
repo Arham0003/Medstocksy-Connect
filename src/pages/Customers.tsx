@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CustomerFormDialog } from '@/components/crm/CustomerFormDialog';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
 type Segment = 'all' | 'new' | 'repeat' | 'inactive' | 'high_value' | 'chronic' | 'optout';
 const VALID_SEGMENTS: Segment[] = ['all', 'new', 'repeat', 'inactive', 'high_value', 'chronic', 'optout'];
@@ -38,6 +40,7 @@ export default function Customers() {
     VALID_SEGMENTS.includes(initialSegment) ? initialSegment : 'all'
   );
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [sort, setSort] = useState<CustomerSort>('newest');
   const [newOpen, setNewOpen] = useState(false);
 
@@ -57,15 +60,20 @@ export default function Customers() {
     setSearchParams(params, { replace: true });
   }, [segment, searchParams, setSearchParams]);
 
+  // Realtime: auto-invalidate when any customer changes in this pharmacy
+  useRealtimeInvalidate({
+    table: 'crm_customers',
+    pharmacyId,
+    queryKeys: [['customers', pharmacyId]],
+  });
+
   const { data, isLoading } = useQuery({
-    queryKey: ['customers', pharmacyId, segment, search, sort],
+    // debouncedSearch (not raw search) in queryKey — DB call waits 300ms after typing stops
+    queryKey: ['customers', pharmacyId, segment, debouncedSearch, sort],
     queryFn: () =>
-      listCustomers({ pharmacyId, segment, search: search || undefined, sort, limit: 50 }),
+      listCustomers({ pharmacyId, segment, search: debouncedSearch || undefined, sort, limit: 50 }),
     enabled: !!pharmacyId,
-    // Customer lists rarely change in a 5-min window during normal counter
-    // work; mutations (create/edit) already invalidate the key, so this just
-    // suppresses needless background refetches.
-    staleTime: 5 * 60_000,
+    staleTime: 2 * 60_000,
   });
 
   // Build a lookup so family rows can render "Family of {primaryName}".

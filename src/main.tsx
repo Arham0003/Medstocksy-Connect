@@ -10,8 +10,10 @@ import './index.css';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
+      // 2 min stale window — mutations call invalidateQueries explicitly,
+      // so this only prevents duplicate refetches during navigation.
+      staleTime: 2 * 60_000,
+      gcTime:    10 * 60_000,
       retry: (failureCount, err: unknown) => {
         // Don't retry auth errors
         const message = err instanceof Error ? err.message : '';
@@ -19,6 +21,12 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,
+      // Always refetch when reconnecting after offline — Realtime may have
+      // missed events while the socket was down.
+      refetchOnReconnect: 'always',
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });

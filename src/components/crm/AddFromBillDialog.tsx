@@ -15,6 +15,7 @@ import {
   Calendar as CalendarIcon, IndianRupee, Pill, Stethoscope,
   Paperclip, Upload, File as FileIcon, Image as ImageIcon, Pencil, ClipboardPaste,
 } from 'lucide-react';
+
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import {

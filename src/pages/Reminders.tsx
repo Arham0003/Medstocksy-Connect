@@ -344,7 +344,7 @@ export default function Reminders() {
       </header>
 
       {/* Channel Connectivity Status Bar */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
         {(Object.entries(CHANNEL_ICONS) as [string, React.ReactNode][]).map(([id, icon]) => (
           <Card key={id} className="flex items-center gap-3 p-3 transition-colors hover:border-primary/30">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/50">
@@ -364,12 +364,12 @@ export default function Reminders() {
       </div>
 
       <Card className="overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex overflow-x-auto border-b bg-muted/20">
+        {/* Tab bar — horizontally scrollable on phones */}
+        <div className="flex overflow-x-auto border-b bg-muted/20 scrollbar-none">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={cn(
-                'flex items-center gap-1.5 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors',
+                'flex min-w-0 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-xs font-medium transition-colors sm:px-4 sm:text-sm',
                 tab === t.id
                   ? 'border-primary text-primary bg-background'
                   : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'

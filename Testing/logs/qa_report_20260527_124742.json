@@ -1,0 +1,109 @@
+{
+  "run_timestamp": "20260527_124742",
+  "email": "singh12521vaibhav@gmail.com",
+  "base_url": "http://localhost:5180",
+  "bugs": [
+    {
+      "title": "No error shown for invalid credentials",
+      "severity": "High",
+      "module": "Auth",
+      "steps": [
+        "Go to /login",
+        "Enter bad@test.com / wrongpass",
+        "Click Sign In"
+      ],
+      "expected": "Error message visible",
+      "actual": "No error displayed",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_auth_invalid_creds_no_error.png",
+      "api_error": "",
+      "console_error": ""
+    },
+    {
+      "title": "Uncaught test exception: Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"[role='dialog']\").first.get_by_role(\"button\"",
+      "severity": "Critical",
+      "module": "Test Runner",
+      "steps": [
+        "Running QA suite"
+      ],
+      "expected": "Suite completes",
+      "actual": "Locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator(\"[role='dialog']\").first.get_by_role(\"button\", name=re.compile(r\"save|create|add\", re.IGNORECASE)).first\n    - locator resolved to <button disabled type=\"submit\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2\">Create customer</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    57 \u00d7 waiting for element to be visible, enabled and stable\n       - element is not enabled\n     - retrying click action\n       - waiting 500ms\n",
+      "screenshot": "e:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_uncaught_exception.png",
+      "api_error": "",
+      "console_error": ""
+    }
+  ],
+  "passed_checks": [
+    "Empty form submit -- browser/JS validation checked",
+    "Login success -> redirected to http://localhost:5180/",
+    "Session persists after reload",
+    "Protected route /customers loads for authenticated user",
+    "Protected route /segments loads for authenticated user",
+    "Protected route /campaigns loads for authenticated user",
+    "Protected route /reminders loads for authenticated user",
+    "Protected route /templates loads for authenticated user",
+    "Protected route /activity loads for authenticated user",
+    "Protected route /settings loads for authenticated user",
+    "Protected route /rx loads for authenticated user",
+    "Dashboard heading found: 'Good afternoon, php'",
+    "Dashboard stat cards present",
+    "Navigation element present",
+    "Customer list/table renders",
+    "Search input accepts text",
+    "XSS payload sanitized in search",
+    "SQL injection string entered in search (no crash)",
+    "Add Customer dialog opens"
+  ],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Access to fetch at 'https://ypeopwzkemqlgvvgyhcw.supabase.co/rest/v1/crm_customers?select=*&pharmacy_id=eq.ee84821f-329b-4425-b790-a7de9a58adfe&offset=0&limit=50&order=created_at.desc&or=%28name.ilike.%25%27+OR+1%3D1+--%25%2Cphone.ilike.%25%27+OR+1%3D1+--%25%29' from origin 'http://localhost:5180' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.",
+      "url": "http://localhost:5180/customers"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED",
+      "url": "http://localhost:5180/customers"
+    }
+  ],
+  "api_failures": [],
+  "summary": {
+    "total_bugs": 2,
+    "critical": 1,
+    "high": 1,
+    "medium": 0,
+    "low": 0,
+    "passed": 19,
+    "console_errors": 8,
+    "api_failures": 0
+  }
+}

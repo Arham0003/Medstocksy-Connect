@@ -103,7 +103,7 @@ export default function Activity() {
       </header>
 
       {/* ── Compact stat strip (4 tiles) ── */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatTile
           icon={<ActivityIcon className="h-4 w-4" />}
           label={t('activity.stat.total')}
@@ -130,14 +130,14 @@ export default function Activity() {
         />
       </section>
 
-      {/* ── Filter chips ── */}
-      <div className="flex flex-wrap gap-2">
+      {/* ── Filter chips — horizontally scrollable on mobile ── */}
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={cn(
-              'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+              'chip shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
               filter === f.key
                 ? 'border-foreground bg-foreground text-background'
                 : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground'
