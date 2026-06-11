@@ -331,41 +331,6 @@ export async function recordRefill(args: RefillInput): Promise<PrescriptionRefil
   return (data as unknown) as PrescriptionRefill;
 }
 
-async function scheduleNextRefillReminder(
-  medicineId: string, pharmacyId: string, customerId: string
-): Promise<void> {
-  const { data: med } = await supabase
-    .from('crm_prescription_medicines')
-    .select('medicine_name, refill_interval_days')
-    .eq('id', medicineId)
-    .maybeSingle();
-  const row = med as { medicine_name?: string; refill_interval_days?: number | null } | null;
-  const interval = row?.refill_interval_days ?? 0;
-  if (!row || interval <= 0) return;
-
-  const { data: tpl } = await supabase
-    .from('crm_templates')
-    .select('id')
-    .eq('kind', 'refill_reminder')
-    .or(`pharmacy_id.is.null,pharmacy_id.eq.${pharmacyId}`)
-    .order('is_built_in', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const templateId = (tpl as { id?: string } | null)?.id;
-  if (!templateId) return;
-
-  const when = new Date();
-  when.setDate(when.getDate() + Math.max(interval - 5, 1));
-  when.setHours(9, 0, 0, 0);
-
-  await supabase.from('crm_scheduled_reminders').insert({
-    pharmacy_id: pharmacyId,
-    customer_id: customerId,
-    template_id: templateId,
-    scheduled_for: when.toISOString(),
-    variables: { medicine: row.medicine_name ?? '' },
-  } as never);
-}
 
 export async function listRefills(medicineId: string): Promise<PrescriptionRefill[]> {
   const { data, error } = await supabase
