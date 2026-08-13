@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useT } from '@/contexts/LanguageContext';
 import type { TranslationKey } from '@/i18n/translations';
+import { signedBillUrl } from '@/lib/api/attachments';
 import { supabase } from '@/lib/supabase';
 import { listVisitNotes, type VisitNote } from '@/lib/api/visitNotes';
 import {
@@ -475,14 +476,39 @@ function RefillBody({ data }: { data: PrescriptionRefill & { medicine_name?: str
 
 function AttachmentLink({ url }: { url: string }) {
   const t = useT();
+  const [busy, setBusy] = useState(false);
+
+  /**
+   * Bill scans live in a private bucket, so there is no durable href to put on
+   * the anchor. Sign on click and open the result: the link is valid for
+   * minutes rather than forever, and a user who is not a member of the owning
+   * pharmacy simply gets nothing back instead of the file.
+   *
+   * Opening the window BEFORE awaiting keeps this a user-gesture navigation —
+   * open it after the await and Safari/Firefox treat it as a popup and block.
+   */
+  const open = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (busy) return;
+    setBusy(true);
+    const w = window.open('', '_blank', 'noopener,noreferrer');
+    try {
+      const signed = await signedBillUrl(url);
+      if (!signed) { w?.close(); return; }
+      if (w) w.location.href = signed;
+      else window.location.href = signed;  // popup blocked — navigate in place
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
+      href="#"
+      onClick={open}
+      aria-busy={busy}
       className="inline-flex items-center gap-1 rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-700 hover:bg-sky-500/20 dark:text-sky-300"
-      title={url}
     >
       <Paperclip className="h-2.5 w-2.5" />
       {t('add_bill.attachment_view')}

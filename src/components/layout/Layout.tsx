@@ -99,7 +99,7 @@ export function Layout() {
           collapsed ? 'md:pl-[60px]' : 'md:pl-[232px]'
         )}
       >
-        <div className="mx-auto max-w-[1440px] animate-fade-in p-4 md:p-8">
+        <div className="mx-auto max-w-[1440px] animate-fade-in p-4 pb-8 md:p-8 safe-bottom">
           <Outlet />
         </div>
       </main>

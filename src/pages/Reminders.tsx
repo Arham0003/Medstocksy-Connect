@@ -11,6 +11,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReminderRuleDialog } from '@/components/crm/ReminderRuleDialog';
+import { BulkReminderSendDialog } from '@/components/crm/BulkReminderSendDialog';
+import { useT } from '@/contexts/LanguageContext';
 import { renderTemplate, cn } from '@/lib/utils';
 
 type Rule = Tables<'crm_reminder_rules'>;
@@ -22,7 +24,7 @@ interface ScheduledReminder {
   status: ReminderStatus;
   sent_at: string | null;
   variables: Record<string, string>;
-  customer: { id: string; name: string; phone: string } | null;
+  customer: { id: string; name: string; phone: string; whatsapp_opted_in?: boolean } | null;
   template: { name: string; body?: string } | null;
 }
 
@@ -75,11 +77,28 @@ function ReminderRow({ row, onRetry, onSend }: { row: ScheduledReminder; onRetry
     if (url) {
       window.open(url, channel === 'whatsapp' ? '_blank' : '_self');
     }
-    if (onSend) onSend();
+    
+    if (onSend) {
+      if (channel === 'whatsapp') {
+        setTimeout(() => {
+          if (document.hasFocus()) {
+            onSend();
+          } else {
+            const onFocus = () => {
+              window.removeEventListener('focus', onFocus);
+              onSend();
+            };
+            window.addEventListener('focus', onFocus);
+          }
+        }, 1000);
+      } else {
+        onSend();
+      }
+    }
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
+    <div className="flex flex-wrap items-center gap-3 p-4 border-b last:border-0 hover:bg-muted/30 transition-colors">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
         {CHANNEL_ICONS[channel] ?? <BellRing className="h-3.5 w-3.5" />}
       </div>
@@ -127,14 +146,18 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
     queryFn: async () => {
       let q = supabase
         .from('crm_scheduled_reminders')
-        .select('id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone), template:crm_templates(name, body)')
+        .select('id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone, whatsapp_opted_in), template:crm_templates(name, body)')
         .eq('pharmacy_id', pharmacyId)
         .in('status', statusFilter)
         .order('scheduled_for', { ascending: statusFilter.includes('pending') });
 
       if (statusFilter.includes('pending') && statusFilter.length === 1) {
-        // upcoming: next 30 days
-        q = q.gte('scheduled_for', new Date().toISOString()).lt('scheduled_for', new Date(Date.now() + 30 * 86400000).toISOString());
+        // upcoming: only future reminders (on or after start of tomorrow)
+        const startOfTomorrow = new Date();
+        startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+        startOfTomorrow.setHours(0, 0, 0, 0);
+        q = q.gte('scheduled_for', startOfTomorrow.toISOString())
+             .lt('scheduled_for', new Date(Date.now() + 30 * 86400000).toISOString());
       }
 
       const { data, error } = await q.limit(50);
@@ -190,20 +213,40 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
 }
 
 function TodayList({ pharmacyId }: { pharmacyId: string }) {
+  const t = useT();
+  const [bulkOpen, setBulkOpen] = useState(false);
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
 
-  const { data: rows = [], isLoading } = useQuery<ScheduledReminder[]>({
+  // Fetch today's reminders (today window)
+  const { data: todayRows = [], isLoading: loadingToday } = useQuery<ScheduledReminder[]>({
     queryKey: ['reminders-today', pharmacyId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('crm_scheduled_reminders')
-        .select('id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone), template:crm_templates(name, body)')
+        .select('id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone, whatsapp_opted_in), template:crm_templates(name, body)')
         .eq('pharmacy_id', pharmacyId)
         .gte('scheduled_for', start)
         .lt('scheduled_for', end)
         .order('scheduled_for');
+      if (error) throw error;
+      return (data ?? []) as unknown as ScheduledReminder[];
+    },
+  });
+
+  // Fetch overdue reminders (anything before start of today, still pending)
+  const { data: overdueRows = [], isLoading: loadingOverdue } = useQuery<ScheduledReminder[]>({
+    queryKey: ['reminders-overdue', pharmacyId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('crm_scheduled_reminders')
+        .select('id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone, whatsapp_opted_in), template:crm_templates(name, body)')
+        .eq('pharmacy_id', pharmacyId)
+        .eq('status', 'pending')
+        .lt('scheduled_for', start)
+        .order('scheduled_for', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return (data ?? []) as unknown as ScheduledReminder[];
     },
@@ -219,9 +262,13 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scheduled-reminders'] });
       qc.invalidateQueries({ queryKey: ['reminders-today'] });
+      qc.invalidateQueries({ queryKey: ['reminders-overdue'] });
+      qc.invalidateQueries({ queryKey: ['due-reminders'] });
       qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
     },
   });
+
+  const isLoading = loadingToday || loadingOverdue;
 
   if (isLoading) return (
     <div className="space-y-2 p-4">
@@ -229,33 +276,87 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
     </div>
   );
 
-  if (rows.length === 0) return (
-    <div className="py-12 text-center text-sm text-muted-foreground">No reminders scheduled for today 🎉</div>
-  );
+  const pending = todayRows.filter(r => r.status === 'pending');
+  const sent = todayRows.filter(r => r.status === 'sent');
+  const failed = todayRows.filter(r => r.status === 'failed');
 
-  const pending = rows.filter(r => r.status === 'pending');
-  const sent = rows.filter(r => r.status === 'sent');
-  const failed = rows.filter(r => r.status === 'failed');
+  const totalToday = todayRows.length;
+  const totalOverdue = overdueRows.length;
+
+  // Everything still owed to a patient right now — overdue first, then today.
+  // The bulk dialog filters this further (opt-out, missing phone, non-WA).
+  const allPending = [...overdueRows, ...pending];
 
   return (
     <div>
-      {/* Summary pills */}
-      <div className="flex gap-3 px-4 py-3 border-b bg-muted/20">
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
-          <Clock className="h-3.5 w-3.5" /> {pending.length} pending
-        </span>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-          <CheckCircle2 className="h-3.5 w-3.5" /> {sent.length} sent
-        </span>
-        {failed.length > 0 && (
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600">
-            <XCircle className="h-3.5 w-3.5" /> {failed.length} failed
+      {allPending.length > 0 && (
+        <div className="flex items-center justify-between gap-3 border-b bg-primary/5 px-4 py-2.5">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {allPending.length} {allPending.length === 1 ? 'reminder' : 'reminders'} waiting to be sent
           </span>
-        )}
-      </div>
-      <div className="divide-y">
-        {rows.map(r => <ReminderRow key={r.id} row={r} onSend={r.status === 'pending' ? () => markSent.mutate(r.id) : undefined} />)}
-      </div>
+          <Button size="sm" onClick={() => setBulkOpen(true)} className="h-7 gap-1.5 text-xs">
+            <Send className="h-3 w-3" /> {t('rem.bulk.button')}
+          </Button>
+        </div>
+      )}
+
+      <BulkReminderSendDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        pharmacyId={pharmacyId}
+        reminders={allPending}
+      />
+
+      {/* Overdue section — shown prominently if overdue items exist */}
+      {totalOverdue > 0 && (
+        <div>
+          <div className="flex items-center gap-2 border-b bg-destructive/8 px-4 py-2.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+            <span className="text-xs font-bold text-destructive">
+              {totalOverdue} overdue reminder{totalOverdue !== 1 ? 's' : ''} — not sent yet
+            </span>
+          </div>
+          <div className="divide-y">
+            {overdueRows.map(r => (
+              <ReminderRow
+                key={r.id}
+                row={r}
+                onSend={r.status === 'pending' ? () => markSent.mutate(r.id) : undefined}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Today section */}
+      {totalToday > 0 ? (
+        <div>
+          {totalOverdue > 0 && (
+            <div className="border-b bg-muted/20 px-4 py-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Today</span>
+            </div>
+          )}
+          {/* Summary pills */}
+          <div className="flex gap-3 px-4 py-3 border-b bg-muted/20">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600">
+              <Clock className="h-3.5 w-3.5" /> {pending.length} pending
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5" /> {sent.length} sent
+            </span>
+            {failed.length > 0 && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-red-600">
+                <XCircle className="h-3.5 w-3.5" /> {failed.length} failed
+              </span>
+            )}
+          </div>
+          <div className="divide-y">
+            {todayRows.map(r => <ReminderRow key={r.id} row={r} onSend={r.status === 'pending' ? () => markSent.mutate(r.id) : undefined} />)}
+          </div>
+        </div>
+      ) : totalOverdue === 0 ? (
+        <div className="py-12 text-center text-sm text-muted-foreground">No reminders scheduled for today 🎉</div>
+      ) : null}
     </div>
   );
 }

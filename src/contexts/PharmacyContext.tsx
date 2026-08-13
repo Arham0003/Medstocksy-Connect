@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { claimInvites } from '@/lib/api/members';
 import type { MemberRole } from '@/types/database';
 import { useAuth } from './AuthContext';
 import { storage } from '@/lib/utils';
@@ -44,6 +45,17 @@ export function PharmacyProvider({ children }: { children: ReactNode }) {
       queryKey: ['memberships', user?.id],
       enabled: !!user,
       queryFn: async () => {
+        // Convert any invite addressed to this user's verified email into a
+        // real membership BEFORE reading the list, so someone invited while
+        // signed out is already a member by the time this query returns.
+        // No-op (and cheap) when there is nothing pending — never let it
+        // block sign-in for an existing member.
+        try {
+          await claimInvites();
+        } catch (e) {
+          console.warn('[PharmacyContext] invite claim skipped:', e);
+        }
+
         // crm_my_pharmacies is a view that already inlines pharmacy_name +
         // pharmacy_logo_url — single SELECT, no joins needed.
         const { data, error } = await supabase

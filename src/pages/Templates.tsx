@@ -39,12 +39,12 @@ export default function Templates() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs text-muted-foreground">{t('nav.section.crm')}</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">{t('templates.title')}</h1>
         </div>
-        <Button onClick={openNew}>
+        <Button onClick={openNew} className="shrink-0">
           <Plus className="h-4 w-4" /> {t('btn.add')}
         </Button>
       </header>

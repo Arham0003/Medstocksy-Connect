@@ -6,29 +6,38 @@ import {
   Loader2, CheckCircle2, AlertTriangle, LogOut, Trash2,
   Building2, MessageCircle, User as UserIcon, ShieldAlert, Sliders, Globe,
   ImagePlus, X as XIcon, Sun, Moon, Monitor, Palette,
-  Info, Mail, BellRing,
+  Info, Mail, BellRing, Gift, Share2, BadgeCheck, Sparkles, Users, Bot,
 } from 'lucide-react';
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage, useT } from '@/contexts/LanguageContext';
 import { useTheme, type Theme } from '@/contexts/ThemeContext';
-import { SUPPORTED_LANGUAGES, type Lang } from '@/i18n/translations';
+import { SUPPORTED_LANGUAGES, type Lang, type TranslationKey } from '@/i18n/translations';
 import { supabase, type Tables } from '@/lib/supabase';
 import { getNotifyInterval, setNotifyInterval, NOTIFY_INTERVAL_OPTIONS } from '@/lib/notify';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ReferralCard } from '@/components/ui/referral-card';
+import { MembersSection } from '@/components/crm/MembersSection';
+import { getGeminiKey, setGeminiKey, maskKey } from '@/lib/aiKey';
+import { extractBillData, GeminiAuthError } from '@/lib/gemini';
 import medstocksyLogo from '@/assets/brand/medstocksy.png';
 
 type Pharmacy = Tables<'crm_pharmacies'>;
-type SectionKey = 'general' | 'preferences' | 'whatsapp' | 'account' | 'about' | 'danger';
+type SectionKey =
+  | 'general' | 'preferences' | 'whatsapp' | 'account' | 'members'
+  | 'ai' | 'referral' | 'about' | 'danger';
 
-const SECTIONS: { key: SectionKey; icon: typeof Building2; titleKey: 'settings.section.general' | 'settings.section.preferences' | 'settings.section.whatsapp' | 'settings.section.account' | 'settings.section.about' | 'settings.section.danger'; adminOnly?: boolean }[] = [
+const SECTIONS: { key: SectionKey; icon: typeof Building2; titleKey: TranslationKey; adminOnly?: boolean }[] = [
   { key: 'general', icon: Building2, titleKey: 'settings.section.general' },
   { key: 'preferences', icon: Sliders, titleKey: 'settings.section.preferences' },
   { key: 'whatsapp', icon: MessageCircle, titleKey: 'settings.section.whatsapp' },
   { key: 'account', icon: UserIcon, titleKey: 'settings.section.account' },
+  { key: 'members', icon: Users, titleKey: 'settings.section.members' },
+  { key: 'ai', icon: Bot, titleKey: 'settings.section.ai' },
+  { key: 'referral', icon: Gift, titleKey: 'settings.section.referral' },
   { key: 'about', icon: Info, titleKey: 'settings.section.about' },
   { key: 'danger', icon: ShieldAlert, titleKey: 'settings.section.danger', adminOnly: true },
 ];
@@ -67,7 +76,7 @@ export default function Settings() {
         <p className="mt-1 text-sm text-muted-foreground">{t('settings.subtitle')}</p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         {/* Side nav */}
         <SideNav section={section} onChange={setSection} sections={visibleSections} />
 
@@ -84,10 +93,18 @@ export default function Settings() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
               >
-                {section === 'general' && <PharmacySection pharmacy={pharmacy} canEdit={isAdmin} />}
+                {section === 'general' && (
+                  <div className="space-y-6">
+                    <PharmacySection pharmacy={pharmacy} canEdit={isAdmin} />
+                    <SegmentThresholdsSection pharmacy={pharmacy} canEdit={isAdmin} />
+                  </div>
+                )}
                 {section === 'preferences' && <PreferencesSection />}
                 {section === 'whatsapp' && <WhatsAppSection pharmacy={pharmacy} canEdit={isAdmin} />}
                 {section === 'account' && <AccountSection />}
+                {section === 'members' && pharmacyId && <MembersSection pharmacyId={pharmacyId} isAdmin={isAdmin} />}
+                {section === 'ai' && <AiSection />}
+                {section === 'referral' && <ReferralSection pharmacyId={pharmacyId} />}
                 {section === 'about' && <AboutSection />}
                 {section === 'danger' && isAdmin && <DangerZone pharmacy={pharmacy} />}
               </motion.div>
@@ -115,29 +132,19 @@ function SideNav({
       aria-label="Settings sections"
       className="lg:sticky lg:top-4"
     >
-      {/* Mobile: horizontal scrollable */}
-      <div className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 scrollbar-none sm:mx-0 sm:px-0 lg:hidden">
-        {sections.map((s) => {
-          const Icon = s.icon;
-          const active = s.key === section;
-          return (
-            <button
-              key={s.key}
-              onClick={() => onChange(s.key)}
-              className={cn(
-                'flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-                active
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground',
-                s.key === 'danger' && active && 'border-destructive bg-destructive/10 text-destructive',
-                s.key === 'danger' && !active && 'text-destructive/80'
-              )}
-            >
-              <Icon className="h-4 w-4" />
+      {/* Mobile: Native Select dropdown */}
+      <div className="block lg:hidden">
+        <select
+          value={section}
+          onChange={(e) => onChange(e.target.value as SectionKey)}
+          className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm font-medium shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {sections.map((s) => (
+            <option key={s.key} value={s.key}>
               {t(s.titleKey)}
-            </button>
-          );
-        })}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Desktop: vertical stack */}
@@ -236,7 +243,7 @@ function PharmacySection({ pharmacy, canEdit }: SectionProps) {
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
           <Label>{t('onb.pharmacy_name')}</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit || save.isPending} maxLength={120} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!canEdit || save.isPending} maxLength={120} className="h-11" />
         </div>
         <div>
           <Label>{t('onb.contact_phone')}</Label>
@@ -260,7 +267,7 @@ function PharmacySection({ pharmacy, canEdit }: SectionProps) {
         </div>
         <div className="md:col-span-2">
           <Label>{t('settings.general.address')} <span className="text-xs font-normal text-muted-foreground">({t('common.optional')})</span></Label>
-          <Input value={address} onChange={(e) => setAddress(e.target.value)} disabled={!canEdit || save.isPending} maxLength={240} />
+          <Input value={address} onChange={(e) => setAddress(e.target.value)} disabled={!canEdit || save.isPending} maxLength={240} className="h-11" />
         </div>
       </div>
 
@@ -302,7 +309,7 @@ function PreferencesSection() {
         canEdit
       />
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
         {/* ── Appearance tile ── */}
         <PreferenceTile
           icon={Palette}
@@ -374,7 +381,7 @@ function PreferencesSection() {
               setNotifyInterval(v);
             }}
             aria-label={t('settings.prefs.notify')}
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {NOTIFY_INTERVAL_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -521,19 +528,19 @@ function WhatsAppSection({ pharmacy, canEdit }: SectionProps) {
         </div>
         <div>
           <Label>{t('settings.wa.bulk_threshold')}</Label>
-          <Input type="number" min={1} max={5000} className="font-mono"
+          <Input type="number" min={1} max={5000} className="h-11 font-mono"
             value={bulk} onChange={(e) => setBulk(Number(e.target.value) || 0)}
             disabled={!canEdit || save.isPending} />
           <p className="mt-1 text-xs text-muted-foreground">{t('settings.wa.bulk_hint')}</p>
         </div>
         <div>
           <Label>{t('settings.wa.window_start')}</Label>
-          <Input type="time" className="font-mono" value={windowStart}
+          <Input type="time" className="h-11 font-mono" value={windowStart}
             onChange={(e) => setWindowStart(e.target.value)} disabled={!canEdit || save.isPending} />
         </div>
         <div>
           <Label>{t('settings.wa.window_end')}</Label>
-          <Input type="time" className="font-mono" value={windowEnd}
+          <Input type="time" className="h-11 font-mono" value={windowEnd}
             onChange={(e) => setWindowEnd(e.target.value)} disabled={!canEdit || save.isPending} />
         </div>
       </div>
@@ -593,7 +600,7 @@ function AccountSection() {
             </div>
           </div>
         </div>
-        <Button variant="outline" onClick={onSignOut} className="w-full sm:w-auto">
+        <Button variant="outline" onClick={onSignOut} className="h-11 w-full sm:w-auto">
           <LogOut className="h-4 w-4" />
           {t('nav.sign_out')}
         </Button>
@@ -604,6 +611,261 @@ function AccountSection() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ABOUT — app info, version, support links
+// ─────────────────────────────────────────────────────────────────────────────
+// AI / GEMINI KEY
+// ─────────────────────────────────────────────────────────────────────────────
+function AiSection() {
+  const t = useT();
+  const [key, setKey] = useState(() => getGeminiKey());
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [testState, setTestState] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [testError, setTestError] = useState<string | null>(null);
+
+  const stored = getGeminiKey();
+  const dirty = key.trim() !== stored;
+
+  const save = () => {
+    setGeminiKey(key);
+    setSavedAt(Date.now());
+    setTimeout(() => setSavedAt(null), 2400);
+  };
+
+  // Round-trips a 1x1 PNG through the real extraction path. Cheaper than
+  // asking the user to find a bill, and it exercises exactly what will run
+  // later — key validity, model availability and quota.
+  const testKey = async () => {
+    setTestState('testing');
+    setTestError(null);
+    try {
+      const png = Uint8Array.from(atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+      ), (c) => c.charCodeAt(0));
+      await extractBillData(key.trim(), new Blob([png], { type: 'image/png' }), 'image/png');
+      setTestState('ok');
+    } catch (e) {
+      // A blank image legitimately extracts nothing; only auth/quota failures
+      // mean the key is unusable.
+      if (e instanceof GeminiAuthError) {
+        setTestState('fail');
+        setTestError(e.message);
+      } else {
+        setTestState('ok');
+      }
+    }
+  };
+
+  return (
+    <Card className="p-6">
+      <SectionHeader
+        title={t('settings.ai.heading')}
+        description={t('settings.ai.desc')}
+        canEdit
+      />
+
+      <div className="mt-5 space-y-3">
+        <div>
+          <Label>{t('settings.ai.api_key')}</Label>
+          <Input
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            className="h-11 font-mono"
+            value={key}
+            onChange={(e) => { setKey(e.target.value); setTestState('idle'); }}
+            placeholder={stored ? maskKey(stored) : 'AIza…'}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">{t('settings.ai.api_key_hint')}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={save} disabled={!dirty}>{t('btn.save')}</Button>
+          <Button
+            variant="outline"
+            onClick={() => void testKey()}
+            disabled={!key.trim() || testState === 'testing'}
+            className="gap-2"
+          >
+            {testState === 'testing' && <Loader2 className="h-4 w-4 animate-spin" />}
+            {t('settings.ai.test')}
+          </Button>
+          {stored && (
+            <Button
+              variant="ghost"
+              onClick={() => { setGeminiKey(''); setKey(''); setTestState('idle'); }}
+              className="text-destructive hover:text-destructive"
+            >
+              {t('settings.ai.remove')}
+            </Button>
+          )}
+          {savedAt && (
+            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5" /> {t('settings.ai.saved')}
+            </span>
+          )}
+        </div>
+
+        {testState === 'ok' && (
+          <p className="flex items-center gap-1.5 text-xs text-emerald-600">
+            <CheckCircle2 className="h-3.5 w-3.5" /> {t('settings.ai.test_ok')}
+          </p>
+        )}
+        {testState === 'fail' && (
+          <p className="flex items-start gap-1.5 text-xs text-destructive">
+            <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" /> {testError}
+          </p>
+        )}
+
+        <div className="flex items-start gap-2 rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{t('settings.ai.privacy')}</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEGMENT THRESHOLDS
+// ─────────────────────────────────────────────────────────────────────────────
+function SegmentThresholdsSection({ pharmacy, canEdit }: { pharmacy: Pharmacy; canEdit: boolean }) {
+  const t = useT();
+  const qc = useQueryClient();
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const [newDays, setNewDays] = useState(pharmacy.new_customer_days ?? 7);
+  const [inactive, setInactive] = useState(pharmacy.inactive_days ?? 30);
+  const [highValue, setHighValue] = useState(pharmacy.high_value_amount ?? 10000);
+  const [repeatMin, setRepeatMin] = useState(pharmacy.repeat_min_visits ?? 2);
+
+  const dirty =
+    newDays !== (pharmacy.new_customer_days ?? 7) ||
+    inactive !== (pharmacy.inactive_days ?? 30) ||
+    highValue !== (pharmacy.high_value_amount ?? 10000) ||
+    repeatMin !== (pharmacy.repeat_min_visits ?? 2);
+
+  const save = useMutation({
+    // Bounds mirror the CHECK constraint in migration 20260809_03 so a bad
+    // value is rejected here with a readable message rather than as a raw
+    // Postgres constraint violation.
+    mutationFn: async () => {
+      if (newDays < 1 || newDays > 365) throw new Error('“New” window must be 1–365 days.');
+      if (inactive < 7 || inactive > 3650) throw new Error('“Inactive” window must be 7–3650 days.');
+      if (highValue < 0) throw new Error('High-value amount cannot be negative.');
+      if (repeatMin < 2 || repeatMin > 100) throw new Error('“Repeat” visits must be 2–100.');
+
+      const { error } = await supabase
+        .from('crm_pharmacies')
+        .update({
+          new_customer_days: newDays,
+          inactive_days: inactive,
+          high_value_amount: highValue,
+          repeat_min_visits: repeatMin,
+        } as never)
+        .eq('id', pharmacy.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      // Segment membership is derived, so every customer-facing list changes
+      // the moment these save.
+      for (const key of ['pharmacy', 'customers', 'segments', 'segment-counts', 'dashboard-counts']) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
+      setSavedAt(Date.now());
+      setTimeout(() => setSavedAt(null), 2400);
+    },
+  });
+
+  return (
+    <Card className="p-6">
+      <SectionHeader
+        title={t('settings.thresholds.heading')}
+        description={t('settings.thresholds.desc')}
+        canEdit={canEdit}
+      />
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div>
+          <Label>{t('settings.thresholds.new_days')}</Label>
+          <Input type="number" min={1} max={365} className="h-11 font-mono"
+            value={newDays} onChange={(e) => setNewDays(Number(e.target.value) || 0)}
+            disabled={!canEdit || save.isPending} />
+          <p className="mt-1 text-xs text-muted-foreground">{t('settings.thresholds.new_hint')}</p>
+        </div>
+        <div>
+          <Label>{t('settings.thresholds.inactive_days')}</Label>
+          <Input type="number" min={7} max={3650} className="h-11 font-mono"
+            value={inactive} onChange={(e) => setInactive(Number(e.target.value) || 0)}
+            disabled={!canEdit || save.isPending} />
+          <p className="mt-1 text-xs text-muted-foreground">{t('settings.thresholds.inactive_hint')}</p>
+        </div>
+        <div>
+          <Label>{t('settings.thresholds.high_value')}</Label>
+          <Input type="number" min={0} step={500} className="h-11 font-mono"
+            value={highValue} onChange={(e) => setHighValue(Number(e.target.value) || 0)}
+            disabled={!canEdit || save.isPending} />
+          <p className="mt-1 text-xs text-muted-foreground">{t('settings.thresholds.high_value_hint')}</p>
+        </div>
+        <div>
+          <Label>{t('settings.thresholds.repeat_visits')}</Label>
+          <Input type="number" min={2} max={100} className="h-11 font-mono"
+            value={repeatMin} onChange={(e) => setRepeatMin(Number(e.target.value) || 0)}
+            disabled={!canEdit || save.isPending} />
+          <p className="mt-1 text-xs text-muted-foreground">{t('settings.thresholds.repeat_hint')}</p>
+        </div>
+      </div>
+
+      {canEdit && (
+        <SectionFooter dirty={dirty} savedAt={savedAt} isPending={save.isPending}
+          isError={save.isError} errorMsg={save.error?.message}
+          onSave={() => save.mutate()}
+          onReset={() => {
+            setNewDays(pharmacy.new_customer_days ?? 7);
+            setInactive(pharmacy.inactive_days ?? 30);
+            setHighValue(pharmacy.high_value_amount ?? 10000);
+            setRepeatMin(pharmacy.repeat_min_visits ?? 2);
+          }}
+        />
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REFER & EARN
+// ─────────────────────────────────────────────────────────────────────────────
+function ReferralSection({ pharmacyId }: { pharmacyId: string | null }) {
+  const t = useT();
+
+  // PLACEHOLDER: derived from the pharmacy id so each pharmacy sees a distinct
+  // link, but nothing on the backend records or credits referrals yet. Swap for
+  // a real stored referral code once that table exists.
+  const referralLink = pharmacyId
+    ? `https://medstocksy.in/r/${pharmacyId.slice(0, 8)}`
+    : 'https://medstocksy.in/r/';
+
+  const steps = [
+    { icon: <Share2 className="h-4 w-4" />, text: t('settings.referral.step_share') },
+    { icon: <BadgeCheck className="h-4 w-4" />, text: t('settings.referral.step_signup') },
+    { icon: <Sparkles className="h-4 w-4" />, text: t('settings.referral.step_reward') },
+  ];
+
+  return (
+    <ReferralCard
+      className="max-w-none"
+      badgeText={t('settings.referral.badge')}
+      title={t('settings.referral.title')}
+      description={t('settings.referral.desc')}
+      steps={steps}
+      referralLink={referralLink}
+      howItWorksLabel={t('settings.referral.how')}
+      inviteLinkLabel={t('settings.referral.link')}
+      copyLabel={t('settings.referral.copy')}
+      copiedLabel={t('settings.referral.copied')}
+      copyErrorLabel={t('settings.referral.copy_error')}
+    />
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 function AboutSection() {
   const t = useT();
@@ -691,7 +953,7 @@ function DangerZone({ pharmacy }: { pharmacy: Pharmacy }) {
               {t('settings.danger.confirm_prefix')}{' '}
               <code className="rounded bg-background px-1.5 py-0.5 font-mono text-xs">{pharmacy.name}</code>
             </p>
-            <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={pharmacy.name} autoFocus />
+            <Input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={pharmacy.name} autoFocus className="h-11" />
             {del.isError && (
               <div className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
                 {del.error?.message ?? 'Delete failed'}
@@ -781,7 +1043,7 @@ function LogoUploader({ pharmacy, canEdit }: SectionProps) {
   const previewSrc = pharmacy.logo_url ?? medstocksyLogo;
 
   return (
-    <div className="mt-5 flex items-center gap-4 rounded-xl border bg-muted/30 p-4">
+    <div className="mt-5 flex flex-wrap items-center gap-4 rounded-xl border bg-muted/30 p-4">
       <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/20">
         <img
           src={previewSrc}
@@ -861,10 +1123,10 @@ function PhoneInput({
   return (
     <>
       <div className="flex">
-        <span className="flex select-none items-center rounded-l-md border border-r-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
+        <span className="flex h-11 select-none items-center rounded-l-md border border-r-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
           +91
         </span>
-        <Input type="tel" inputMode="numeric" className="rounded-l-none font-mono"
+        <Input type="tel" inputMode="numeric" className="h-11 rounded-l-none font-mono"
           value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur}
           disabled={disabled} maxLength={15} placeholder="98765 43210" />
       </div>

@@ -25,6 +25,13 @@
   ],
   "functions": {
     "api/whatsapp/send.ts": { "maxDuration": 30 },
-    "api/whatsapp/webhook.ts": { "maxDuration": 10 }
-  }
+    "api/whatsapp/webhook.ts": { "maxDuration": 10 },
+    "api/cron/dispatch-reminders.ts": { "maxDuration": 60 }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/dispatch-reminders",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

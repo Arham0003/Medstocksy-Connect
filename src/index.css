@@ -10,8 +10,9 @@
    All colours HSL so Tailwind opacity utilities work.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* Google Fonts — Inter (UI) + JetBrains Mono (data) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;500;700&display=swap');
+/* Google Fonts (Inter + JetBrains Mono + Noto Sans Devanagari) are loaded via
+   <link rel="stylesheet"> in index.html — not @import — so the browser can start
+   the font fetch during HTML parse instead of waiting for the CSS bundle. */
 
 @layer base {
   :root {
@@ -171,7 +172,7 @@
     touch-action: manipulation;
   }
   @media (max-width: 767px) {
-    button, a, [role='button'] { min-height: 44px; }
+    button:not(.sidebar-nav-item), a:not(.sidebar-nav-item), [role='button']:not(.sidebar-nav-item) { min-height: 44px; }
     button.chip, a.chip, span[role='button'] { min-height: unset; }
   }
 
@@ -245,6 +246,11 @@
 
 /* Prevent horizontal overflow */
 body { overflow-x: hidden; }
+
+/* ── iOS safe-area support (notch / home indicator) ────────────── */
+/* Applied to main page wrapper if needed */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+.safe-top    { padding-top: env(safe-area-inset-top, 0); }
 
 /* ── Sidebar nav item animations ────────────────────────────────── */
 .sidebar-nav-item {

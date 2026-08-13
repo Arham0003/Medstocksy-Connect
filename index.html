@@ -8,10 +8,28 @@
     <meta name="description" content="Medstocksy Connect — WhatsApp-driven customer relations for pharmacies." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Loaded non-render-blocking: a stylesheet <link> in <head> stalls first
+      paint on two round trips (googleapis → gstatic) before anything appears.
+      The media="print" swap makes the browser fetch it at low priority and
+      apply it on load; `display=swap` in the URL already means text paints in
+      the fallback face and swaps in, so this costs nothing visually.
+
+      Noto Sans Devanagari is NOT here — it is ~4 extra font files that only
+      Hindi users need, so LanguageContext injects it when lang === 'hi'.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <title>Medstocksy Connect</title>
     <script>
       // Apply persisted theme BEFORE React hydrates → prevents light-flash.

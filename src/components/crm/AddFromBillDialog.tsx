@@ -14,6 +14,7 @@ import {
   Loader2, Receipt, FileText, Users, ExternalLink, X as XIcon,
   Calendar as CalendarIcon, IndianRupee, Pill, Stethoscope,
   Paperclip, Upload, File as FileIcon, Image as ImageIcon, Pencil, ClipboardPaste,
+  Sparkles,
 } from 'lucide-react';
 
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
@@ -23,7 +24,10 @@ import {
 } from '@/lib/api/customers';
 import { createPrescription, type MedicineInput } from '@/lib/api/prescriptions';
 import { supabase } from '@/lib/supabase';
+import { signedBillUrl } from '@/lib/api/attachments';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
+import { getGeminiKey, hasGeminiKey } from '@/lib/aiKey';
+import { extractBillData } from '@/lib/gemini';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -95,11 +99,16 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     .map(name => ({ ...EMPTY_RX_MED, medicine_name: name }));
 
   // ── Attachment (PDF or image of the bill / prescription) ──
-  const [attachment, setAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [attachment, setAttachment] = useState<{ url: string; path: string; name: string; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ── AI extraction (optional; needs a Gemini key on this device) ──
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractedCount, setExtractedCount] = useState(0);
 
   const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   const MAX_BYTES = 10 * 1024 * 1024;
@@ -122,14 +131,74 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
         .from('crm-bill-attachments')
         .upload(path, file, { upsert: false, contentType: file.type });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('crm-bill-attachments').getPublicUrl(path);
-      setAttachment({ url: pub.publicUrl, name: file.name, type: file.type });
+      // Persist the object PATH, not a URL. The bucket is private now, so a
+      // stored link would expire; the path stays valid forever and is signed
+      // on demand at read time.
+      const preview = await signedBillUrl(path);
+      setAttachment({ url: preview ?? '', path, name: file.name, type: file.type });
+
+      // Attachment is saved regardless; extraction is a bonus on top. Run it
+      // only for images (Gemini can't read our PDFs here) and only when this
+      // device has a key configured — pharmacies without one keep the plain
+      // upload-and-type-it-in flow.
+      if (file.type.startsWith('image/') && hasGeminiKey()) {
+        void autofillFrom(file);
+      }
     } catch (err) {
       console.error('[bill attachment]', err);
       setUploadError(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  /**
+   * Fill blank fields from a scanned bill/prescription.
+   *
+   * Only ever writes into fields the user has left empty — an extraction is a
+   * suggestion, and silently overwriting something already typed (or a phone
+   * number that drove the duplicate-check) would be worse than not helping.
+   * Everything stays editable before save.
+   */
+  const autofillFrom = async (file: File) => {
+    setExtracting(true);
+    setExtractError(null);
+    setExtractedCount(0);
+    try {
+      const data = await extractBillData(getGeminiKey(), file, file.type);
+      let filled = 0;
+      const fill = (value: string | undefined, current: string, set: (v: string) => void) => {
+        if (value && !current.trim()) { set(value); filled += 1; }
+      };
+
+      fill(data.name, name, setName);
+      fill(data.phone?.replace(/\D/g, '').slice(-10), phone, setPhone);
+      fill(data.age ? String(data.age) : undefined, age, setAge);
+      if (data.gender && !gender) { setGender(data.gender); filled += 1; }
+
+      if (source === 'bill') {
+        fill(data.billAmount ? String(data.billAmount) : undefined, billAmount, setBillAmount);
+        if (data.billDate && billDate === today) { setBillDate(data.billDate); filled += 1; }
+        if (data.medicines?.length && billMeds.length === 0) {
+          setBillMeds(data.medicines); filled += 1;
+        }
+      } else {
+        fill(data.doctor, doctor, setDoctor);
+        fill(data.diagnosis, diagnosis, setDiagnosis);
+        if (data.billDate && rxDate === today) { setRxDate(data.billDate); filled += 1; }
+        if (data.medicines?.length && !rxMedsText.trim()) {
+          setRxMedsText(data.medicines.join('\n')); filled += 1;
+        }
+      }
+
+      setExtractedCount(filled);
+    } catch (err) {
+      // Never block the manual path — the file is already attached and every
+      // field can still be typed.
+      setExtractError(err instanceof Error ? err.message : 'Could not read that scan.');
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -146,6 +215,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     setDoctor(''); setRxDate(today); setDiagnosis('');
     setRxMedsText(''); setRxError(null);
     setAttachment(null); setUploadError(null); setDragOver(false);
+    setExtracting(false); setExtractError(null); setExtractedCount(0);
   }, [open, today]);
 
   // ── Shared submit pipeline ─────────────────────────────────────────────────
@@ -196,7 +266,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
             follow_up_date: null,
             diagnosis: diagnosis.trim() || null,
             notes: null,
-            attachment_url: attachment?.url ?? null,
+            attachment_url: attachment?.path ?? null,
           },
           medicines: parsedRxMeds.length > 0
             ? parsedRxMeds
@@ -210,6 +280,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
       await qc.invalidateQueries({ queryKey: ['customers'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
       await qc.invalidateQueries({ queryKey: ['customer', c.id] });
+      await qc.invalidateQueries({ queryKey: ['prescriptions', c.id] });
       onOpenChange(false);
       onCreated?.(c);
     },
@@ -418,6 +489,26 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
 
               {uploadError && (
                 <p className="mt-2 text-xs text-destructive">{uploadError}</p>
+              )}
+
+              {/* AI extraction status. Silent when no key is configured — the
+                  manual flow is the default, not a degraded state. */}
+              {extracting && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {t('add_bill.ai_reading')}
+                </p>
+              )}
+              {!extracting && extractedCount > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-primary">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {t('add_bill.ai_filled')}
+                </p>
+              )}
+              {!extracting && extractError && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t('add_bill.ai_failed')}
+                </p>
               )}
             </section>
           )}

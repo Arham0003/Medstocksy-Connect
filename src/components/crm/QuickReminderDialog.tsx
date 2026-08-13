@@ -236,7 +236,7 @@ export function QuickReminderDialog({
                       )}
                     >
                       {m === 'days' ? <Clock className="h-3 w-3" /> : m === 'months' ? <Calendar className="h-3 w-3" /> : <Zap className="h-3 w-3" />}
-                      {t(`rem.timing.${m}` as any)}
+                      {t(`rem.timing.${m}`)}
                     </button>
                   ))}
                 </div>

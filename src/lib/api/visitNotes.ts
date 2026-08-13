@@ -43,8 +43,3 @@ export async function addVisitNote(args: {
   if (error) throw new Error(error.message);
   return data as unknown as VisitNote;
 }
-
-export async function deleteVisitNote(id: string): Promise<void> {
-  const { error } = await supabase.from('crm_visit_notes').delete().eq('id', id);
-  if (error) throw new Error(error.message);
-}

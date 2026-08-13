@@ -88,6 +88,22 @@ function RemindersBellInner() {
       // 2. Route through the bot if configured + online, else click-to-chat.
       const result = await sendOrCompose({ phone: r.customer.phone, body });
 
+      if (result.via === 'manual') {
+        await new Promise<void>((resolve) => {
+          setTimeout(() => {
+            if (document.hasFocus()) {
+              resolve();
+            } else {
+              const onFocus = () => {
+                window.removeEventListener('focus', onFocus);
+                resolve();
+              };
+              window.addEventListener('focus', onFocus);
+            }
+          }, 1000);
+        });
+      }
+
       // 3. Audit-log the send + bump the rate counter (skip if bot already
       //    audited via its /audit endpoint — TODO: wire that fully).
       const { messageId } = await logManualSend({
