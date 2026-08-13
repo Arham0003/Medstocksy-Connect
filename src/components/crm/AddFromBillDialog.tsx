@@ -14,7 +14,7 @@ import {
   Loader2, Receipt, FileText, Users, ExternalLink, X as XIcon,
   Calendar as CalendarIcon, IndianRupee, Pill, Stethoscope,
   Paperclip, Upload, File as FileIcon, Image as ImageIcon, Pencil, ClipboardPaste,
-  Sparkles,
+  Sparkles, AlertTriangle,
 } from 'lucide-react';
 
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
@@ -28,6 +28,9 @@ import { signedBillUrl } from '@/lib/api/attachments';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
 import { getGeminiKey, hasGeminiKey } from '@/lib/aiKey';
 import { extractBillData } from '@/lib/gemini';
+import { BILL_FIELDS, PRESCRIPTION_FIELDS } from '@/lib/ocr/fields';
+import { validateExtraction, type ExtractionReport } from '@/lib/ocr/validate';
+import { loadKnownMedicines, matchMedicines, type MedicineMatch } from '@/lib/ocr/matchMedicines';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -109,6 +112,11 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [extractedCount, setExtractedCount] = useState(0);
+  /** Per-field warnings from validation — shown so the user knows what to check. */
+  const [issues, setIssues] = useState<{ key: string; issue: string }[]>([]);
+  /** Medicine names whose match against history was too weak to apply. */
+  const [medMatches, setMedMatches] = useState<MedicineMatch[]>([]);
+  const [totalsCheck, setTotalsCheck] = useState<ExtractionReport['totalsCheck'] | null>(null);
 
   const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   const MAX_BYTES = 10 * 1024 * 1024;
@@ -165,30 +173,72 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     setExtracting(true);
     setExtractError(null);
     setExtractedCount(0);
+    setIssues([]);
+    setMedMatches([]);
+    setTotalsCheck(null);
     try {
-      const data = await extractBillData(getGeminiKey(), file, file.type);
+      // The form declares its own fields, so extraction adapts to whichever
+      // mode is active rather than pulling a fixed shape and discarding half.
+      const specs = source === 'bill' ? BILL_FIELDS : PRESCRIPTION_FIELDS;
+      const raw = await extractBillData(getGeminiKey(), file, file.type, specs);
+
+      // Nothing reaches a form field before it has been validated.
+      const report = validateExtraction(specs, raw);
+      setIssues(
+        [...report.suspect, ...report.invalid]
+          .map((k) => ({ key: k, issue: report.fields[k]?.issue ?? '' }))
+          .filter((i) => i.issue)
+      );
+      setTotalsCheck(report.totalsCheck ?? null);
+
+      /** Only 'ok' and 'suspect' values are offered; 'invalid' is dropped. */
+      const take = (key: string): string | null => {
+        const f = report.fields[key];
+        if (!f || f.value === null || f.verdict === 'invalid') return null;
+        return String(f.value);
+      };
+      const takeList = (key: string): string[] => {
+        const f = report.fields[key];
+        return f && Array.isArray(f.value) && f.verdict !== 'invalid' ? f.value : [];
+      };
+
       let filled = 0;
-      const fill = (value: string | undefined, current: string, set: (v: string) => void) => {
+      const fill = (value: string | null, current: string, set: (v: string) => void) => {
         if (value && !current.trim()) { set(value); filled += 1; }
       };
 
-      fill(data.name, name, setName);
-      fill(data.phone?.replace(/\D/g, '').slice(-10), phone, setPhone);
-      fill(data.age ? String(data.age) : undefined, age, setAge);
-      if (data.gender && !gender) { setGender(data.gender); filled += 1; }
+      fill(take('name'), name, setName);
+      fill(take('phone'), phone, setPhone);
+      fill(take('age'), age, setAge);
+      const g = take('gender');
+      if (g && !gender) { setGender(g as Gender); filled += 1; }
+
+      // Suggest the pharmacy's own spelling where a confident match exists,
+      // but keep the OCR text whenever the match is uncertain — the spec
+      // forbids overwriting on low confidence.
+      const meds = takeList('medicines');
+      let resolved = meds;
+      if (meds.length > 0) {
+        const known = await loadKnownMedicines(pharmacyId);
+        const matches = matchMedicines(meds, known);
+        setMedMatches(matches.filter((m) => m.confidence === 'low'));
+        resolved = matches.map((m) => (m.confidence === 'high' && m.match ? m.match : m.extracted));
+      } else {
+        setMedMatches([]);
+      }
 
       if (source === 'bill') {
-        fill(data.billAmount ? String(data.billAmount) : undefined, billAmount, setBillAmount);
-        if (data.billDate && billDate === today) { setBillDate(data.billDate); filled += 1; }
-        if (data.medicines?.length && billMeds.length === 0) {
-          setBillMeds(data.medicines); filled += 1;
-        }
+        fill(take('billAmount'), billAmount, setBillAmount);
+        const d = take('billDate');
+        if (d && billDate === today) { setBillDate(d); filled += 1; }
+        if (resolved.length && billMeds.length === 0) { setBillMeds(resolved); filled += 1; }
       } else {
-        fill(data.doctor, doctor, setDoctor);
-        fill(data.diagnosis, diagnosis, setDiagnosis);
-        if (data.billDate && rxDate === today) { setRxDate(data.billDate); filled += 1; }
-        if (data.medicines?.length && !rxMedsText.trim()) {
-          setRxMedsText(data.medicines.join('\n')); filled += 1;
+        fill(take('doctor'), doctor, setDoctor);
+        fill(take('diagnosis'), diagnosis, setDiagnosis);
+        const d = take('billDate');
+        if (d && rxDate === today) { setRxDate(d); filled += 1; }
+        if (resolved.length && !rxMedsText.trim()) {
+          setRxMedsText(resolved.join('\n')); filled += 1;
         }
       }
 
@@ -216,6 +266,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     setRxMedsText(''); setRxError(null);
     setAttachment(null); setUploadError(null); setDragOver(false);
     setExtracting(false); setExtractError(null); setExtractedCount(0);
+    setIssues([]); setMedMatches([]); setTotalsCheck(null);
   }, [open, today]);
 
   // ── Shared submit pipeline ─────────────────────────────────────────────────
@@ -509,6 +560,46 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t('add_bill.ai_failed')}
                 </p>
+              )}
+
+              {/* Validation warnings. Extraction is a suggestion, so anything
+                  the validator could not vouch for is named explicitly rather
+                  than dropped into a field and hoped for. */}
+              {!extracting && issues.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {issues.map((i) => (
+                    <li key={i.key} className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                      <AlertTriangle aria-hidden="true" className="mt-px h-3 w-3 shrink-0" />
+                      <span><span className="font-semibold">{i.key}</span> — {i.issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Bill arithmetic cross-check. */}
+              {!extracting && totalsCheck && !totalsCheck.ok && (
+                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                  <AlertTriangle aria-hidden="true" className="mt-px h-3 w-3 shrink-0" />
+                  {t('add_bill.ai_totals_mismatch')
+                    .replace('{expected}', totalsCheck.expected.toFixed(2))
+                    .replace('{stated}', totalsCheck.stated.toFixed(2))}
+                </p>
+              )}
+
+              {/* Medicines that resemble a known name but not closely enough to
+                  substitute automatically — the user decides. */}
+              {!extracting && medMatches.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground">
+                    {t('add_bill.ai_check_medicines')}
+                  </p>
+                  {medMatches.map((m) => (
+                    <p key={m.extracted} className="text-[11px] text-muted-foreground">
+                      “{m.extracted}” → {t('add_bill.ai_did_you_mean')}{' '}
+                      <span className="font-semibold text-foreground">{m.match}</span>?
+                    </p>
+                  ))}
+                </div>
               )}
             </section>
           )}

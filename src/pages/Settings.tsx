@@ -640,7 +640,10 @@ function AiSection() {
       const png = Uint8Array.from(atob(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
       ), (c) => c.charCodeAt(0));
-      await extractBillData(key.trim(), new Blob([png], { type: 'image/png' }), 'image/png');
+      // One trivial field: this only needs to prove the key and a model are
+      // reachable, not to extract anything from a blank pixel.
+      await extractBillData(key.trim(), new Blob([png], { type: 'image/png' }), 'image/png',
+        [{ key: 'probe', type: 'string', describe: 'Any text visible in the image' }]);
       setTestState('ok');
     } catch (e) {
       // A blank image legitimately extracts nothing; only auth/quota failures
