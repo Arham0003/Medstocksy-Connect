@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, rpc } from '@/lib/supabase';
 import type { Tables, Inserts } from '@/lib/supabase';
 import type { TagKey } from '@/components/ui/tag';
 
@@ -25,6 +25,18 @@ const SEGMENT_TO_TAG: Record<string, TagKey> = {
 
 export type CustomerSort = 'newest' | 'oldest' | 'name' | 'recent_visit' | 'top_spend';
 
+/** One row of `crm_customers_enriched` as returned by the RPC: every
+ *  crm_customers column, plus the flattened stats columns and auto-tags. */
+type EnrichedRow = Customer & {
+  visit_count: number | null;
+  lifetime_value: number | null;
+  last_visit_at: string | null;
+  avg_days_between_visits: number | null;
+  auto_tags_json: string[] | null;
+  /** Generated tsvector on the table — never used client-side. */
+  fts?: unknown;
+};
+
 export async function listCustomers(opts: {
   pharmacyId: string;
   search?: string;
@@ -34,89 +46,57 @@ export async function listCustomers(opts: {
   offset?: number;
 }): Promise<{ rows: CustomerWithStats[]; total: number }> {
   const { pharmacyId, search, segment = 'all', sort = 'newest', limit = 25, offset = 0 } = opts;
-  // Server-side sorts go through .order(); 'recent_visit' / 'top_spend' use
-  // crm_customer_stats which lives in a separate view, so we sort those
-  // client-side after the fetch.
-  let query = supabase
-    .from('crm_customers')
-    .select('*', { count: 'exact' })
-    .eq('pharmacy_id', pharmacyId)
-    .range(offset, offset + limit - 1);
-  if (sort === 'newest')      query = query.order('created_at', { ascending: false });
-  else if (sort === 'oldest') query = query.order('created_at', { ascending: true });
-  else if (sort === 'name')   query = query.order('name', { ascending: true });
-  else                        query = query.order('created_at', { ascending: false });
 
-  if (search) {
-    // ILIKE on name OR phone — RLS already restricts to pharmacy
-    query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
-  }
+  // Filtering, sorting and pagination all happen in `crm_list_customers`
+  // (migration 20260610_05). Doing it here instead of client-side fixes two
+  // things: the `chronic` segment (a manual crm_tags row, which the old
+  // client filter had no way to see and so always returned empty), and
+  // `recent_visit`/`top_spend`, which used to sort only the current page and
+  // therefore produced the wrong order past the first 25 rows.
+  const { data, error } = await rpc<{ total: number; rows: EnrichedRow[] }>(
+    'crm_list_customers',
+    {
+      p_pharmacy_id: pharmacyId,
+      p_segment: segment,
+      p_search: search?.trim() || null,
+      p_sort: sort,
+      p_limit: limit,
+      p_offset: offset,
+    }
+  );
+  if (error) throw new Error(error.message);
 
-  if (segment === 'optout') {
-    query = query.eq('whatsapp_opted_in', false);
-  }
+  const rows = (data?.rows ?? []).map((row): CustomerWithStats => {
+    const { auto_tags_json, visit_count, lifetime_value, last_visit_at,
+            avg_days_between_visits, fts: _fts, ...customer } = row;
 
-  const { data: rawData, count, error } = await query;
-  if (error) throw error;
-  const data = (rawData ?? []) as unknown as Customer[];
+    return {
+      ...(customer as Customer),
+      // crm_customer_stats is LEFT JOINed, so every stat column is null until
+      // the customer has at least one sale. Keep `stats: null` in that case
+      // rather than an object of nulls — callers already branch on it.
+      stats: visit_count === null
+        ? null
+        : {
+            customer_id: row.id,
+            visit_count,
+            lifetime_value: lifetime_value ?? 0,
+            last_visit_at,
+            avg_days_between_visits,
+          },
+      auto_tags: (auto_tags_json ?? [])
+        .map((tag) => SEGMENT_TO_TAG[tag])
+        .filter((tag): tag is TagKey => Boolean(tag)),
+    };
+  });
 
-  const customerIds = data.map((c) => c.id);
-  if (customerIds.length === 0) return { rows: [], total: count ?? 0 };
-
-  // Stats + auto-tags in two parallel calls
-  const [statsRes, autoTagsRes] = await Promise.all([
-    supabase.from('crm_customer_stats').select('*').in('customer_id', customerIds),
-    supabase.from('crm_customer_auto_tags').select('*').in('customer_id', customerIds),
-  ]);
-
-  if (statsRes.error) throw statsRes.error;
-  if (autoTagsRes.error) throw autoTagsRes.error;
-
-  const statsRows = (statsRes.data ?? []) as unknown as CustomerStats[];
-  const tagRows = (autoTagsRes.data ?? []) as unknown as { customer_id: string; tag: string }[];
-
-  const statsMap = new Map(statsRows.map((s) => [s.customer_id, s]));
-  const tagsMap = new Map<string, TagKey[]>();
-  for (const row of tagRows) {
-    const tagKey = SEGMENT_TO_TAG[row.tag];
-    if (!tagKey) continue;
-    const list = tagsMap.get(row.customer_id) ?? [];
-    list.push(tagKey);
-    tagsMap.set(row.customer_id, list);
-  }
-
-  let rows: CustomerWithStats[] = data
-    .map((c) => ({
-      ...c,
-      stats: statsMap.get(c.id) ?? null,
-      auto_tags: tagsMap.get(c.id) ?? [],
-    }))
-    .filter((c) => {
-      if (segment === 'all' || segment === 'optout') return true;
-      if (segment === 'chronic') return false; // chronic is manual tag (TODO: join crm_tags)
-      return c.auto_tags.includes(SEGMENT_TO_TAG[segment]!);
-    });
-
-  // Client-side sorts that depend on the stats view.
-  if (sort === 'recent_visit') {
-    rows = rows.slice().sort((a, b) => {
-      const av = a.stats?.last_visit_at ?? '';
-      const bv = b.stats?.last_visit_at ?? '';
-      return bv.localeCompare(av);
-    });
-  } else if (sort === 'top_spend') {
-    rows = rows.slice().sort((a, b) =>
-      (b.stats?.lifetime_value ?? 0) - (a.stats?.lifetime_value ?? 0)
-    );
-  }
-
-  return { rows, total: count ?? 0 };
+  return { rows, total: data?.total ?? 0 };
 }
 
 /** Find an existing PRIMARY customer for the given phone, scoped to this
- *  pharmacy. Returns null if none — used by the create-customer dialog to
- *  resolve duplicate-phone collisions into a "family member" workflow. */
-export async function findPrimaryByPhone(
+ *  pharmacy. Returns null if none — used by createCustomer below to resolve
+ *  duplicate-phone collisions into a "family member" workflow. */
+async function findPrimaryByPhone(
   pharmacyId: string, phoneE164: string
 ): Promise<Customer | null> {
   const { data, error } = await supabase
@@ -128,17 +108,6 @@ export async function findPrimaryByPhone(
     .maybeSingle();
   if (error) throw error;
   return (data as unknown as Customer | null) ?? null;
-}
-
-/** List family members for a primary customer. */
-export async function listFamilyMembers(primaryId: string): Promise<Customer[]> {
-  const { data, error } = await supabase
-    .from('crm_customers')
-    .select('*')
-    .eq('family_of_id', primaryId)
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  return ((data ?? []) as unknown) as Customer[];
 }
 
 export async function getCustomer(id: string): Promise<CustomerWithStats | null> {
@@ -288,3 +257,12 @@ export async function listManualTags(customerId: string): Promise<string[]> {
   if (error) throw error;
   return ((data ?? []) as unknown as { tag_key: string }[]).map((r) => r.tag_key);
 }
+
+export async function deleteCustomer(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('crm_customers')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+

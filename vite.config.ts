@@ -21,18 +21,17 @@ export default defineConfig({
   preview: { port: 4180 },
   build: {
     target: 'es2022',
-    sourcemap: true,
+    // Source maps are ~3x the JS payload on disk and slow the build. Vercel
+    // serves them only when devtools requests them, but they still bloat the
+    // deploy; 'hidden' keeps them generated for error reporting without the
+    // //# sourceMappingURL comment that makes browsers fetch them.
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           supabase: ['@supabase/supabase-js'],
-          ui: [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-toast',
-          ],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-slot'],
         },
       },
     },

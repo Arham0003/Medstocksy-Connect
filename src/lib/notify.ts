@@ -8,9 +8,9 @@
  */
 import { storage } from '@/lib/utils';
 
-export const NOTIFY_INTERVAL_KEY = 'medcrm.notify_interval_min';
-export const SNOOZE_UNTIL_KEY = 'medcrm.popup_snoozed_until';
-export const DEFAULT_NOTIFY_INTERVAL = 60; // minutes
+const NOTIFY_INTERVAL_KEY = 'medcrm.notify_interval_min';
+const SNOOZE_UNTIL_KEY = 'medcrm.popup_snoozed_until';
+const DEFAULT_NOTIFY_INTERVAL = 60; // minutes
 
 /** Selectable intervals (minutes). 0 = off. */
 export const NOTIFY_INTERVAL_OPTIONS: { value: number; labelKey: string }[] = [

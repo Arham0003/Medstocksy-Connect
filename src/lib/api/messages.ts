@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, rpc } from '@/lib/supabase';
 
 export interface WhatsAppHealth {
   pharmacy_id: string;
@@ -22,13 +22,9 @@ export async function getWhatsAppHealth(pharmacyId: string): Promise<WhatsAppHea
 }
 
 export async function canSendNow(pharmacyId: string): Promise<boolean> {
-  // Cast: hand-typed Database shim doesn't fully model RPC arg types.
-  // Replace with `npm run supabase:types` output once the migration is applied.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  const { data, error } = await rpc('crm_can_send_now', { p_pharmacy_id: pharmacyId });
+  const { data, error } = await rpc<boolean>('crm_can_send_now', {
+    p_pharmacy_id: pharmacyId,
+  });
   if (error) throw new Error(error.message);
   return Boolean(data);
 }

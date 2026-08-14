@@ -13,6 +13,7 @@ import {
   Stethoscope, Upload, User, Users, X as XIcon, Bell, ClipboardPaste, Plus,
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
+import { signedBillUrl } from '@/lib/api/attachments';
 import { supabase } from '@/lib/supabase';
 import { createCustomer, DuplicatePhoneError, type Customer } from '@/lib/api/customers';
 import { createPrescription, type MedicineInput } from '@/lib/api/prescriptions';
@@ -197,7 +198,7 @@ function PrescriptionStep({
   const [mode, setMode] = useState<Mode>('manual');
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
-  const [attachment, setAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [attachment, setAttachment] = useState<{ url: string; path: string; name: string; type: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -243,8 +244,9 @@ function PrescriptionStep({
       const { error: upErr } = await supabase.storage.from('crm-bill-attachments')
         .upload(path, file, { upsert: false, contentType: file.type });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('crm-bill-attachments').getPublicUrl(path);
-      setAttachment({ url: pub.publicUrl, name: file.name, type: file.type });
+      // Private bucket: keep the path, sign only for the preview.
+      const preview = await signedBillUrl(path);
+      setAttachment({ url: preview ?? '', path, name: file.name, type: file.type });
       // Stay in upload mode — show the simplified medicine + price tiles below.
     } catch (err) {
       setUploadErr(err instanceof Error ? err.message : 'Upload failed.');
@@ -287,7 +289,7 @@ function PrescriptionStep({
           follow_up_date: null,
           diagnosis: isUpload ? null : (diagnosis.trim() || null),
           notes: null,
-          attachment_url: attachment?.url ?? null,
+          attachment_url: attachment?.path ?? null,
           total_cost: total,
         },
         medicines,
