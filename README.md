@@ -1,272 +1,228 @@
-# medcrm — Customer Relations for Pharmacies
+# Medstocksy Connect (medcrm) — Customer Relations for Pharmacies
 
-> **Note on scope:** this is a production-quality scaffold, **not a finished product**. The schema, auth, RLS, layout, and core pages are real. The campaign wizard, reminder rule editor, and a few other interactions are marked TODO and need ~1–2 more weeks of focused work to fully ship. Read the [What's done vs what's left](#whats-done-vs-whats-left) section before deploying.
-
-A WhatsApp-driven CRM that plugs into the existing **Medstocksy Inventory** app at [app.medstocksy.in](https://app.medstocksy.in). Same Supabase project = single sign-on. Customers, segments, campaigns, reminders, templates, activity stream — all built around the PRD in `wire/medstocksy_connect_prd.md` and the rules in `wire/medstocksy_connect_rules.md`.
+A high-performance WhatsApp-driven and email-enabled CRM that seamlessly integrates into the **Medstocksy Inventory** ecosystem at [app.medstocksy.in](https://app.medstocksy.in). Powered by single sign-on (SSO) via shared Supabase auth, intelligent Prescription OCR extraction with Gemini AI, customizable medicine refill reminders, customer segmentation, and Progressive Web App (PWA) offline capabilities.
 
 ---
 
-## ⚙️ Stack
+## ⚙️ Stack & Architecture
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Frontend | **React 18 + TypeScript + Vite 6** | Fast HMR, code-split routes, strict types |
-| Styling | **Tailwind 3 + shadcn/ui** | Matches parent inventory app's design tokens exactly |
-| State | **TanStack Query 5** + React Context | Server cache + auth/pharmacy state |
-| Routing | **react-router-dom v6** | File-organised routes |
-| Forms | react-hook-form + zod | Type-safe validation |
-| Animations | **Framer Motion 11** | Drawer transitions, page fade-in, list stagger |
-| Backend | **Supabase** (Postgres + Auth + RLS) | Same project as inventory app — SSO via shared `auth.users` |
-| Serverless | **Vercel Functions** (`api/`) | WhatsApp send + webhook handlers |
-| WhatsApp | **Meta Cloud API v21** | Direct integration (Twilio fallback supported) |
+| Layer | Choice | Description / Purpose |
+|-------|--------|------------------------|
+| **Frontend** | **React 18 + TypeScript + Vite 6** | Strict typing, code-split chunking, sub-second HMR |
+| **Styling** | **Tailwind 3 + shadcn/ui** | Design tokens matching Medstocksy inventory app |
+| **State & Cache** | **TanStack Query 5** + React Context | Smart invalidation, optimistic updates, auth/pharmacy state |
+| **Routing** | **react-router-dom v6** | Protected routes, auth guards, deep linking for reset flows |
+| **AI / OCR** | **Google Gemini AI + PDF.js** | Prescription parsing, schema extraction, medicine auto-matching |
+| **Email Service** | **Resend + React Email** | Custom branded transactional templates (Welcome, Reset Password) |
+| **PWA / Mobile** | **Vite PWA (Workbox)** | Offline asset caching, service worker, standalone mobile install |
+| **Backend & DB** | **Supabase (PostgreSQL + RLS)** | 13+ CRM tables, RPCs, security definer views, audit triggers |
+| **Serverless** | **Vercel Functions (`api/`)** | WhatsApp dispatch, webhooks, transactional email endpoints |
+| **WhatsApp API** | **Meta Cloud API v21** | Direct graph API messaging with rate-limit enforcement |
+| **i18n** | **Custom lightweight i18n** | English (`en`) & Hindi (`hi`) translation dictionaries |
 
 ---
 
-## 🚀 Getting started
+## 🌟 Key Features & Recent Implementation Updates
 
-### 1. Clone the parent's Supabase project credentials
+### 1. 🔍 Schema-Driven Prescription OCR & AI Extraction
+- **Gemini AI Vision & OCR Engine**: Extracts patient name, doctor, hospital, diagnosis, medicines, dosages, frequencies, and durations directly from prescription images and multi-page PDFs (`src/lib/gemini.ts`, `src/lib/ocr/fields.ts`).
+- **PDF.js Client-Side Extraction**: Fast rasterization of multi-page PDFs to images in a dedicated worker thread (`src/lib/pdf/extract.ts`, `src/lib/pdf/usePdfExtraction.ts`).
+- **Inventory Medicine Matcher**: Automatically maps extracted prescription medicines to inventory catalog items with confidence scoring and fallback manual assignment.
 
-This app **must** share the inventory app's Supabase project so users only sign in once. Copy the same `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` values:
+### 2. 🔐 Authentication, Reset Password & Transactional Email
+- **Direct Password Reset Flow**: Dedicated `/reset-password` route supporting PKCE recovery tokens, real-time password strength validation, and secure password update via Supabase Auth (`src/pages/ResetPassword.tsx`).
+- **Custom Branded Email System**: Serverless endpoints powered by Resend (`api/email/reset-password.ts`, `api/email/welcome.ts`, `api/email/template.ts`) with custom styled email templates in `react-email-starter/`.
+- **Cross-Domain Recovery Handshake**: Automatic redirect and token preservation from Medstocksy authentication emails to the active client origin.
+
+### 3. 📱 Progressive Web App (PWA) & Mobile UX
+- **Full Offline Caching**: Workbox service worker caching assets, fonts, icons, and shell HTML for instant loading (`vite.config.ts`).
+- **Mobile Standalone Manifest**: Custom icons (`pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`), theme colors, and responsive drawer navigation.
+- **PWA Auto-Update Prompt**: Seamless service worker update detection without hard page refreshes.
+
+### 4. ⏰ Interactive Reminders & Action Center
+- **Bulk Reminder Send Dialog**: Multi-customer selection with template preview, variable replacement, and instant WhatsApp dispatch (`src/components/crm/BulkReminderSendDialog.tsx`).
+- **Reschedule Reminder Dialog**: Interactive calendar date/time picker to delay or move refill reminders (`src/components/crm/RescheduleReminderDialog.tsx`).
+- **Today's Due Reminders Popup & Bell**: Header notification counter with direct one-click send and mark-completed triggers (`src/components/layout/RemindersBell.tsx`, `src/components/layout/TodayRemindersPopup.tsx`).
+- **Quick Reminder & Bill Linking**: Quickly attach refill reminders directly from billing and prescription workflows (`src/components/crm/QuickReminderDialog.tsx`, `src/components/crm/AddFromBillDialog.tsx`).
+
+### 5. 🎯 Customers, Segments & Direct Campaigns
+- **Customer Segmentation**: Automatic segment tagging (`chronic`, `refill_due`, `inactive`, `high_value`, `new_customer`) with instant count badges and customer profile history (`src/pages/Segments.tsx`, `src/pages/Customers.tsx`).
+- **Direct Campaign Dispatch**: Filter-to-send dialog for blasting announcements, offers, and seasonal alerts with WhatsApp rate-limit guards (`src/components/crm/CampaignSendDialog.tsx`, `src/pages/Campaigns.tsx`).
+- **Real-time Query Cache Invalidation**: Automatic optimistic updates on customer status changes, reminders, and opt-outs.
+
+### 6. 🌐 Dual Language Support (English & Hindi)
+- Comprehensive internationalization system covering all pages, buttons, modals, error messages, and reminder statuses (`src/i18n/en.ts`, `src/i18n/hi.ts`).
+
+### 7. 🛡️ Database Migrations & Security Hardening
+- **Security Definer Views**: Fixed RLS bypass on derived views (`supabase/migrations/20260816181903_fix_security_definer_views.sql`).
+- **Postgres Optimization**: Warning cleanups and index optimizations (`supabase/migrations/20260816182753_fix_warnings.sql`).
+- **WhatsApp Rate Limit Guard**: Trigger preventing unauthorized outbound burst requests (`supabase/migrations/20260817001200_fix_can_send_now_guard.sql`).
+
+---
+
+## 🚀 Getting Started
+
+### 1. Configure Environment Variables
+
+Create `.env` based on `.env.example`:
 
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase URL + anon key (same as Medstocksy-inventory)
 ```
 
-### 2. Apply the database migration
+| Variable | Scope | Description |
+|----------|-------|-------------|
+| `VITE_SUPABASE_URL` | Client | Supabase Project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Client | Supabase Anon Key (shared with inventory app) |
+| `VITE_INVENTORY_APP_URL` | Client | URL of main Medstocksy inventory app (`https://app.medstocksy.in`) |
+| `VITE_APP_URL` | Client / Server | URL of Medstocksy Connect app |
+| `VITE_GEMINI_API_KEY` | Client / Server | Google Gemini API key for OCR parsing |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server (Vercel) | Supabase Admin Secret Key for API routes |
+| `WHATSAPP_PHONE_NUMBER_ID` | Server (Vercel) | Meta Cloud API Phone Number ID |
+| `WHATSAPP_ACCESS_TOKEN` | Server (Vercel) | Meta Permanent System User Access Token |
+| `WHATSAPP_VERIFY_TOKEN` | Server (Vercel) | Webhook verification handshake token |
+| `RESEND_API_KEY` | Server (Vercel) | Resend API key for custom transactional emails |
 
-In your Supabase project SQL editor (or via CLI), run:
+### 2. Apply Database Migrations
+
+Run with the Supabase CLI or copy into your Supabase SQL Editor:
 
 ```bash
-supabase db push --include-all   # if using local supabase CLI
-# OR copy-paste supabase/migrations/20260507_medcrm.sql into the SQL editor
+# Apply schema and incremental migration patches
+supabase db push
+# Or run files in supabase/migrations/ sequentially in SQL editor:
+# 1. 20260507_medcrm.sql
+# 2. 20260816181903_fix_security_definer_views.sql
+# 3. 20260816182753_fix_warnings.sql
+# 4. 20260817001200_fix_can_send_now_guard.sql
 ```
 
-This creates 13 tables under the `crm_` prefix, plus RLS policies, audit triggers, derived views, and 3 seeded message templates. Existing inventory tables are not touched.
-
-### 3. Install + run
+### 3. Install & Run Locally
 
 ```bash
 npm install
-npm run dev   # http://localhost:5174
+npm run dev       # Starts local dev server at http://localhost:5174
 ```
 
-The first time you log in (with the same Google account as the inventory app), you'll see an Onboarding screen to create your pharmacy record.
-
-### 4. Build for production
+### 4. Build & Typecheck
 
 ```bash
-npm run build
-npm run preview   # smoke test the bundle locally
+npm run typecheck # Strict TypeScript check
+npm run build     # Production build with PWA service worker bundle
+npm run preview   # Preview production bundle
 ```
 
 ---
 
-## 📡 WhatsApp Business setup (separate from app deployment)
-
-The most fiddly part of the whole product — give yourself half a day.
-
-### Meta Cloud API path (recommended)
-
-1. Create a **Meta Business Account** at [business.facebook.com](https://business.facebook.com)
-2. Add a **WhatsApp Business Platform** product to your app
-3. Add a **system user** with `whatsapp_business_messaging` + `whatsapp_business_management` perms
-4. Generate a **permanent access token** for that system user
-5. Get your **WhatsApp phone number ID** from the API setup screen
-6. Submit your message templates (T1, T2, T3 from `crm_templates`) for approval in the Meta dashboard
-7. Once approved, set `whatsapp_template_name` on each row in `crm_templates`
-
-### Vercel env vars
-
-Set these as **encrypted** in Vercel project settings:
+## 📂 Project Structure
 
 ```
-SUPABASE_SERVICE_ROLE_KEY    # from Supabase dashboard → settings → API
-WHATSAPP_PHONE_NUMBER_ID
-WHATSAPP_ACCESS_TOKEN
-WHATSAPP_VERIFY_TOKEN        # any random string — set the same on Meta webhook
-```
-
-### Wire the webhook
-
-In Meta dashboard → WhatsApp → Configuration → Webhook:
-
-```
-Callback URL:   https://<your-vercel-domain>/api/whatsapp/webhook
-Verify token:   <same as WHATSAPP_VERIFY_TOKEN above>
-Subscribe to:   messages
-```
-
-The webhook handles: delivery receipts, inbound replies, and **automatic opt-out** when a customer replies "STOP" / "UNSUBSCRIBE".
-
----
-
-## 🔐 Security model
-
-| Layer | Mechanism |
-|-------|-----------|
-| Auth | Supabase JWT, PKCE flow, persisted in localStorage |
-| Multi-tenant isolation | Every table has `pharmacy_id` + RLS policy via `crm_is_member()` |
-| RBAC | `admin` / `manager` / `staff` roles via `crm_members` |
-| Server-side authorization | `/api/whatsapp/send` validates JWT + membership + rate limit before calling WhatsApp |
-| Audit trail | `crm_audit_log` table + trigger on `customers`, `messages`, `campaigns`. 90-day retention. |
-| Webhook trust | `WHATSAPP_VERIFY_TOKEN` matched on GET handshake. (TODO: signature validation on POST) |
-| Secrets | Service role key only used server-side. Client uses anon key. No `.env` checked in. |
-| Headers | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` (set in `vercel.json`) |
-
----
-
-## 📂 Project structure
-
-```
-medcrm-v2/
-├── api/                          # Vercel serverless functions
+Medstocksy-Connect/
+├── api/                               # Vercel Serverless Functions
+│   ├── email/                         # Transactional email handlers (Resend)
+│   │   ├── reset-password.ts          # Branded password reset email dispatch
+│   │   ├── welcome.ts                 # Welcome onboarding email dispatch
+│   │   └── template.ts                # Base HTML email renderer
 │   └── whatsapp/
-│       ├── send.ts               # POST — server-validated dispatch
-│       └── webhook.ts            # GET (verify) + POST (events)
-├── public/                       # static assets (favicon etc.)
+│       ├── send.ts                    # WhatsApp message dispatch with rate limiter
+│       └── webhook.ts                 # WhatsApp inbound & status webhook handler
+├── public/                            # Static PWA icons, manifest & assets
+├── react-email-starter/               # React Email development & preview workspace
+│   └── emails/
+│       ├── medstocksy-reset-password.tsx
+│       └── medstocksy-welcome.tsx
 ├── src/
 │   ├── components/
-│   │   ├── crm/                  # domain components
-│   │   │   ├── ComposeDrawer.tsx # the highest-stakes UI
-│   │   │   └── RateMeter.tsx     # ambient WhatsApp rate display
-│   │   ├── layout/
-│   │   │   ├── AppSidebar.tsx    # matches inventory app pattern
-│   │   │   └── Layout.tsx        # responsive shell + mobile drawer
-│   │   └── ui/                   # shadcn primitives (button, card, input, …)
+│   │   ├── crm/                       # Domain CRM Modals & Drawers
+│   │   │   ├── AddFromBillDialog.tsx
+│   │   │   ├── BulkReminderSendDialog.tsx
+│   │   │   ├── CampaignDialog.tsx
+│   │   │   ├── CampaignSendDialog.tsx
+│   │   │   ├── ComposeDrawer.tsx
+│   │   │   ├── CustomerFormDialog.tsx
+│   │   │   ├── PrescriptionDialog.tsx
+│   │   │   ├── QuickReminderDialog.tsx
+│   │   │   ├── RateMeter.tsx
+│   │   │   └── RescheduleReminderDialog.tsx
+│   │   ├── layout/                    # Shell, Navbar, Sidebar & Notifications
+│   │   │   ├── AppSidebar.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   ├── RemindersBell.tsx
+│   │   │   └── TodayRemindersPopup.tsx
+│   │   └── ui/                        # Radix + Tailwind UI Primitives
 │   ├── contexts/
-│   │   ├── AuthContext.tsx       # Supabase auth wrapper
-│   │   └── PharmacyContext.tsx   # active pharmacy + role
-│   ├── hooks/
+│   │   ├── AuthContext.tsx            # Supabase Auth session & reset state
+│   │   └── PharmacyContext.tsx        # Multi-tenant pharmacy switcher & RBAC
+│   ├── i18n/                          # Internationalization Dictionaries
+│   │   ├── en.ts                      # English strings
+│   │   └── hi.ts                      # Hindi strings
 │   ├── lib/
-│   │   ├── api/                  # typed data layer
+│   │   ├── api/                       # Typed Supabase & Serverless Data Layer
+│   │   │   ├── campaigns.ts
 │   │   │   ├── customers.ts
-│   │   │   └── messages.ts
-│   │   ├── supabase.ts           # client (single shared instance)
-│   │   └── utils.ts              # cn, formatINR, validateIndianPhone, …
-│   ├── pages/                    # routes
-│   │   ├── Login.tsx
-│   │   ├── Onboarding.tsx
-│   │   ├── Dashboard.tsx
-│   │   ├── Customers.tsx
-│   │   ├── CustomerProfile.tsx
-│   │   ├── Segments.tsx
-│   │   ├── Campaigns.tsx
-│   │   ├── Reminders.tsx
-│   │   ├── Templates.tsx
-│   │   ├── Activity.tsx
-│   │   ├── Settings.tsx
-│   │   └── NotFound.tsx
+│   │   │   ├── email.ts
+│   │   │   ├── messages.ts
+│   │   │   ├── prescriptions.ts
+│   │   │   ├── reminders.ts
+│   │   │   └── templates.ts
+│   │   ├── ocr/                       # Prescription parsing schemas & rules
+│   │   │   └── fields.ts
+│   │   ├── pdf/                       # PDF rasterization & extraction
+│   │   │   ├── extract.ts
+│   │   │   └── usePdfExtraction.ts
+│   │   ├── gemini.ts                  # Google Gemini AI Vision client
+│   │   ├── supabase.ts                # Shared Supabase client instance
+│   │   └── utils.ts                   # Formatting, date helpers & Indian phone validation
+│   ├── pages/                         # Core Application Views
+│   │   ├── Activity.tsx               # Real-time message & audit timeline
+│   │   ├── AuthCallback.tsx           # OAuth / Auth redirect landing
+│   │   ├── Campaigns.tsx              # Campaign management & history
+│   │   ├── CustomerProfile.tsx        # Customer 360 profile, stats & bills
+│   │   ├── Customers.tsx              # Customer list, filters & actions
+│   │   ├── Dashboard.tsx              # KPIs, health cards & upcoming reminders
+│   │   ├── Login.tsx                  # Sign-in & password recovery trigger
+│   │   ├── Onboarding.tsx             # New pharmacy setup wizard
+│   │   ├── PrescriptionWorkflow.tsx   # Prescription OCR scanning & conversion
+│   │   ├── Reminders.tsx              # Refill reminders management & filters
+│   │   ├── ResetPassword.tsx          # Password update & validation
+│   │   ├── Segments.tsx               # Smart customer segments
+│   │   ├── Settings.tsx               # Pharmacy settings & WhatsApp config
+│   │   └── Templates.tsx              # WhatsApp message templates
 │   ├── types/
-│   │   └── database.ts           # Supabase types (regen with `npm run supabase:types`)
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── index.css                 # design tokens (matches inventory app)
+│   │   └── database.ts                # Auto-generated Supabase TypeScript definitions
+│   ├── App.tsx                        # Root Router & Providers
+│   ├── main.tsx                       # React mounting & PWA registration
+│   └── index.css                      # Global design tokens
 ├── supabase/
-│   └── migrations/
-│       └── 20260507_medcrm.sql   # 619-line schema + RLS + triggers + views
-├── components.json               # shadcn config
-├── tailwind.config.ts
-├── tsconfig*.json
-├── vite.config.ts
-├── vercel.json                   # security headers + function timeouts
-└── package.json
+│   └── migrations/                    # SQL schema definitions & RLS migrations
+├── vite.config.ts                     # Vite + PWA + Build optimization config
+└── vercel.json                        # Vercel serverless runtime & security headers
 ```
 
 ---
 
-## ✅ What's done vs what's left
+## 📊 Status & Roadmap
 
-This is the honest accounting. **Read this before deploying.**
+### ✅ Shipped & Production Ready
+- [x] Multi-tenant pharmacy data isolation with strict Row-Level Security (RLS).
+- [x] Unified SSO with Medstocksy inventory app.
+- [x] Gemini AI Prescription OCR extraction from Images & PDFs.
+- [x] Dedicated `/reset-password` recovery flow with Resend custom email templates.
+- [x] Progressive Web App (PWA) with offline caching and mobile support.
+- [x] Interactive Refill Reminders (Bulk Send, Reschedule, Bill Linking, Bell Popup).
+- [x] Customer 360 profile with purchase history, tags, and WhatsApp communication timeline.
+- [x] Smart Segment Filtering & direct Campaign dispatch dialog.
+- [x] WhatsApp Meta Cloud API direct integration with opt-out ("STOP") handler.
+- [x] Full English and Hindi (i18n) localization.
 
-### ✅ Production-ready
-
-- [x] **SQL schema (619 lines)** — 13 tables, RLS policies, audit trigger, rate-limit function, derived views (`crm_customer_stats`, `crm_customer_auto_tags`, `crm_whatsapp_health`)
-- [x] **Auth flow** — Google OAuth + email/password, session persistence, route guards
-- [x] **Multi-pharmacy support** — pharmacy switcher in sidebar, `useActivePharmacy()` hook
-- [x] **RBAC** — admin / manager / staff distinguished via `crm_members.role`
-- [x] **Onboarding** — first-time setup creates the pharmacy + owner record
-- [x] **Layout** — responsive sidebar (mobile drawer), matches inventory app's design language
-- [x] **Customer list** — search, segment chips (6 fixed), tabular layout, derived auto-tags
-- [x] **Customer profile** — hero, stat strip, activity timeline (messages + bills), opt-out badge
-- [x] **Compose drawer** — template picker, variable rendering, live preview, ambient rate meter, opt-out enforcement, send via `/api/whatsapp/send`
-- [x] **Dashboard** — KPIs, upcoming reminders feed, WhatsApp health card
-- [x] **Segments page** — 6 fixed segments with live counts from auto-tag view
-- [x] **Templates page** — pre-built (3 seeded) + custom listing
-- [x] **Campaigns / Reminders / Activity / Settings pages** — read-only versions wired to the schema
-- [x] **WhatsApp send endpoint** — JWT verification, membership check, rate-limit, opt-in check, Meta Cloud API call, audit insert
-- [x] **WhatsApp webhook** — verification handshake, status updates, inbound message logging, automatic opt-out on "STOP"
-- [x] **Audit log + retention** — `crm_audit_trigger` on key tables, 90-day purge function ready for pg_cron
-
-### 🟡 Functional stub — needs ~1–2 weeks more
-
-- [ ] **Campaign wizard** (3-step flow): segment → template → schedule. Page lists campaigns but creation flow is `Plus → TODO`.
-- [ ] **Reminder rule editor** — list works, "New rule" / "Edit" is `TODO`.
-- [ ] **Add customer / Edit customer dialogs** — `Plus` and `Edit` buttons are wired but open nothing.
-- [ ] **Custom template editor** — read works; "+ New" is `TODO`.
-- [ ] **User & role management** in Settings — schema supports it, UI not built.
-- [ ] **Custom segments** — schema supports `segment_key = 'custom:<filter>'`; builder UI not built.
-- [ ] **Bulk-send approval flow** — schema has `approved_at` / `approved_by`; UI not built. Currently any send below 100 recipients goes through.
-
-### ❌ Not started (V2)
-
-- [ ] **Scheduled reminder dispatcher** — needs Supabase cron + a small worker function to query `crm_scheduled_reminders` where `scheduled_for < now()` and trigger sends.
-- [ ] **Tests** — no unit/integration tests yet. Highest priority: rate-limiter, opt-out enforcement, RLS isolation.
-- [ ] **PWA** — manifest + service worker not configured (parent app has them — easy port).
-- [ ] **i18n** — Hindi support promised in PRD §3.4; not started.
-- [ ] **Sentry / error monitoring** — env var present, integration not wired.
-- [ ] **WhatsApp webhook signature verification** — currently relies on verify token only; should validate `x-hub-signature-256` HMAC.
-
----
-
-## 🧪 Sanity check after first install
-
-1. `npm install` — should complete without warnings on TypeScript types
-2. `npm run typecheck` — should pass with zero errors
-3. `npm run dev` — open http://localhost:5174, redirected to /login
-4. Sign in with the same Google account as the inventory app — should land on /onboarding (since you have no pharmacy yet)
-5. Create a pharmacy — should land on /
-6. Dashboard loads with empty KPIs (0 customers etc.) — that's correct
-7. Visit /templates — should see the 3 seeded templates (T1, T2, T3)
-
-If any step fails, check `supabase/migrations/20260507_medcrm.sql` actually ran. The `crm_my_pharmacies` view must exist.
-
----
-
-## 🚦 Deployment to Vercel
-
-```bash
-# 1. Connect repo to Vercel project
-# 2. Set env vars (Settings → Environment Variables):
-#    VITE_SUPABASE_URL
-#    VITE_SUPABASE_PUBLISHABLE_KEY
-#    VITE_INVENTORY_APP_URL    (https://app.medstocksy.in)
-#    SUPABASE_SERVICE_ROLE_KEY (encrypted)
-#    WHATSAPP_PHONE_NUMBER_ID
-#    WHATSAPP_ACCESS_TOKEN
-#    WHATSAPP_VERIFY_TOKEN
-# 3. Deploy
-```
-
-Vercel auto-detects Vite. The `vercel.json` adds security headers and function timeouts.
-
-After deploying, configure the WhatsApp webhook in Meta dashboard pointing to `https://<your-domain>/api/whatsapp/webhook`.
-
----
-
-## 📖 Source docs
-
-- **Product spec:** `../wire/medstocksy_connect_prd.md`
-- **Design rules:** `../wire/medstocksy_connect_rules.md`
-- **Theme spec:** `../wire/medstocksy_connect_theme.md`
-- **Wireframes:** `../wire/medcrm/*.svg`
+### 🟡 Next Phase Enhancements
+- [ ] Automated scheduled reminder background worker via Supabase pg_cron / Edge Functions.
+- [ ] Meta webhook HMAC signature validation (`x-hub-signature-256`).
+- [ ] Custom segment rule builder UI.
+- [ ] Automated E2E test suite (Playwright/Vitest).
 
 ---
 
 ## 🛡 License
 
-Proprietary — Medstocksy. Internal use only.
-
----
-
-Built by Vaibhav Singh · Lucknow, India · Full-Stack Web Developer
+Proprietary — Medstocksy. All rights reserved.

@@ -40,22 +40,18 @@ export function PharmacyProvider({ children }: { children: ReactNode }) {
     pharmacy_logo_url: string | null;
   }
 
+  // Claim any pending invites addressed to this user's email — once per
+  // login, not on every refetch. No-op when nothing is pending.
+  useEffect(() => {
+    if (!user) return;
+    claimInvites().catch((e) => console.warn('[PharmacyContext] invite claim skipped:', e));
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { data: memberships = [], isLoading, isError, error: queryError, isSuccess } =
     useQuery<PharmacyMembership[]>({
       queryKey: ['memberships', user?.id],
       enabled: !!user,
       queryFn: async () => {
-        // Convert any invite addressed to this user's verified email into a
-        // real membership BEFORE reading the list, so someone invited while
-        // signed out is already a member by the time this query returns.
-        // No-op (and cheap) when there is nothing pending — never let it
-        // block sign-in for an existing member.
-        try {
-          await claimInvites();
-        } catch (e) {
-          console.warn('[PharmacyContext] invite claim skipped:', e);
-        }
-
         // crm_my_pharmacies is a view that already inlines pharmacy_name +
         // pharmacy_logo_url — single SELECT, no joins needed.
         const { data, error } = await supabase

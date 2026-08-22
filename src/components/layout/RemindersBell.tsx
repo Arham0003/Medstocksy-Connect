@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, Loader2, Send, X as XIcon, AlertCircle, Clock, ChevronRight, BellOff,
+  Bell, Loader2, Send, X as XIcon, AlertCircle, Clock, ChevronRight, BellOff, Check,
 } from 'lucide-react';
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -88,24 +88,7 @@ function RemindersBellInner() {
       // 2. Route through the bot if configured + online, else click-to-chat.
       const result = await sendOrCompose({ phone: r.customer.phone, body });
 
-      if (result.via === 'manual') {
-        await new Promise<void>((resolve) => {
-          setTimeout(() => {
-            if (document.hasFocus()) {
-              resolve();
-            } else {
-              const onFocus = () => {
-                window.removeEventListener('focus', onFocus);
-                resolve();
-              };
-              window.addEventListener('focus', onFocus);
-            }
-          }, 1000);
-        });
-      }
-
-      // 3. Audit-log the send + bump the rate counter (skip if bot already
-      //    audited via its /audit endpoint — TODO: wire that fully).
+      // 3. Audit-log the send + bump the rate counter
       const { messageId } = await logManualSend({
         pharmacyId,
         customerId: r.customer.id,
@@ -114,14 +97,16 @@ function RemindersBellInner() {
         templateId: r.template.id,
       });
 
-      // 4. Mark the reminder as sent. For bot sends this is fully accurate;
-      //    for manual sends it's optimistic (assumes staff hit Send in WA).
+      // 4. Mark the reminder as sent.
       await markReminderSent(r.id, result.messageId ?? messageId);
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['due-reminders', pharmacyId] });
-      await qc.invalidateQueries({ queryKey: ['whatsapp-health', pharmacyId] });
-      await qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
+      for (const key of [
+        'due-reminders', 'whatsapp-health', 'dashboard-counts',
+        'scheduled-reminders', 'reminders-today', 'reminders-overdue', 'upcoming-reminders',
+      ]) {
+        await qc.invalidateQueries({ queryKey: [key] });
+      }
     },
   });
 
@@ -133,8 +118,9 @@ function RemindersBellInner() {
     },
   });
 
-  const count = reminders.length;
-  const hasOverdue = reminders.some((r) => new Date(r.scheduled_for) < new Date());
+  const count = reminders.filter((r) => r.status === 'pending').length;
+  const hasOverdue = reminders.some((r) => r.status === 'pending' && new Date(r.scheduled_for) < new Date());
+  const pendingSendable = reminders.filter((r) => r.status === 'pending' && r.customer?.whatsapp_opted_in !== false);
 
   return (
     <div className="fixed right-3 top-2 z-30 md:right-6 md:top-6">
@@ -241,26 +227,23 @@ function RemindersBellInner() {
             </div>
 
             {/* Footer — start-queue button */}
-            {reminders.length > 1 && canSend !== false && !queue && (
+            {pendingSendable.length > 1 && canSend !== false && !queue && (
               <div className="border-t bg-muted/30 px-4 py-2">
                 <button
                   type="button"
                   onClick={() => {
-                    const eligible = reminders.filter((r) => r.customer?.whatsapp_opted_in !== false);
-                    const first = eligible[0];
+                    const first = pendingSendable[0];
                     if (!first) return;
                     // First send fires immediately on the user's gesture (popup
                     // blockers allow it). After this, the same WhatsApp tab gets
                     // navigated on each subsequent click — no fresh popup needed.
-                    setQueue(eligible);
+                    setQueue(pendingSendable);
                     send.mutate(first);
                   }}
                   disabled={send.isPending}
                   className="w-full rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 >
-                  {t('bell.start_queue').replace('{n}', String(
-                    reminders.filter((r) => r.customer?.whatsapp_opted_in !== false).length
-                  ))}
+                  {t('bell.start_queue').replace('{n}', String(pendingSendable.length))}
                 </button>
               </div>
             )}
@@ -304,7 +287,7 @@ function ReminderRow({
 }) {
   const t = useT();
   const optedOut = reminder.customer?.whatsapp_opted_in === false;
-  const overdue = new Date(reminder.scheduled_for) < new Date();
+  const overdue = reminder.status === 'pending' && new Date(reminder.scheduled_for) < new Date();
   const time = new Date(reminder.scheduled_for).toLocaleString('en-IN', {
     hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short',
   });
@@ -365,34 +348,42 @@ function ReminderRow({
             </div>
           )}
 
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={onSend}
-              disabled={sending || skipping || optedOut || !canSend}
-              title={
-                optedOut ? t('bell.tooltip_optout')
-                : !canSend ? t('bell.tooltip_rate_limited')
-                : ''
-              }
-              className={cn(
-                'inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground transition-opacity',
-                'hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'
-              )}
-            >
-              {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-              {sending ? t('bell.sending') : t('bell.send')}
-            </button>
-            <button
-              type="button"
-              onClick={onSkip}
-              disabled={sending || skipping}
-              className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted/40 disabled:opacity-50"
-            >
-              {skipping ? <Loader2 className="h-3 w-3 animate-spin" /> : <XIcon className="h-3 w-3" />}
-              {skipping ? '…' : t('bell.skip')}
-            </button>
-          </div>
+          {reminder.status === 'sent' || reminder.status === 'converted' ? (
+            <div className="mt-2 flex items-center">
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <Check className="h-3 w-3" /> Done
+              </span>
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={onSend}
+                disabled={sending || skipping || optedOut || !canSend}
+                title={
+                  optedOut ? t('bell.tooltip_optout')
+                  : !canSend ? t('bell.tooltip_rate_limited')
+                  : ''
+                }
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground transition-opacity',
+                  'hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'
+                )}
+              >
+                {sending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                {sending ? t('bell.sending') : t('bell.send')}
+              </button>
+              <button
+                type="button"
+                onClick={onSkip}
+                disabled={sending || skipping}
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted/40 disabled:opacity-50"
+              >
+                {skipping ? <Loader2 className="h-3 w-3 animate-spin" /> : <XIcon className="h-3 w-3" />}
+                {skipping ? '…' : t('bell.skip')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </li>

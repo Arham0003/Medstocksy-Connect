@@ -59,6 +59,7 @@ export interface DueReminder {
   id: string;
   scheduled_for: string;
   status: string;
+  sent_at?: string | null;
   variables: Record<string, string>;
   template_id: string;
   customer_id: string;
@@ -76,29 +77,20 @@ export interface DueReminder {
   } | null;
 }
 
-/** List pending reminders whose scheduled_for is at most `withinHours` away
- *  (default: end of today). Includes joins to customer + template. */
-/**
- * List reminders that still need sending TODAY.
- *   • status = 'pending'  → already-sent reminders never appear (they flip to
- *     'sent' via markReminderSent and drop out automatically).
- *   • scheduled_for < start-of-tomorrow → only today's (and any overdue) ones;
- *     reminders scheduled for a future date stay hidden until that date.
- * So the popup/bell only ever surfaces un-sent reminders due today.
- */
+/** List reminders due today (or overdue), plus reminders already sent today so they stay visible with Done tick mark. */
 export async function listDueReminders(pharmacyId: string): Promise<DueReminder[]> {
   const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
   const { data, error } = await supabase
     .from('crm_scheduled_reminders')
     .select(`
-      id, scheduled_for, status, variables, template_id, customer_id,
+      id, scheduled_for, status, sent_at, variables, template_id, customer_id,
       customer:crm_customers!inner(id, name, phone, whatsapp_opted_in),
       template:crm_templates!inner(id, name, body, language)
     `)
     .eq('pharmacy_id', pharmacyId)
-    .eq('status', 'pending')
-    .lt('scheduled_for', startOfTomorrow)
+    .or(`and(status.eq.pending,scheduled_for.lt.${startOfTomorrow}),and(status.in.(sent,converted),sent_at.gte.${startOfDay})`)
     .order('scheduled_for', { ascending: true })
     .limit(50);
   if (error) throw new Error(error.message);
@@ -126,3 +118,32 @@ export async function cancelReminder(reminderId: string): Promise<void> {
     .eq('id', reminderId);
   if (error) throw new Error(error.message);
 }
+
+/** Reschedule a reminder to a new date/time and sync linked prescription follow_up_date. */
+export async function rescheduleReminder(args: {
+  reminderId: string;
+  scheduledFor: string;
+}): Promise<void> {
+  const { data, error } = await supabase
+    .from('crm_scheduled_reminders')
+    .update({
+      scheduled_for: args.scheduledFor,
+      status: 'pending',
+    } as never)
+    .eq('id', args.reminderId)
+    .select('prescription_id')
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  const rxId = ((data as unknown) as { prescription_id?: string | null } | null)?.prescription_id;
+  if (rxId) {
+    await supabase
+      .from('crm_prescriptions')
+      .update({
+        follow_up_date: args.scheduledFor.slice(0, 10),
+      } as never)
+      .eq('id', rxId);
+  }
+}
+

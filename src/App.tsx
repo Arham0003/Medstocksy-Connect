@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Login = lazy(() => import('@/pages/Login'));
 const AuthCallback = lazy(() => import('@/pages/AuthCallback'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Customers = lazy(() => import('@/pages/Customers'));
 const CustomerProfile = lazy(() => import('@/pages/CustomerProfile'));
 const Segments = lazy(() => import('@/pages/Segments'));
@@ -108,6 +109,7 @@ function AppShell() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/onboarding"
           element={

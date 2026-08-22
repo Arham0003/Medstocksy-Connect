@@ -51,11 +51,8 @@ export async function rpc<T>(
   fn: string,
   args: Record<string, unknown>
 ): Promise<{ data: T | null; error: { message: string } | null }> {
-  const call = supabase.rpc as unknown as (
-    name: string,
-    params: Record<string, unknown>
-  ) => Promise<{ data: T | null; error: { message: string } | null }>;
-  return call(fn, args);
+  // ponytail: direct call preserves 'this' context for supabase client
+  return (supabase.rpc as unknown as (f: string, a: Record<string, unknown>) => Promise<{ data: T | null; error: { message: string } | null }>)(fn, args);
 }
 
 /** Type-safe table references — use throughout the app. */

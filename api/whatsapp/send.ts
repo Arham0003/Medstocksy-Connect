@@ -118,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             type: 'template',
             template: {
               name: template['whatsapp_template_name'],
-              language: { code: 'en_US' },
+            language: { code: template.language === 'hi' ? 'hi' : 'en_US' },
               components: [
                 ...(template.image_url ? [{
                   type: 'header',

@@ -25,9 +25,11 @@ export async function resolveSegmentCustomers(
       .select('id, name, phone')
       .eq('pharmacy_id', pharmacyId)
       .eq('whatsapp_opted_in', true)
+      .not('phone', 'is', null)
       .order('name');
     if (error) throw new Error(error.message);
-    return ((data ?? []) as unknown) as CampaignRecipient[];
+    const recipients = ((data ?? []) as unknown) as CampaignRecipient[];
+    return recipients.filter((r) => r.phone && r.phone.trim().length > 0);
   }
 
   // Chronic = manual tag; everything else = derived auto-tag view.
@@ -56,9 +58,11 @@ export async function resolveSegmentCustomers(
     .select('id, name, phone')
     .in('id', ids)
     .eq('whatsapp_opted_in', true)
+    .not('phone', 'is', null)
     .order('name');
   if (error) throw new Error(error.message);
-  return ((data ?? []) as unknown) as CampaignRecipient[];
+  const recipients = ((data ?? []) as unknown) as CampaignRecipient[];
+  return recipients.filter((r) => r.phone && r.phone.trim().length > 0);
 }
 
 /** Mark a campaign as actively sending. */
@@ -103,4 +107,73 @@ export async function finalizeCampaign(args: {
     } as never)
     .eq('id', args.campaignId);
   if (error) throw new Error(error.message);
+}
+
+/** Fetch real variables for a recipient so we don't use mock SAMPLE_VARS. */
+export async function fetchCustomerCampaignVars(
+  pharmacyId: string,
+  customerId: string,
+  customerName: string
+): Promise<Record<string, string>> {
+  let amount = '';
+  let medicine = '';
+
+  try {
+    // 1. Fetch pharmacy details
+    const { data: pharmacyData } = await supabase
+      .from('crm_pharmacies')
+      .select('name, phone')
+      .eq('id', pharmacyId)
+      .maybeSingle();
+    const pharmacy = pharmacyData as { name?: string; phone?: string | null } | null;
+
+    // 2. Fetch latest purchase amount using exact customer_id
+    const { data: saleData } = await supabase
+      .from('crm_customer_sales')
+      .select('bill_amount')
+      .eq('customer_id', customerId)
+      .order('sold_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const latestSale = saleData as { bill_amount?: number | null } | null;
+      
+    if (latestSale && latestSale.bill_amount) {
+      amount = `₹${latestSale.bill_amount}`;
+    }
+
+    // 3. Fetch latest prescription medicine using exact customer_id
+    const { data: rxData } = await supabase
+      .from('crm_prescriptions')
+      .select('id')
+      .eq('customer_id', customerId)
+      .order('prescription_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const latestRx = rxData as { id: string } | null;
+
+    if (latestRx) {
+      const { data: medData } = await supabase
+        .from('crm_prescription_medicines')
+        .select('medicine_name')
+        .eq('prescription_id', latestRx.id)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const medRow = medData as { medicine_name: string } | null;
+      if (medRow && medRow.medicine_name) {
+        medicine = medRow.medicine_name;
+      }
+    }
+
+    return {
+      name: customerName,
+      pharmacy_name: pharmacy?.name ?? 'Your pharmacy',
+      pharmacy_phone: pharmacy?.phone ?? '',
+      amount,
+      medicine,
+    };
+  } catch (err) {
+    console.error('[fetchCustomerCampaignVars] failed:', err);
+    return { name: customerName };
+  }
 }

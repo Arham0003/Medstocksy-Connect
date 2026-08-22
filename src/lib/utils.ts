@@ -16,13 +16,12 @@ export function formatINR(value: number | null | undefined): string {
   }).format(value);
 }
 
-/** "2 days ago" / "Today" / "Just now" */
+/** "2 days ago" / "Just now" */
 export function relativeTime(date: string | Date | null | undefined): string {
   if (!date) return '—';
   const d = typeof date === 'string' ? new Date(date) : date;
   const diff = Date.now() - d.getTime();
   if (diff < 60_000) return 'Just now';
-  if (diff < 24 * 60 * 60 * 1000) return formatDistanceToNow(d, { addSuffix: true });
   return formatDistanceToNow(d, { addSuffix: true });
 }
 

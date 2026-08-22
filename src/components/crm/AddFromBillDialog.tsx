@@ -31,6 +31,7 @@ import { extractBillData } from '@/lib/gemini';
 import { BILL_FIELDS, PRESCRIPTION_FIELDS } from '@/lib/ocr/fields';
 import { validateExtraction, type ExtractionReport } from '@/lib/ocr/validate';
 import { loadKnownMedicines, matchMedicines, type MedicineMatch } from '@/lib/ocr/matchMedicines';
+import { usePdfExtraction } from '@/lib/pdf/usePdfExtraction';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -118,6 +119,9 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
   const [medMatches, setMedMatches] = useState<MedicineMatch[]>([]);
   const [totalsCheck, setTotalsCheck] = useState<ExtractionReport['totalsCheck'] | null>(null);
 
+  // ── PDF extraction (client-side, no API) ──
+  const pdfExtraction = usePdfExtraction();
+
   const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -145,11 +149,12 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
       const preview = await signedBillUrl(path);
       setAttachment({ url: preview ?? '', path, name: file.name, type: file.type });
 
-      // Attachment is saved regardless; extraction is a bonus on top. Run it
-      // only for images (Gemini can't read our PDFs here) and only when this
-      // device has a key configured — pharmacies without one keep the plain
-      // upload-and-type-it-in flow.
-      if (file.type.startsWith('image/') && hasGeminiKey()) {
+      // Extraction runs in two branches:
+      // 1. PDF → client-side pdf.js parser (no API, always available)
+      // 2. Image + Gemini key → Gemini vision extraction
+      if (file.type === 'application/pdf') {
+        void autofillFromPdf(file);
+      } else if (file.type.startsWith('image/') && hasGeminiKey()) {
         void autofillFrom(file);
       }
     } catch (err) {
@@ -162,7 +167,65 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
   };
 
   /**
-   * Fill blank fields from a scanned bill/prescription.
+   * Autofill from a PDF bill using client-side pdf.js parsing.
+   * Only writes into empty fields. Sets extractError on scanned/corrupt PDFs.
+   */
+  const autofillFromPdf = async (file: File) => {
+    setExtracting(true);
+    setExtractError(null);
+    setExtractedCount(0);
+    setIssues([]);
+    setMedMatches([]);
+    setTotalsCheck(null);
+    try {
+      const parsed = await pdfExtraction.extract(file);
+      if (!parsed) {
+        setExtractError(pdfExtraction.error ?? 'Could not read that PDF.');
+        return;
+      }
+      if (parsed.isScanned) {
+        if (hasGeminiKey()) {
+          void autofillFrom(file);
+          return;
+        }
+        setExtractError('Scanned PDF — no text layer found. Configure Gemini API key in Settings → AI to enable AI extraction.');
+        return;
+      }
+
+      let filled = 0;
+      const fill = (value: string | null, current: string, set: (v: string) => void) => {
+        if (value && !current.trim()) { set(value); filled += 1; }
+      };
+
+      if (parsed.patientName) fill(parsed.patientName, name, setName);
+      if (parsed.patientPhone) fill(parsed.patientPhone, phone, setPhone);
+
+      const meds = parsed.medicines.map((m) => m.name);
+
+      if (source === 'bill') {
+        if (parsed.totalAmount !== null) fill(String(parsed.totalAmount), billAmount, setBillAmount);
+        if (parsed.date) {
+          if (!billDate || billDate === today) { setBillDate(parsed.date); filled += 1; }
+        }
+        if (meds.length && billMeds.length === 0) { setBillMeds(meds); filled += 1; }
+      } else {
+        fill(parsed.doctorName, doctor, setDoctor);
+        fill(parsed.diagnosis, diagnosis, setDiagnosis);
+        if (parsed.totalAmount !== null) fill(String(parsed.totalAmount), billAmount, setBillAmount);
+        if (parsed.date && rxDate === today) { setRxDate(parsed.date); filled += 1; }
+        if (meds.length && !rxMedsText.trim()) {
+          setRxMedsText(meds.join('\n')); filled += 1;
+        }
+      }
+
+      setExtractedCount(filled);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  /**
+   * Fill blank fields from a scanned bill/prescription image via Gemini.
    *
    * Only ever writes into fields the user has left empty — an extraction is a
    * suggestion, and silently overwriting something already typed (or a phone
@@ -235,6 +298,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
       } else {
         fill(take('doctor'), doctor, setDoctor);
         fill(take('diagnosis'), diagnosis, setDiagnosis);
+        fill(take('billAmount'), billAmount, setBillAmount);
         const d = take('billDate');
         if (d && rxDate === today) { setRxDate(d); filled += 1; }
         if (resolved.length && !rxMedsText.trim()) {

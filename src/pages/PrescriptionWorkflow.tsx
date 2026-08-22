@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Camera, Check, ChevronRight, Clock, FileText,
-  Image as ImageIcon, Loader2, Pencil, Pill, Receipt, Search,
-  Stethoscope, Upload, User, Users, X as XIcon, Bell, ClipboardPaste, Plus,
+  Image as ImageIcon, Loader2, Pill, Receipt, Search,
+  Sparkles, Stethoscope, Upload, User, Users, X as XIcon, Bell, ClipboardPaste, Plus, AlertTriangle,
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { signedBillUrl } from '@/lib/api/attachments';
@@ -18,6 +18,11 @@ import { supabase } from '@/lib/supabase';
 import { createCustomer, DuplicatePhoneError, type Customer } from '@/lib/api/customers';
 import { createPrescription, type MedicineInput } from '@/lib/api/prescriptions';
 import { validateIndianPhone, cn } from '@/lib/utils';
+import { usePdfExtraction } from '@/lib/pdf/usePdfExtraction';
+import { getGeminiKey, hasGeminiKey } from '@/lib/aiKey';
+import { extractBillData, GeminiAuthError } from '@/lib/gemini';
+import { PRESCRIPTION_FIELDS } from '@/lib/ocr/fields';
+import { validateExtraction } from '@/lib/ocr/validate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -25,7 +30,6 @@ import { QuickReminderDialog } from '@/components/crm/QuickReminderDialog';
 
 /* ─── types ──────────────────────────────────────────────────────────────── */
 type Step = 1 | 2 | 3;
-type Mode = 'upload' | 'manual';
 
 const EMPTY_MED: MedicineInput = {
   medicine_name: '', form: '', strength: '', dosage: '', route: '',
@@ -195,7 +199,6 @@ function PrescriptionStep({
 }: { customer: Customer; pharmacyId: string; onSaved: (prescriptionId: string, firstMed: string) => void }) {
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
-  const [mode, setMode] = useState<Mode>('manual');
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{ url: string; path: string; name: string; type: string } | null>(null);
@@ -203,7 +206,7 @@ function PrescriptionStep({
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
-  // Rx fields (manual mode)
+  // Rx fields
   const [doctor, setDoctor] = useState('');
   const [rxDate, setRxDate] = useState(today);
   const [diagnosis, setDiagnosis] = useState('');
@@ -211,22 +214,13 @@ function PrescriptionStep({
   const [medsText, setMedsText] = useState('');
   const [rxErr, setRxErr] = useState<string | null>(null);
 
-  // Upload mode: medicine + price tiles entered by staff from the scan.
-  const [medItems, setMedItems] = useState<{ name: string; price: string }[]>([]);
-  const [draftName, setDraftName] = useState('');
-  const [draftPrice, setDraftPrice] = useState('');
+  // Extraction state
+  const pdfExtraction = usePdfExtraction();
+  const [extracting, setExtracting] = useState(false);
+  const [extractedCount, setExtractedCount] = useState(0);
+  const [extractNote, setExtractNote] = useState<string | null>(null);
 
-  const addMedItem = () => {
-    const name = draftName.trim();
-    if (!name) return;
-    setMedItems((arr) => [...arr, { name, price: draftPrice.trim() }]);
-    setDraftName('');
-    setDraftPrice('');
-  };
-  const removeMedItem = (i: number) => setMedItems((arr) => arr.filter((_, idx) => idx !== i));
-  const uploadTotal = medItems.reduce((s, m) => s + (parseFloat(m.price) || 0), 0);
-
-  // Convert textarea lines → MedicineInput array (manual mode)
+  // Convert textarea lines → MedicineInput array
   const parsedMeds: MedicineInput[] = medsText
     .split('\n')
     .map(l => l.trim())
@@ -247,7 +241,9 @@ function PrescriptionStep({
       // Private bucket: keep the path, sign only for the preview.
       const preview = await signedBillUrl(path);
       setAttachment({ url: preview ?? '', path, name: file.name, type: file.type });
-      // Stay in upload mode — show the simplified medicine + price tiles below.
+
+      // Run extraction (PDF client-side parser with Gemini fallback, or Gemini vision for images)
+      void extractFromFile(file);
     } catch (err) {
       setUploadErr(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
@@ -256,43 +252,123 @@ function PrescriptionStep({
     }
   };
 
+  /**
+   * Extract medicines and prescription/bill info from uploaded PDF or image.
+   * Uses client-side PDF parser for digital PDFs; uses Gemini vision for images
+   * and scanned PDFs when a Gemini API key is configured.
+   */
+  const extractFromFile = async (file: File) => {
+    setExtracting(true);
+    setExtractedCount(0);
+    setExtractNote(null);
+    try {
+      let docDoctor: string | null = null;
+      let docDiagnosis: string | null = null;
+      let docDate: string | null = null;
+      let docTotal: string | null = null;
+      let docMeds: string[] = [];
 
+      // 1. Digital PDF: try fast client-side extraction first
+      if (file.type === 'application/pdf') {
+        try {
+          const parsed = await pdfExtraction.extract(file);
+          if (parsed && !parsed.isScanned && parsed.medicines.length > 0) {
+            docDoctor = parsed.doctorName;
+            docDiagnosis = parsed.diagnosis;
+            docDate = parsed.date;
+            if (parsed.totalAmount !== null) docTotal = String(parsed.totalAmount);
+            docMeds = parsed.medicines.map((m) => m.name);
+          }
+        } catch {
+          // Fall through to Gemini if PDF client-side parsing fails
+        }
+      }
+
+      // 2. Image or Scanned/Unparsed PDF: use Gemini vision AI
+      if (docMeds.length === 0) {
+        if (hasGeminiKey()) {
+          try {
+            const raw = await extractBillData(getGeminiKey(), file, file.type, PRESCRIPTION_FIELDS);
+            const report = validateExtraction(PRESCRIPTION_FIELDS, raw);
+            if (report.fields.doctor?.value) docDoctor = String(report.fields.doctor.value);
+            if (report.fields.diagnosis?.value) docDiagnosis = String(report.fields.diagnosis.value);
+            if (report.fields.billDate?.value) docDate = String(report.fields.billDate.value);
+            if (report.fields.billAmount?.value) docTotal = String(report.fields.billAmount.value);
+            if (Array.isArray(report.fields.medicines?.value)) {
+              docMeds = report.fields.medicines.value as string[];
+            }
+          } catch (gemErr) {
+            if (gemErr instanceof GeminiAuthError) {
+              setExtractNote(gemErr.message);
+              return;
+            }
+            throw gemErr;
+          }
+        } else {
+          // No Gemini key stored
+          if (file.type === 'application/pdf') {
+            setExtractNote('Scanned PDF — no text layer. Configure Gemini API key in Settings → AI to enable AI extraction.');
+          } else {
+            setExtractNote('Add your Gemini API key in Settings → AI to enable AI data extraction from images.');
+          }
+          return;
+        }
+      }
+
+      // 3. Populate form fields
+      let filled = 0;
+      const fill = (val: string | null, cur: string, set: (v: string) => void) => {
+        if (val && !cur.trim()) { set(val); filled += 1; }
+      };
+
+      fill(docDoctor, doctor, setDoctor);
+      fill(docDiagnosis, diagnosis, setDiagnosis);
+      if (docTotal) fill(docTotal, totalCost, setTotalCost);
+      if (docDate && rxDate === today) { setRxDate(docDate); filled += 1; }
+
+      if (docMeds.length > 0) {
+        setMedsText((prev) => {
+          if (!prev.trim()) return docMeds.join('\n');
+          const existing = new Set(prev.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean));
+          const newMeds = docMeds.filter(m => !existing.has(m.toLowerCase()));
+          return newMeds.length > 0 ? `${prev}\n${newMeds.join('\n')}` : prev;
+        });
+        filled += docMeds.length;
+      }
+
+      if (filled > 0) {
+        setExtractedCount(filled);
+      } else {
+        setExtractNote('Could not detect any medicines or details in this document. Enter them manually below.');
+      }
+    } catch (err) {
+      setExtractNote(err instanceof Error ? err.message : 'Extraction failed.');
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const save = useMutation<string, Error>({
     mutationFn: async () => {
-      const isUpload = mode === 'upload' && !!attachment;
-
-      // Build medicines + total depending on the mode.
-      let medicines: MedicineInput[];
-      let total: number | null;
-      if (isUpload) {
-        if (medItems.length === 0) throw new Error('Add at least one medicine with its price.');
-        medicines = medItems.map((m) => ({
-          ...EMPTY_MED,
-          medicine_name: m.name,
-          price: m.price ? parseFloat(m.price) : null,
-        }));
-        total = uploadTotal > 0 ? uploadTotal : null;
-      } else {
-        if (parsedMeds.length === 0) throw new Error('Paste at least one medicine name.');
-        medicines = parsedMeds;
-        total = totalCost ? parseFloat(totalCost) : null;
+      if (parsedMeds.length === 0) throw new Error('Paste or enter at least one medicine name.');
+      const total = parseFloat(totalCost);
+      if (!totalCost.trim() || Number.isNaN(total) || total < 0) {
+        throw new Error('Total cost of prescription is required.');
       }
 
       const rx = await createPrescription({
         pharmacyId,
         customerId: customer.id,
         rx: {
-          // Upload mode keeps it lean — only the scan + medicines + price.
-          doctor_name: isUpload ? null : (doctor.trim() || null),
+          doctor_name: doctor.trim() || null,
           prescription_date: rxDate,
           follow_up_date: null,
-          diagnosis: isUpload ? null : (diagnosis.trim() || null),
+          diagnosis: diagnosis.trim() || null,
           notes: null,
           attachment_url: attachment?.path ?? null,
           total_cost: total,
         },
-        medicines,
+        medicines: parsedMeds,
       });
       return rx.id;
     },
@@ -301,9 +377,7 @@ function PrescriptionStep({
       await qc.invalidateQueries({ queryKey: ['customer-activity', customer.id] });
       await qc.invalidateQueries({ queryKey: ['customers'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
-      const firstMed = (mode === 'upload' && attachment)
-        ? (medItems[0]?.name ?? '')
-        : (parsedMeds[0]?.medicine_name ?? '');
+      const firstMed = parsedMeds[0]?.medicine_name ?? '';
       onSaved(rxId, firstMed);
     },
     onError: (err) => setRxErr(err.message),
@@ -323,34 +397,23 @@ function PrescriptionStep({
         <Check className="ml-auto h-4 w-4 text-emerald-500" />
       </div>
 
-      {/* Mode switch */}
-      <div role="radiogroup" className="inline-flex w-full rounded-lg border bg-muted/60 p-1">
-        {([['upload', <Upload className="h-3.5 w-3.5" />, 'Upload scan'], ['manual', <Pencil className="h-3.5 w-3.5" />, 'Enter manually']] as const).map(([m, icon, label]) => (
-          <button key={m} type="button" role="radio" aria-checked={mode === m}
-            onClick={() => setMode(m as Mode)}
-            className={cn('inline-flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-all',
-              mode === m ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-background/60')}>
-            {icon}{label}
-          </button>
-        ))}
-      </div>
-
       {/* Upload zone */}
-      {mode === 'upload' && !attachment && (
+      {!attachment && (
         <div
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
           onClick={() => fileRef.current?.click()}
-          className={cn('flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 text-center transition-colors',
+          className={cn('flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors',
             dragOver ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/40',
             uploading && 'pointer-events-none opacity-60')}>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload className="h-6 w-6" />}
           </div>
           <div>
-            <div className="font-medium">{uploading ? 'Uploading…' : 'Drop bill or prescription here'}</div>
-            <div className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, WEBP · up to 10 MB</div>
+            <div className="font-medium text-sm">{uploading ? 'Uploading & reading…' : <>{`Upload scan, bill, or prescription (optional)`} <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-500 ring-1 ring-inset ring-amber-500/25">BETA</span></>}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">PDF, JPG, PNG, WEBP · up to 10 MB</div>
+            {!uploading && <div className="text-[10px] text-muted-foreground/60 mt-0.5">AI extraction may not always be accurate — verify before saving</div>}
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}>
@@ -374,9 +437,9 @@ function PrescriptionStep({
             <FileText className="h-5 w-5 text-primary shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium truncate">{attachment.name}</div>
-              <div className="text-xs text-emerald-600">Uploaded ✓</div>
+              <div className="text-xs text-emerald-600">Attached ✓</div>
             </div>
-            <button onClick={() => { setAttachment(null); setMode('upload'); }}
+            <button onClick={() => { setAttachment(null); }}
               className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
               <XIcon className="h-4 w-4" />
             </button>
@@ -384,136 +447,82 @@ function PrescriptionStep({
         </div>
       )}
 
-      {/* ── UPLOAD MODE: simplified medicine + price tiles ── */}
-      {mode === 'upload' && attachment && (
-        <div className="rounded-xl border bg-card/40 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Pill className="h-3.5 w-3.5 text-primary" /> Medicines &amp; price
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Read the medicines off the scan above and add each with its price.
-          </p>
+      {/* Document extraction status */}
+      {extracting && (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading document &amp; extracting medicines…
+        </p>
+      )}
+      {!extracting && extractedCount > 0 && (
+        <p className="flex items-center gap-1.5 text-xs text-emerald-600">
+          <Sparkles className="h-3.5 w-3.5" /> {extractedCount} field{extractedCount !== 1 ? 's' : ''} extracted
+        </p>
+      )}
+      {!extracting && extractNote && (
+        <p className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+          <AlertTriangle aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" /> {extractNote}
+        </p>
+      )}
 
-          {/* Add row: name + price + add */}
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Medicine</label>
-              <Input
-                value={draftName}
-                onChange={e => setDraftName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
-                placeholder="Crocin 500mg"
-                maxLength={120}
-              />
-            </div>
-            <div className="w-24">
-              <label className="mb-1 block text-[11px] font-medium text-muted-foreground">Price ₹</label>
-              <Input
-                type="number" min="0" step="0.01" inputMode="decimal"
-                value={draftPrice}
-                onChange={e => setDraftPrice(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMedItem(); } }}
-                placeholder="0.00"
-                className="font-mono"
-              />
-            </div>
-            <Button type="button" variant="outline" onClick={addMedItem} disabled={!draftName.trim()}>
-              <Plus className="h-4 w-4" /> Add
-            </Button>
+      {/* Prescription details form */}
+      <div className="rounded-xl border bg-card/40 p-4 space-y-4">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Receipt className="h-3.5 w-3.5 text-primary" /> Prescription details
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+              <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" /> Doctor
+            </label>
+            <Input value={doctor} onChange={e => setDoctor(e.target.value)} placeholder="Dr. Sharma" maxLength={120} />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Prescription date</label>
+            <Input type="date" className="font-mono" value={rxDate} onChange={e => setRxDate(e.target.value)} max={today} />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Diagnosis</label>
+          <Input value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="e.g. Hypertension" maxLength={240} />
+        </div>
 
-          {/* Tiles: name + price */}
-          {medItems.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {medItems.map((m, i) => (
-                <span key={i} className="inline-flex items-center gap-2 rounded-lg border bg-background px-2.5 py-1.5 text-sm">
-                  <Pill className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-medium">{m.name}</span>
-                  {m.price && <span className="font-mono text-emerald-600">₹{m.price}</span>}
-                  <button type="button" onClick={() => removeMedItem(i)}
-                    className="rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                    <XIcon className="h-3 w-3" />
-                  </button>
+        {/* Medicines — paste / extracted zone */}
+        <div className="rounded-lg border bg-background p-3 space-y-2">
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Pill className="h-3.5 w-3.5" /> Medicines *</span>
+            {parsedMeds.length > 0 && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-primary">{parsedMeds.length}</span>
+            )}
+          </div>
+          <textarea
+            value={medsText}
+            onChange={e => setMedsText(e.target.value)}
+            placeholder={`Enter or paste medicines here — one medicine per line:\n\nCrocin 500mg\nAzithromycin 250mg\nPan-D`}
+            rows={5}
+            className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          {parsedMeds.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {parsedMeds.map((m, i) => (
+                <span key={i} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  <ClipboardPaste className="h-3 w-3 opacity-60" />
+                  {m.medicine_name}
                 </span>
               ))}
             </div>
           )}
-
-          {/* Auto total */}
-          {uploadTotal > 0 && (
-            <div className="flex items-center justify-between border-t pt-3 text-sm">
-              <span className="font-medium text-muted-foreground">Total</span>
-              <span className="font-mono text-lg font-bold">₹{uploadTotal.toFixed(2)}</span>
-            </div>
-          )}
         </div>
-      )}
-
-      {/* ── MANUAL MODE: full prescription form ── */}
-      {mode === 'manual' && (
-        <div className="rounded-xl border bg-card/40 p-4 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Receipt className="h-3.5 w-3.5 text-primary" /> Prescription details
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
-                <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" /> Doctor
-              </label>
-              <Input value={doctor} onChange={e => setDoctor(e.target.value)} placeholder="Dr. Sharma" maxLength={120} />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Prescription date</label>
-              <Input type="date" className="font-mono" value={rxDate} onChange={e => setRxDate(e.target.value)} max={today} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Diagnosis</label>
-            <Input value={diagnosis} onChange={e => setDiagnosis(e.target.value)} placeholder="e.g. Hypertension" maxLength={240} />
-          </div>
-
-          {/* Medicines — paste zone */}
-          <div className="rounded-lg border bg-background p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Pill className="h-3.5 w-3.5" /> Medicines *</span>
-              {parsedMeds.length > 0 && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 font-mono text-primary">{parsedMeds.length}</span>
-              )}
-            </div>
-            <textarea
-              value={medsText}
-              onChange={e => setMedsText(e.target.value)}
-              placeholder={`Paste prescription here — one medicine per line:\n\nCrocin 500mg\nAzithromycin 250mg\nPan-D`}
-              rows={5}
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm font-mono leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            {parsedMeds.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {parsedMeds.map((m, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    <ClipboardPaste className="h-3 w-3 opacity-60" />
-                    {m.medicine_name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Total Cost of Prescription (₹)</label>
-            <Input type="number" min="0" step="0.01" value={totalCost} onChange={e => setTotalCost(e.target.value)} placeholder="0.00" />
-          </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">Total Cost of Prescription (₹) *</label>
+          <Input type="number" min="0" step="0.01" value={totalCost} onChange={e => setTotalCost(e.target.value)} placeholder="0.00" required />
         </div>
-      )}
+      </div>
 
       {rxErr && <p className="text-xs text-destructive">{rxErr}</p>}
 
       <Button
         onClick={() => save.mutate()}
-        disabled={save.isPending || (
-          mode === 'upload'
-            ? !attachment || medItems.length === 0
-            : parsedMeds.length === 0
-        )}
+        disabled={save.isPending || parsedMeds.length === 0 || !totalCost.trim()}
         className="w-full"
         size="lg"
       >

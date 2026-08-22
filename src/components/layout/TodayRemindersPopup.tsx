@@ -9,7 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   BellRing, Loader2, Send, X as XIcon, Clock, BellOff, ChevronRight,
-  CheckCircle2, AlertTriangle, Pill,
+  CheckCircle2, AlertTriangle, Pill, Check,
 } from 'lucide-react';
 import { useActivePharmacy, usePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -37,6 +37,7 @@ function TodayRemindersPopupInner() {
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
   const [queue, setQueue] = useState<DueReminder[] | null>(null);
+  const [queueTotal, setQueueTotal] = useState(0);
   // Bumps every 30s to re-evaluate the snooze window without a full refetch.
   const [tick, setTick] = useState(0);
 
@@ -66,15 +67,17 @@ function TodayRemindersPopupInner() {
   // AND it's not already open. Re-evaluated on data change + every heartbeat.
   useEffect(() => {
     if (isLoading || open) return;
-    if (reminders.length === 0) return;
+    const hasPending = reminders.some((r) => r.status === 'pending');
+    if (!hasPending) return;
     if (Date.now() < getSnoozedUntil()) return;
     setOpen(true);
-  }, [isLoading, reminders.length, open, tick]);
+  }, [isLoading, reminders, open, tick]);
 
   const close = (markSnoozed = true) => {
     if (markSnoozed) snoozePopup();
     setOpen(false);
     setQueue(null);
+    setQueueTotal(0);
   };
 
   const send = useMutation<void, Error, DueReminder>({
@@ -92,22 +95,6 @@ function TodayRemindersPopupInner() {
 
       const result = await sendOrCompose({ phone: r.customer.phone, body });
 
-      if (result.via === 'manual') {
-        await new Promise<void>((resolve) => {
-          setTimeout(() => {
-            if (document.hasFocus()) {
-              resolve();
-            } else {
-              const onFocus = () => {
-                window.removeEventListener('focus', onFocus);
-                resolve();
-              };
-              window.addEventListener('focus', onFocus);
-            }
-          }, 1000);
-        });
-      }
-
       const { messageId } = await logManualSend({
         pharmacyId,
         customerId: r.customer.id,
@@ -119,9 +106,12 @@ function TodayRemindersPopupInner() {
       await markReminderSent(r.id, result.messageId ?? messageId);
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['due-reminders', pharmacyId] });
-      await qc.invalidateQueries({ queryKey: ['whatsapp-health', pharmacyId] });
-      await qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
+      for (const key of [
+        'due-reminders', 'whatsapp-health', 'dashboard-counts',
+        'scheduled-reminders', 'reminders-today', 'reminders-overdue', 'upcoming-reminders',
+      ]) {
+        await qc.invalidateQueries({ queryKey: [key] });
+      }
     },
   });
 
@@ -135,9 +125,12 @@ function TodayRemindersPopupInner() {
 
   // Pre-slice once so render + queue logic agree on the same 5 rows.
   const top = reminders.slice(0, TOP_N);
-  const overflow = Math.max(0, reminders.length - TOP_N);
-  const overdueCount = top.filter((r) => new Date(r.scheduled_for) < new Date()).length;
-  const sendableCount = top.filter((r) => r.customer?.whatsapp_opted_in !== false).length;
+  const pendingTop = top.filter((r) => r.status === 'pending');
+  const pendingTotal = reminders.filter((r) => r.status === 'pending').length;
+  const overflow = Math.max(0, pendingTotal - pendingTop.length);
+  const overdueCount = pendingTop.filter((r) => new Date(r.scheduled_for) < new Date()).length;
+  const pendingSendable = pendingTop.filter((r) => r.customer?.whatsapp_opted_in !== false);
+  const sendableCount = pendingSendable.length;
 
   return (
     <AnimatePresence>
@@ -190,7 +183,7 @@ function TodayRemindersPopupInner() {
                         are context, not the point of the card. Only the overdue
                         figure takes colour, so it stays the single loud thing. */}
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-                      <span>{t('popup.stat_due').replace('{n}', String(top.length))}</span>
+                      <span>{t('popup.stat_due').replace('{n}', String(pendingTop.length))}</span>
                       {overdueCount > 0 && (
                         <>
                           <span aria-hidden="true" className="text-muted-foreground/40">·</span>
@@ -266,14 +259,14 @@ function TodayRemindersPopupInner() {
                       {t('bell.queue_status').replace('{n}', String(queue.length))}
                     </span>
                     <span className="font-mono text-[10px] text-muted-foreground">
-                      {top.length - queue.length + 1} / {top.length}
+                      {queueTotal - queue.length + 1} / {queueTotal}
                     </span>
                   </div>
                   {/* Progress bar makes a multi-send run feel finite. */}
                   <div className="mb-2.5 h-1.5 w-full overflow-hidden rounded-full bg-primary/15">
                     <div
                       className="h-full rounded-full bg-primary transition-all duration-300"
-                      style={{ width: `${((top.length - queue.length) / Math.max(top.length, 1)) * 100}%` }}
+                      style={{ width: `${((queueTotal - queue.length) / Math.max(queueTotal, 1)) * 100}%` }}
                     />
                   </div>
                   <div className="mb-2.5 text-xs">
@@ -289,6 +282,7 @@ function TodayRemindersPopupInner() {
                         const next = remaining[0];
                         if (!next) {
                           setQueue(null);
+                          setQueueTotal(0);
                         } else {
                           setQueue(remaining);
                           send.mutate(next);
@@ -301,7 +295,10 @@ function TodayRemindersPopupInner() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setQueue(null)}
+                      onClick={() => {
+                        setQueue(null);
+                        setQueueTotal(0);
+                      }}
                       disabled={send.isPending}
                       className="rounded-lg border border-input bg-background px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-60"
                     >
@@ -329,14 +326,14 @@ function TodayRemindersPopupInner() {
                     >
                       {t('popup.dismiss')}
                     </button>
-                    {top.length > 1 && canSend !== false && sendableCount > 0 && (
+                    {sendableCount > 1 && canSend !== false && (
                       <button
                         type="button"
                         onClick={() => {
-                          const eligible = top.filter((r) => r.customer?.whatsapp_opted_in !== false);
-                          const first = eligible[0];
+                          const first = pendingSendable[0];
                           if (!first) return;
-                          setQueue(eligible);
+                          setQueue(pendingSendable);
+                          setQueueTotal(pendingSendable.length);
                           send.mutate(first);
                         }}
                         disabled={send.isPending}
@@ -373,7 +370,7 @@ function PopupRow({
 }) {
   const t = useT();
   const optedOut = reminder.customer?.whatsapp_opted_in === false;
-  const overdue = new Date(reminder.scheduled_for) < new Date();
+  const overdue = reminder.status === 'pending' && new Date(reminder.scheduled_for) < new Date();
   const medicine = (reminder.variables?.['medicine'] as string | undefined) ?? '';
   const time = new Date(reminder.scheduled_for).toLocaleString('en-IN', {
     hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short',
@@ -462,29 +459,37 @@ function PopupRow({
         {/* Actions — beside the text on desktop, stacked under it on phones.
             Fixed width so the Send buttons form a clean column down the card
             and don't jitter when the label swaps to "Sending…". */}
-        <div className="flex shrink-0 gap-2 pl-11 sm:pl-0">
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={sending || skipping || blocked}
-            title={blockedReason}
-            className="inline-flex h-8 w-[86px] items-center justify-center gap-1.5 rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {sending
-              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : <><Send className="h-3.5 w-3.5" />{t('bell.send')}</>}
-          </button>
-          <button
-            type="button"
-            onClick={onSkip}
-            disabled={sending || skipping}
-            aria-label={t('bell.skip')}
-            title={t('bell.skip')}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-input bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-50"
-          >
-            {skipping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XIcon className="h-3.5 w-3.5" />}
-          </button>
-        </div>
+        {reminder.status === 'sent' || reminder.status === 'converted' ? (
+          <div className="flex shrink-0 items-center pl-11 sm:pl-0">
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+              <Check className="h-3.5 w-3.5" /> Done
+            </span>
+          </div>
+        ) : (
+          <div className="flex shrink-0 gap-2 pl-11 sm:pl-0">
+            <button
+              type="button"
+              onClick={onSend}
+              disabled={sending || skipping || blocked}
+              title={blockedReason}
+              className="inline-flex h-8 w-[86px] items-center justify-center gap-1.5 rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {sending
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <><Send className="h-3.5 w-3.5" />{t('bell.send')}</>}
+            </button>
+            <button
+              type="button"
+              onClick={onSkip}
+              disabled={sending || skipping}
+              aria-label={t('bell.skip')}
+              title={t('bell.skip')}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-input bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-50"
+            >
+              {skipping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XIcon className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        )}
       </div>
     </motion.li>
   );

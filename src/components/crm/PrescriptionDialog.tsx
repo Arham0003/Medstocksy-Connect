@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Loader2, Stethoscope, Calendar as CalendarIcon, FileText,
   Pill, NotebookPen, AlertCircle, User as UserIcon, ClipboardPaste,
+  Upload, X as XIcon, Sparkles, AlertTriangle, Clock,
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -10,6 +11,13 @@ import {
   createPrescription, updatePrescription,
   type PrescriptionWithMeds, type MedicineInput,
 } from '@/lib/api/prescriptions';
+import { supabase } from '@/lib/supabase';
+import { signedBillUrl } from '@/lib/api/attachments';
+import { usePdfExtraction } from '@/lib/pdf/usePdfExtraction';
+import { getGeminiKey, hasGeminiKey } from '@/lib/aiKey';
+import { extractBillData, GeminiAuthError } from '@/lib/gemini';
+import { PRESCRIPTION_FIELDS } from '@/lib/ocr/fields';
+import { validateExtraction } from '@/lib/ocr/validate';
 import { cn, initials } from '@/lib/utils';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -57,10 +65,25 @@ export function PrescriptionDialog({
   const [doctor, setDoctor] = useState('');
   const [date, setDate] = useState(today);
   const [followUp, setFollowUp] = useState('');
+  const [followUpTime, setFollowUpTime] = useState('09:00');
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
   const [totalCost, setTotalCost] = useState('');
   const [medsText, setMedsText] = useState('');
+
+  // PDF upload + extraction state
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [attachPath, setAttachPath] = useState<string | null>(null);
+  const [attachName, setAttachName] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const pdfExtraction = usePdfExtraction();
+  const [extracting, setExtracting] = useState(false);
+  const [extractedCount, setExtractedCount] = useState(0);
+  const [extractNote, setExtractNote] = useState<string | null>(null);
+
+  const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+  const MAX_BYTES = 10 * 1024 * 1024;
 
   // Convert textarea lines → MedicineInput[]
   const parsedMeds: MedicineInput[] = medsText
@@ -73,21 +96,44 @@ export function PrescriptionDialog({
       setDoctor(existing.doctor_name ?? '');
       setDate(existing.prescription_date.slice(0, 10));
       setFollowUp(existing.follow_up_date?.slice(0, 10) ?? '');
+      setFollowUpTime('09:00');
       setDiagnosis(existing.diagnosis ?? '');
       setNotes(existing.notes ?? '');
       setTotalCost(existing.total_cost?.toString() ?? '');
       // Pre-populate textarea with existing medicine names (one per line)
       setMedsText(existing.medicines.map(m => m.medicine_name).join('\n'));
+
+      // Look up existing scheduled reminder time if present
+      void supabase
+        .from('crm_scheduled_reminders')
+        .select('scheduled_for')
+        .eq('prescription_id', existing.id)
+        .eq('status', 'pending')
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          const row = (data as unknown) as { scheduled_for?: string } | null;
+          if (row?.scheduled_for) {
+            const d = new Date(row.scheduled_for);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            setFollowUpTime(`${hh}:${mm}`);
+          }
+        });
     } else {
       setDoctor('');
       setDate(today);
       setFollowUp('');
+      setFollowUpTime('09:00');
       setDiagnosis('');
       setNotes('');
       setTotalCost('');
       setMedsText('');
     }
-  }, [open, isEdit, existing, today]);
+    // Reset upload state on every open
+    setAttachPath(null); setAttachName(''); setUploadErr(null);
+    setExtractedCount(0); setExtractNote(null); pdfExtraction.reset();
+  }, [open, isEdit, existing, today, pdfExtraction]);
 
 
 
@@ -96,13 +142,19 @@ export function PrescriptionDialog({
   const save = useMutation<void, Error>({
     mutationFn: async () => {
       if (parsedMeds.length === 0) throw new Error('Paste at least one medicine name.');
+      const total = parseFloat(totalCost);
+      if (!totalCost.trim() || Number.isNaN(total) || total < 0) {
+        throw new Error('Total cost of prescription is required.');
+      }
       const rx = {
         doctor_name: doctor.trim() || null,
         prescription_date: date,
         follow_up_date: followUp || null,
+        follow_up_time: followUp ? (followUpTime || '09:00') : null,
         diagnosis: diagnosis.trim() || null,
         notes: notes.trim() || null,
-        total_cost: totalCost ? parseFloat(totalCost) : null,
+        total_cost: total,
+        attachment_url: attachPath,
       };
       if (isEdit && existing) {
         await updatePrescription({ id: existing.id, rx, medicines: parsedMeds });
@@ -113,15 +165,19 @@ export function PrescriptionDialog({
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['prescriptions', customerId] });
       await qc.invalidateQueries({ queryKey: ['customer-activity', customerId] });
-      // Refreshes the hero stat strip — the unified crm_customer_stats view
-      // counts prescriptions toward visit_count and last_visit_at.
+      await qc.invalidateQueries({ queryKey: ['scheduled-reminders'] });
+      await qc.invalidateQueries({ queryKey: ['reminders-today'] });
+      await qc.invalidateQueries({ queryKey: ['reminders-overdue'] });
+      await qc.invalidateQueries({ queryKey: ['due-reminders'] });
+      await qc.invalidateQueries({ queryKey: ['upcoming-reminders'] });
+      await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
       await qc.invalidateQueries({ queryKey: ['customer', customerId] });
       await qc.invalidateQueries({ queryKey: ['customers'] });
       onOpenChange(false);
     },
   });
 
-  const canSubmit = !save.isPending && parsedMeds.length > 0 && !followUpInvalid;
+  const canSubmit = !save.isPending && parsedMeds.length > 0 && !followUpInvalid && totalCost.trim() !== '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,6 +216,170 @@ export function PrescriptionDialog({
             gender={customerGender}
           />
 
+          {/* ── PDF Upload section ── above Consultation ── */}
+          <section className="mt-4 rounded-xl border bg-card/40 p-4">
+            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Upload className="h-3.5 w-3.5" />
+              </span>
+              Import from Bill / Prescription PDF
+              <span className="text-[10px] font-normal lowercase tracking-normal">({t('common.optional')})</span>
+            </div>
+
+            {!attachPath ? (
+              <div
+                onClick={() => fileRef.current?.click()}
+                className={cn(
+                  'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-5 text-center transition-colors',
+                  'border-border bg-background hover:border-primary/40 hover:bg-muted/30',
+                  uploading && 'pointer-events-none opacity-60',
+                )}
+              >
+                {uploading
+                  ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  : <Upload className="h-5 w-5 text-muted-foreground" />}
+                <p className="text-sm font-medium">{uploading ? 'Uploading…' : 'Drop or click to upload'}</p>
+                <p className="text-[11px] text-muted-foreground">PDF, JPG, PNG · up to 10 MB · fields autofill from text-based PDFs</p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border bg-background p-3">
+                <FileText className="h-5 w-5 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{attachName}</span>
+                <button
+                  type="button"
+                  onClick={() => { setAttachPath(null); setAttachName(''); setExtractedCount(0); setExtractNote(null); }}
+                  className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            <input
+              ref={fileRef}
+              type="file"
+              hidden
+              accept={ALLOWED.join(',')}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (!ALLOWED.includes(file.type)) { setUploadErr('Only PDF, JPG, PNG, WEBP allowed.'); return; }
+                if (file.size > MAX_BYTES) { setUploadErr('File over 10 MB.'); return; }
+                setUploadErr(null); setUploading(true);
+                try {
+                  const ext = (file.name.split('.').pop() ?? 'bin').toLowerCase();
+                  const path = `${pharmacyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                  const { error: upErr } = await supabase.storage
+                    .from('crm-bill-attachments')
+                    .upload(path, file, { upsert: false, contentType: file.type });
+                  if (upErr) throw upErr;
+                  await signedBillUrl(path); // warm up the signed URL cache
+                  setAttachPath(path);
+                  setAttachName(file.name);
+
+                  // Extract data from document (PDF or Image via Gemini)
+                  setExtracting(true); setExtractedCount(0); setExtractNote(null);
+                  try {
+                    let docDoctor: string | null = null;
+                    let docDiagnosis: string | null = null;
+                    let docDate: string | null = null;
+                    let docTotal: string | null = null;
+                    let docMeds: string[] = [];
+
+                    // 1. Digital PDF client-side parse
+                    if (file.type === 'application/pdf') {
+                      try {
+                        const parsed = await pdfExtraction.extract(file);
+                        if (parsed && !parsed.isScanned && parsed.medicines.length > 0) {
+                          docDoctor = parsed.doctorName;
+                          docDiagnosis = parsed.diagnosis;
+                          docDate = parsed.date;
+                          if (parsed.totalAmount !== null) docTotal = String(parsed.totalAmount);
+                          docMeds = parsed.medicines.map(m => m.name);
+                        }
+                      } catch {
+                        // Fall back to Gemini if available
+                      }
+                    }
+
+                    // 2. Image or scanned/empty PDF: Gemini vision
+                    if (docMeds.length === 0) {
+                      if (hasGeminiKey()) {
+                        try {
+                          const raw = await extractBillData(getGeminiKey(), file, file.type, PRESCRIPTION_FIELDS);
+                          const report = validateExtraction(PRESCRIPTION_FIELDS, raw);
+                          if (report.fields.doctor?.value) docDoctor = String(report.fields.doctor.value);
+                          if (report.fields.diagnosis?.value) docDiagnosis = String(report.fields.diagnosis.value);
+                          if (report.fields.billDate?.value) docDate = String(report.fields.billDate.value);
+                          if (report.fields.billAmount?.value) docTotal = String(report.fields.billAmount.value);
+                          if (Array.isArray(report.fields.medicines?.value)) {
+                            docMeds = report.fields.medicines.value as string[];
+                          }
+                        } catch (gemErr) {
+                          if (gemErr instanceof GeminiAuthError) {
+                            setExtractNote(gemErr.message);
+                            return;
+                          }
+                          throw gemErr;
+                        }
+                      } else {
+                        if (file.type === 'application/pdf') {
+                          setExtractNote('Scanned PDF with no text layer. Configure Gemini API key in Settings → AI to enable AI extraction.');
+                        } else {
+                          setExtractNote('Add your Gemini API key in Settings → AI to enable AI data extraction from images.');
+                        }
+                        return;
+                      }
+                    }
+
+                    // 3. Fill fields
+                    let filled = 0;
+                    const fill = (val: string | null, cur: string, set: (v: string) => void) => {
+                      if (val && !cur.trim()) { set(val); filled += 1; }
+                    };
+                    fill(docDoctor, doctor, setDoctor);
+                    fill(docDiagnosis, diagnosis, setDiagnosis);
+                    if (docTotal) fill(docTotal, totalCost, setTotalCost);
+                    if (docDate && date === today) { setDate(docDate); filled += 1; }
+                    if (docMeds.length > 0 && !medsText.trim()) {
+                      setMedsText(docMeds.join('\n'));
+                      filled += docMeds.length;
+                    }
+                    if (filled > 0) {
+                      setExtractedCount(filled);
+                    } else {
+                      setExtractNote('Could not detect medicines in this document. Enter them manually below.');
+                    }
+                  } finally {
+                    setExtracting(false);
+                  }
+                } catch (err) {
+                  setUploadErr(err instanceof Error ? err.message : 'Upload failed.');
+                } finally {
+                  setUploading(false);
+                  if (fileRef.current) fileRef.current.value = '';
+                }
+              }}
+            />
+
+            {uploadErr && <p className="mt-2 text-xs text-destructive">{uploadErr}</p>}
+            {extracting && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading document &amp; extracting medicines…
+              </p>
+            )}
+            {!extracting && extractedCount > 0 && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600">
+                <Sparkles className="h-3.5 w-3.5" /> {extractedCount} field{extractedCount !== 1 ? 's' : ''} extracted
+              </p>
+            )}
+            {!extracting && extractNote && (
+              <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                <AlertTriangle aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" /> {extractNote}
+              </p>
+            )}
+          </section>
+
           <div className="mt-5 space-y-5">
             {/* Section 1 — Consultation */}
             <Section icon={<Stethoscope className="h-4 w-4" />} title={t('rx.section_consultation')}>
@@ -192,13 +412,27 @@ export function PrescriptionDialog({
                   icon={<CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />}
                   error={followUpInvalid ? t('rx.follow_up_invalid') : undefined}
                 >
-                  <Input
-                    type="date"
-                    className={cn('font-mono', followUpInvalid && 'border-destructive/60 focus-visible:ring-destructive/40')}
-                    value={followUp}
-                    onChange={(e) => setFollowUp(e.target.value)}
-                    min={date}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      className={cn('font-mono flex-1', followUpInvalid && 'border-destructive/60 focus-visible:ring-destructive/40')}
+                      value={followUp}
+                      onChange={(e) => setFollowUp(e.target.value)}
+                      min={date}
+                    />
+                    {followUp && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          type="time"
+                          className="w-24 font-mono text-xs h-10"
+                          value={followUpTime}
+                          onChange={(e) => setFollowUpTime(e.target.value)}
+                          title={t('rx.follow_up_time')}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </Field>
               </div>
 
@@ -211,7 +445,7 @@ export function PrescriptionDialog({
                 />
               </Field>
 
-              <Field label="Total Cost of Prescription (₹)" optional className="mt-3">
+              <Field label="Total Cost of Prescription (₹)" required className="mt-3">
                 <Input
                   type="number"
                   min="0"
@@ -219,6 +453,7 @@ export function PrescriptionDialog({
                   value={totalCost}
                   onChange={(e) => setTotalCost(e.target.value)}
                   placeholder="0.00"
+                  required
                 />
               </Field>
             </Section>
@@ -284,7 +519,7 @@ export function PrescriptionDialog({
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={save.isPending}>
             {t('btn.cancel')}
           </Button>
-          <Button type="submit" form="rx-form" disabled={!canSubmit}>
+          <Button type="button" onClick={handleSubmit} disabled={!canSubmit}>
             {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             {save.isPending
               ? t('btn.saving')

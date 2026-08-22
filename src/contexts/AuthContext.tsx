@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { sendWelcomeEmail, sendResetPasswordEmail } from '@/lib/api/email';
 
 interface AuthContextValue {
   user: User | null;
@@ -13,6 +14,8 @@ interface AuthContextValue {
     password: string,
     fullName: string
   ) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -82,10 +85,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
       if (error) return { error: error.message, needsConfirmation: false };
+      // ponytail: dispatch welcome email via Resend on first-time signup
+      if (data.user?.email) {
+        sendWelcomeEmail({ email: data.user.email, fullName: fullName.trim() });
+      }
       // If email confirmation is enabled, signUp returns a user but no session.
       // If disabled, both user and session are returned and we're auto-signed-in.
       const needsConfirmation = !!data.user && !data.session;
       return { error: null, needsConfirmation };
+    },
+    resetPasswordForEmail: async (email: string) => {
+      const cleanEmail = email.trim().toLowerCase();
+      // Dispatch secure branded reset email via backend (Resend + Supabase recovery token)
+      await sendResetPasswordEmail(cleanEmail);
+      return { error: null };
+    },
+    updatePassword: async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error: error?.message ?? null };
     },
     signOut: async () => {
       await supabase.auth.signOut();

@@ -74,6 +74,10 @@ export const PRESCRIPTION_FIELDS: FieldSpec[] = [
   { key: 'doctor',    type: 'string', describe: 'Prescribing doctor name, without the "Dr." prefix' },
   { key: 'diagnosis', type: 'string', describe: 'Diagnosis, condition or complaint written on the prescription' },
   { key: 'billDate',  type: 'date',   describe: 'Date written on the prescription, as YYYY-MM-DD' },
+  {
+    key: 'billAmount', type: 'number', min: 0, max: 10_000_000,
+    describe: 'Final payable amount — grand total or net amount. Number only, no currency symbol.',
+  },
   MEDICINES,
 ];
 

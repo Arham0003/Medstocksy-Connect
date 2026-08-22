@@ -1,16 +1,16 @@
-# Graph Report - Medstocksy-Connect 18-05-26  (2026-06-10)
+# Graph Report - Medstocksy-Connect 18-05-26  (2026-08-22)
 
 ## Corpus Check
-- 129 files · ~245,508 words
+- 241 files · ~348,345 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1120 nodes · 2165 edges · 92 communities (84 shown, 8 thin omitted)
+- 1825 nodes · 3044 edges · 172 communities (130 shown, 42 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fcb769c2`
+- Built from commit: `01f0ec2e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,7 +30,7 @@
 - [[_COMMUNITY_QA Test Report Logs|QA Test Report Logs]]
 - [[_COMMUNITY_QA Test Report Logs|QA Test Report Logs]]
 - [[_COMMUNITY_api_prescriptions  crm_refilldialog|api_prescriptions / crm_refilldialog]]
-- [[_COMMUNITY_crm_reminderruledialog  ui_button|crm_reminderruledialog / ui_button]]
+- [[_COMMUNITY_Community 15|Community 15]]
 - [[_COMMUNITY_package_devdependencies  package_devdependencies_globals|package_devdependencies / package_devdependencies_globals]]
 - [[_COMMUNITY_QA Test Report Logs|QA Test Report Logs]]
 - [[_COMMUNITY_QA Test Report Logs|QA Test Report Logs]]
@@ -40,7 +40,7 @@
 - [[_COMMUNITY_contexts_pharmacycontext_useactivepharmacy  pages_prescriptionworkflow|contexts_pharmacycontext_useactivepharmacy / pages_prescriptionworkflow]]
 - [[_COMMUNITY_crm_addfrombilldialog  api_customers_customer|crm_addfrombilldialog / api_customers_customer]]
 - [[_COMMUNITY_pages_reminders  pages_reminders_reminderrow|pages_reminders / pages_reminders_reminderrow]]
-- [[_COMMUNITY_pages_segments  pages_segments_hasfilter|pages_segments / pages_segments_hasfilter]]
+- [[_COMMUNITY_Community 25|Community 25]]
 - [[_COMMUNITY_medcrm_feature_medstocksy_connect_medcrm_v2_feature_reference  medcrm_feature_14_templates_pages_templates_tsx|medcrm_feature_medstocksy_connect_medcrm_v2_feature_reference / medcrm_feature_14_templates_pages_templates_tsx]]
 - [[_COMMUNITY_crm_prescriptiondialog  crm_batchrefilldialog|crm_prescriptiondialog / crm_batchrefilldialog]]
 - [[_COMMUNITY_pages_activity  pages_activity_activity|pages_activity / pages_activity_activity]]
@@ -103,47 +103,123 @@
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
 - [[_COMMUNITY_Community 91|Community 91]]
+- [[_COMMUNITY_Community 92|Community 92]]
+- [[_COMMUNITY_Community 93|Community 93]]
+- [[_COMMUNITY_Community 94|Community 94]]
+- [[_COMMUNITY_Community 95|Community 95]]
+- [[_COMMUNITY_Community 96|Community 96]]
+- [[_COMMUNITY_Community 97|Community 97]]
+- [[_COMMUNITY_Community 98|Community 98]]
+- [[_COMMUNITY_Community 99|Community 99]]
+- [[_COMMUNITY_Community 100|Community 100]]
+- [[_COMMUNITY_Community 101|Community 101]]
+- [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 103|Community 103]]
+- [[_COMMUNITY_Community 104|Community 104]]
+- [[_COMMUNITY_Community 105|Community 105]]
+- [[_COMMUNITY_Community 106|Community 106]]
+- [[_COMMUNITY_Community 107|Community 107]]
+- [[_COMMUNITY_Community 108|Community 108]]
+- [[_COMMUNITY_Community 109|Community 109]]
+- [[_COMMUNITY_Community 110|Community 110]]
+- [[_COMMUNITY_Community 111|Community 111]]
+- [[_COMMUNITY_Community 112|Community 112]]
+- [[_COMMUNITY_Community 113|Community 113]]
+- [[_COMMUNITY_Community 114|Community 114]]
+- [[_COMMUNITY_Community 115|Community 115]]
+- [[_COMMUNITY_Community 116|Community 116]]
+- [[_COMMUNITY_Community 117|Community 117]]
+- [[_COMMUNITY_Community 122|Community 122]]
+- [[_COMMUNITY_Community 123|Community 123]]
+- [[_COMMUNITY_Community 124|Community 124]]
+- [[_COMMUNITY_Community 125|Community 125]]
+- [[_COMMUNITY_Community 126|Community 126]]
+- [[_COMMUNITY_Community 127|Community 127]]
+- [[_COMMUNITY_Community 128|Community 128]]
+- [[_COMMUNITY_Community 129|Community 129]]
+- [[_COMMUNITY_Community 130|Community 130]]
+- [[_COMMUNITY_Community 131|Community 131]]
+- [[_COMMUNITY_Community 132|Community 132]]
+- [[_COMMUNITY_Community 133|Community 133]]
+- [[_COMMUNITY_Community 134|Community 134]]
+- [[_COMMUNITY_Community 135|Community 135]]
+- [[_COMMUNITY_Community 136|Community 136]]
+- [[_COMMUNITY_Community 137|Community 137]]
+- [[_COMMUNITY_Community 138|Community 138]]
+- [[_COMMUNITY_Community 139|Community 139]]
+- [[_COMMUNITY_Community 140|Community 140]]
+- [[_COMMUNITY_Community 141|Community 141]]
+- [[_COMMUNITY_Community 142|Community 142]]
+- [[_COMMUNITY_Community 143|Community 143]]
+- [[_COMMUNITY_Community 144|Community 144]]
+- [[_COMMUNITY_Community 145|Community 145]]
+- [[_COMMUNITY_Community 146|Community 146]]
+- [[_COMMUNITY_Community 147|Community 147]]
+- [[_COMMUNITY_Community 148|Community 148]]
+- [[_COMMUNITY_Community 149|Community 149]]
+- [[_COMMUNITY_Community 150|Community 150]]
+- [[_COMMUNITY_Community 151|Community 151]]
+- [[_COMMUNITY_Community 152|Community 152]]
+- [[_COMMUNITY_Community 153|Community 153]]
+- [[_COMMUNITY_Community 154|Community 154]]
+- [[_COMMUNITY_Community 155|Community 155]]
+- [[_COMMUNITY_Community 156|Community 156]]
+- [[_COMMUNITY_Community 157|Community 157]]
+- [[_COMMUNITY_Community 158|Community 158]]
+- [[_COMMUNITY_Community 159|Community 159]]
+- [[_COMMUNITY_Community 160|Community 160]]
+- [[_COMMUNITY_Community 161|Community 161]]
+- [[_COMMUNITY_Community 165|Community 165]]
+- [[_COMMUNITY_Community 166|Community 166]]
+- [[_COMMUNITY_Community 169|Community 169]]
+- [[_COMMUNITY_Community 171|Community 171]]
+- [[_COMMUNITY_Community 176|Community 176]]
+- [[_COMMUNITY_Community 177|Community 177]]
+- [[_COMMUNITY_Community 178|Community 178]]
+- [[_COMMUNITY_Community 179|Community 179]]
+- [[_COMMUNITY_Community 181|Community 181]]
+- [[_COMMUNITY_Community 183|Community 183]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `useT()` - 98 edges
-2. `cn()` - 77 edges
+1. `useT()` - 117 edges
+2. `cn()` - 83 edges
 3. `useActivePharmacy()` - 55 edges
-4. `Button` - 27 edges
-5. `supabase` - 27 edges
+4. `supabase` - 34 edges
+5. `Button` - 32 edges
 6. `run_tests()` - 22 edges
-7. `compilerOptions` - 22 edges
-8. `Medstocksy Connect (medcrm-v2) — Feature Reference` - 22 edges
-9. `initials()` - 21 edges
-10. `shot()` - 19 edges
+7. `initials()` - 22 edges
+8. `compilerOptions` - 22 edges
+9. `Medstocksy Connect (medcrm-v2) — Feature Reference` - 22 edges
+10. `Input` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `FullScreenLoader()` --calls--> `useT()`  [EXTRACTED]
   src/App.tsx → src/contexts/LanguageContext.tsx
 - `PharmacyLoadError()` --calls--> `useT()`  [EXTRACTED]
   src/App.tsx → src/contexts/LanguageContext.tsx
+- `AttachmentPreview()` --calls--> `useT()`  [EXTRACTED]
+  src/components/crm/AddFromBillDialog.tsx → src/contexts/LanguageContext.tsx
 - `SourceButton()` --calls--> `cn()`  [EXTRACTED]
   src/components/crm/AddFromBillDialog.tsx → src/lib/utils.ts
-- `DateGroup()` --calls--> `useT()`  [EXTRACTED]
-  src/components/crm/CustomerActivityTimeline.tsx → src/contexts/LanguageContext.tsx
-- `EventIcon()` --calls--> `cn()`  [EXTRACTED]
-  src/components/crm/CustomerActivityTimeline.tsx → src/lib/utils.ts
+- `RateTile()` --calls--> `cn()`  [EXTRACTED]
+  src/components/crm/CampaignAnalyticsDialog.tsx → src/lib/utils.ts
 
 ## Import Cycles
-- None detected.
+- 2-file cycle: `src/i18n/hi.ts -> src/i18n/translations.ts -> src/i18n/hi.ts`
 
-## Communities (92 total, 8 thin omitted)
+## Communities (172 total, 42 thin omitted)
 
 ### Community 0 - "contexts_languagecontext_uset / pages_settings"
 Cohesion: 0.09
-Nodes (24): addVisitNote(), listVisitNotes(), VisitNote, AttachmentLink(), BillBody(), BillEvent, DateGroup(), EmptyTimeline() (+16 more)
+Nodes (25): addVisitNote(), listVisitNotes(), VisitNote, AttachmentLink(), BillBody(), BillEvent, CustomerActivityTimeline(), DateGroup() (+17 more)
 
 ### Community 1 - "contexts_pharmacycontext / src_app"
-Cohesion: 0.12
-Nodes (13): Activity, Campaigns, CustomerProfile, Customers, FullScreenLoader(), NotFound, Onboarding, PharmacyLoadError() (+5 more)
+Cohesion: 0.10
+Nodes (17): Activity, AuthCallback, Campaigns, CustomerProfile, Customers, Dashboard, FullScreenLoader(), Login (+9 more)
 
 ### Community 2 - "contexts_languagecontext / crm_templatedialog"
-Cohesion: 0.13
-Nodes (20): Campaign, CampaignDialogProps, Template, ALLOWED_TYPES, KIND_OPTIONS, Template, TemplateDialog(), TemplateDialogProps (+12 more)
+Cohesion: 0.11
+Nodes (21): buildPrompt(), buildSchema(), extractBillData(), FREE_TIER_MODELS, GeminiAuthError, GenAiType, RESPONSE_SCHEMA, toBase64() (+13 more)
 
 ### Community 3 - "medstocksy_connect_rules_medstocksy_connect_agent_rules_for_claude_sonnet_4_7 / medstocksy_connect_rules_operational_rules"
 Cohesion: 0.05
@@ -158,12 +234,12 @@ Cohesion: 0.07
 Nodes (29): 10. Theme Quick-Reference (paste into design reviews), 11. Theme Acceptance Checklist (every screen), 1. Brand Essence, 2.1 Brand Palette (Pharmacy Blue + Green), 2.2 Semantic Status Colors, 2.3 Neutrals (Surface & Text), 2.4 Tag Color Mapping (auto-generated tags from PRD §2.1), 2.5 shadcn/ui CSS Variable Mapping (+21 more)
 
 ### Community 6 - "pages_customerprofile / pages_customers"
-Cohesion: 0.15
-Nodes (16): addTag(), createCustomer(), CustomerSort, CustomerStats, findPrimaryByPhone(), getCustomer(), listCustomers(), listManualTags() (+8 more)
+Cohesion: 0.11
+Nodes (24): addTag(), createCustomer(), Customer, CustomerStats, deleteCustomer(), DuplicatePhoneError, EnrichedRow, findPrimaryByPhone() (+16 more)
 
 ### Community 7 - "Third-Party Dependencies"
 Cohesion: 0.07
-Nodes (27): dependencies, class-variance-authority, clsx, date-fns, framer-motion, @google/genai, @google/generative-ai, @hookform/resolvers (+19 more)
+Nodes (30): dependencies, class-variance-authority, clsx, date-fns, framer-motion, @google/genai, @google/generative-ai, @hookform/resolvers (+22 more)
 
 ### Community 8 - "tsconfig_app_compileroptions / tsconfig_app_compileroptions_paths"
 Cohesion: 0.08
@@ -171,11 +247,11 @@ Nodes (24): compilerOptions, allowImportingTsExtensions, baseUrl, composite, exa
 
 ### Community 9 - "crm_quickreminderdialog / crm_customerformdialog"
 Cohesion: 0.12
-Nodes (19): usePharmacy(), AddFromBillDialog(), CustomerFormDialog(), PatientCard(), AppSidebar(), AppSidebarProps, commsLinks, crmLinks (+11 more)
+Nodes (16): [1.2.0](https://github.com/supabase/agent-skills/compare/v1.1.1...v1.2.0) (2026-06-02), [1.3.0](https://github.com/supabase/agent-skills/compare/v1.2.0...v1.3.0) (2026-06-05), [1.4.0](https://github.com/supabase/agent-skills/compare/v1.3.0...v1.4.0) (2026-07-10), [1.5.0](https://github.com/supabase/agent-skills/compare/supabase-postgres-best-practices-v1.4.0...supabase-postgres-best-practices-v1.5.0) (2026-07-30), [1.6.0](https://github.com/supabase/agent-skills/compare/supabase-postgres-best-practices-v1.5.0...supabase-postgres-best-practices-v1.6.0) (2026-07-30), Bug Fixes, Bug Fixes, Bug Fixes (+8 more)
 
 ### Community 10 - "crm_composedrawer / layout_remindersbell"
-Cohesion: 0.06
-Nodes (49): CampaignRecipient, finalizeCampaign(), markCampaignSending(), recordCampaignRecipient(), resolveSegmentCustomers(), CustomerWithStats, BotStatus, canSendNow() (+41 more)
+Cohesion: 0.38
+Nodes (4): getWelcomeEmailHtml(), handler(), resend, WelcomeRequestBody
 
 ### Community 11 - "QA Test Report Logs"
 Cohesion: 0.14
@@ -191,15 +267,15 @@ Nodes (19): api_failures, base_url, bugs, console_errors, email, passed_checks, 
 
 ### Community 14 - "api_prescriptions / crm_refilldialog"
 Cohesion: 0.11
-Nodes (21): createPrescription(), deletePrescription(), fetchRefillsByMedicine(), getPrescription(), listPrescriptions(), MedicineRefillStats, MedicineWithRefills, Prescription (+13 more)
+Nodes (25): createPrescription(), deletePrescription(), fetchRefillsByMedicine(), getPrescription(), listPrescriptions(), listPrescriptionsFallback(), MedicineInput, MedicineRefillStats (+17 more)
 
-### Community 15 - "crm_reminderruledialog / ui_button"
-Cohesion: 0.23
-Nodes (9): useDebounce(), useRealtimeInvalidate(), relativeTime(), CustomerProfile(), Customers(), Segment, segmentChips, VALID_SEGMENTS (+1 more)
+### Community 15 - "Community 15"
+Cohesion: 0.38
+Nodes (5): sendResetPasswordEmail(), sendWelcomeEmail(), AuthContext, AuthContextValue, AuthProvider()
 
 ### Community 16 - "package_devdependencies / package_devdependencies_globals"
-Cohesion: 0.11
-Nodes (19): devDependencies, autoprefixer, eslint, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss, prettier (+11 more)
+Cohesion: 0.09
+Nodes (22): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss (+14 more)
 
 ### Community 17 - "QA Test Report Logs"
 Cohesion: 0.16
@@ -218,8 +294,8 @@ Cohesion: 0.12
 Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
 ### Community 21 - "lib_utils_cn / lib_utils"
-Cohesion: 0.33
-Nodes (5): ComposeDrawerProps, RateMeter(), RateMeterProps, CreatedPharmacy, Input
+Cohesion: 0.08
+Nodes (24): CustomerDrawerProps, CustomFilter, CustomFilterBuilder(), CustomFilterBuilderProps, EMPTY_FILTER, hasFilter(), SEGMENT_DEFS, SegmentCard() (+16 more)
 
 ### Community 22 - "contexts_pharmacycontext_useactivepharmacy / pages_prescriptionworkflow"
 Cohesion: 0.08
@@ -230,32 +306,32 @@ Cohesion: 0.22
 Nodes (6): LanguageProvider(), Theme, ThemeContext, ThemeContextValue, ThemeProvider(), queryClient
 
 ### Community 24 - "pages_reminders / pages_reminders_reminderrow"
-Cohesion: 0.14
-Nodes (11): ReminderRuleDialog(), CHANNEL_ICONS, formatRelative(), ReminderRow(), Reminders(), ReminderStatus, Rule, ScheduledReminder (+3 more)
+Cohesion: 0.16
+Nodes (16): CustomerSort, useActivePharmacy(), AddFromBillDialog(), BatchRefillDialog(), RefillDialog(), VisitNoteDialog(), useDebounce(), useRealtimeInvalidate() (+8 more)
 
-### Community 25 - "pages_segments / pages_segments_hasfilter"
-Cohesion: 0.11
-Nodes (18): CustomerDrawerProps, CustomFilter, CustomFilterBuilder(), CustomFilterBuilderProps, EMPTY_FILTER, hasFilter(), SEGMENT_DEFS, SegmentCard() (+10 more)
+### Community 25 - "Community 25"
+Cohesion: 0.29
+Nodes (5): ConfirmEmailPanel(), Login(), Mode, ResetLinkSentPanel(), ResetSentPanel()
 
 ### Community 26 - "medcrm_feature_medstocksy_connect_medcrm_v2_feature_reference / medcrm_feature_14_templates_pages_templates_tsx"
 Cohesion: 0.15
 Nodes (12): 11. Segments (`pages/Segments.tsx`), 14.1 Grid, 14.2 `TemplateDialog` (scrollable, max-w-2xl), 14. Templates (`pages/Templates.tsx`), 15. Activity (`pages/Activity.tsx`), 19. Migrations (run order), 20. Conventions & rules in force, 3. Onboarding (`pages/Onboarding.tsx`) (+4 more)
 
 ### Community 27 - "crm_prescriptiondialog / crm_batchrefilldialog"
-Cohesion: 0.22
-Nodes (15): MedicineInput, Gender, Mode, EMPTY_MED, PrescriptionDialog(), VisitNoteDialogProps, Button, ButtonProps (+7 more)
+Cohesion: 0.14
+Nodes (26): LanguageContext, BulkReminder, Outcome, Props, Campaign, CampaignDialogProps, Template, PRESET_DAYS (+18 more)
 
 ### Community 28 - "pages_activity / pages_activity_activity"
-Cohesion: 0.11
-Nodes (23): useActivePharmacy(), BatchRefillDialog(), PRESET_DAYS, QuickReminderDialog(), QuickReminderDialogProps, ReminderChannel, Template, TimingMode (+15 more)
+Cohesion: 0.08
+Nodes (27): CustomerWithStats, EventIcon(), CustomerPickerDialog(), CustomerPickerDialogProps, RateMeter(), RateMeterProps, ReminderRuleDialog(), ReminderRuleDialogProps (+19 more)
 
 ### Community 29 - "vercel / vercel_functions"
-Cohesion: 0.17
-Nodes (11): maxDuration, maxDuration, buildCommand, framework, functions, api/whatsapp/send.ts, api/whatsapp/webhook.ts, headers (+3 more)
+Cohesion: 0.12
+Nodes (16): maxDuration, maxDuration, maxDuration, maxDuration, buildCommand, crons, framework, functions (+8 more)
 
 ### Community 30 - "lib_supabase / pages_campaigns"
-Cohesion: 0.11
-Nodes (18): ALL_SEGMENT, getSegment(), SEGMENT_OPTIONS, SegmentMetadata, SEGMENTS, TemplateMetadata, TranslationKey, NavLinkSpec (+10 more)
+Cohesion: 0.12
+Nodes (15): 1. Concrete Transformation Patterns, 2. Error-First Structure, 3. Quantified Impact, 4. Self-Contained Examples, 5. Semantic Naming, Code Example Standards, Comments, Impact Level Guidelines (+7 more)
 
 ### Community 31 - "graphify_skill_what_you_must_do_when_invoked / graphify_skill_graphify"
 Cohesion: 0.20
@@ -266,8 +342,8 @@ Cohesion: 0.20
 Nodes (8): Bug #2: Clicking customer row doesn't navigate to profile, Bug #3: Logout doesn't redirect to /login, Bug Reports, Medstocksy Connect QA Report, API Failures, Console Errors, Passed Checks, Summary
 
 ### Community 33 - "ui_tabs / ui_tabs_tabstrigger"
-Cohesion: 0.24
-Nodes (8): TabsContent(), TabsContext, TabsContextValue, TabsList(), TabsProps, TabsTrigger(), TabsTriggerProps, useTabs()
+Cohesion: 0.07
+Nodes (26): Dependencies & Execution Order, Format: `[ID] [P?] [Story] Description`, Implementation for User Story 1, Implementation for User Story 2, Implementation for User Story 3, Implementation Strategy, Incremental Delivery, MVP First (User Story 1 Only) (+18 more)
 
 ### Community 34 - "QA Test Report Logs"
 Cohesion: 0.22
@@ -310,12 +386,12 @@ Cohesion: 0.25
 Nodes (8): scripts, build, dev, format, lint, preview, supabase:types, typecheck
 
 ### Community 44 - "Caveman Skill Docs"
-Cohesion: 0.25
-Nodes (7): computedHash, skillPath, source, sourceType, skills, caveman, version
+Cohesion: 0.11
+Nodes (17): computedHash, skillPath, source, sourceType, skills, caveman, supabase, supabase-postgres-best-practices (+9 more)
 
 ### Community 45 - "ui_card / ui_card_card"
-Cohesion: 0.10
-Nodes (23): useLanguage(), useT(), useTheme(), AttachmentPreview(), Field(), Section(), Timeline(), NotFound() (+15 more)
+Cohesion: 0.09
+Nodes (27): useLanguage(), useT(), useTheme(), Field(), Section(), Timeline(), maskKey(), NotFound() (+19 more)
 
 ### Community 46 - "medcrm_feature_16_settings_pages_settings_tsx / medcrm_feature_16_5_about_minimal"
 Cohesion: 0.29
@@ -373,6 +449,10 @@ Nodes (5): 10. Positioning (Use Everywhere), Elevator Pitch:, ❌ NOT This:, Pos
 Cohesion: 0.40
 Nodes (5): 13. Risk Mitigation, Risk: Billing Sync Failures, Risk: Data Quality Issues, Risk: Low Staff Adoption, Risk: WhatsApp Account Suspension
 
+### Community 60 - "lib_gemini / lib_gemini_response_schema"
+Cohesion: 0.08
+Nodes (25): 1. Initialize Analysis Context, 2. Load Artifacts (Progressive Disclosure), 3. Build Semantic Models, 4. Detection Passes (Token-Efficient Analysis), 5. Severity Assignment, 6. Produce Compact Analysis Report, 7. Provide Next Actions, 8. Offer Remediation (+17 more)
+
 ### Community 61 - "medcrm_feature_10_refilldialog / medcrm_feature_10_3_save_side_effects"
 Cohesion: 0.50
 Nodes (4): 10.1 Medicine summary card (read-only), 10.2 Fields, 10.3 Save side-effects, 10. `RefillDialog`
@@ -405,29 +485,33 @@ Nodes (3): 8. V1 Scope (Be Strict), ❌ Exclude from V1:, ✅ Include in MVP:
 Cohesion: 0.67
 Nodes (3): 5. Roles & Permissions, Admin (Owner), Staff (Pharmacist/Counter)
 
+### Community 70 - "scratch_check_duplicates / scratch_check_duplicates_supabase"
+Cohesion: 0.11
+Nodes (20): useAuth(), PharmacyProvider(), usePharmacy(), MembersSection(), AppSidebar(), AppSidebarProps, commsLinks, crmLinks (+12 more)
+
 ### Community 76 - "graphify_detect"
-Cohesion: 0.17
-Nodes (11): AuthContext, AuthContextValue, AuthProvider(), useAuth(), PharmacyProvider(), AuthCallback(), ConfirmEmailPanel(), Login() (+3 more)
+Cohesion: 0.10
+Nodes (19): compilerOptions, allowImportingTsExtensions, composite, isolatedModules, jsx, lib, module, moduleDetection (+11 more)
 
 ### Community 79 - "readme"
-Cohesion: 0.09
-Nodes (21): 1. Clone the parent's Supabase project credentials, 2. Apply the database migration, 3. Install + run, 4. Build for production, 🚦 Deployment to Vercel, 🟡 Functional stub — needs ~1–2 weeks more, 🚀 Getting started, 🛡 License (+13 more)
+Cohesion: 0.06
+Nodes (38): 1. Clone the parent's Supabase project credentials, 1. Configure Environment Variables, 1. 🔍 Schema-Driven Prescription OCR & AI Extraction, 2. Apply Database Migrations, 2. Apply the database migration, 2. 🔐 Authentication, Reset Password & Transactional Email, 3. Install + run, 3. Install & Run Locally (+30 more)
 
 ### Community 82 - "Community 82"
 Cohesion: 0.13
 Nodes (14): compilerOptions, allowSyntheticDefaultImports, esModuleInterop, isolatedModules, module, moduleResolution, noImplicitAny, outDir (+6 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.17
-Nodes (10): Customer, DuplicatePhoneError, AddFromBillDialogProps, EMPTY_RX_MED, Gender, Mode, Source, SourceButton() (+2 more)
+Cohesion: 0.16
+Nodes (12): recordSale(), AttachmentPreview(), EMPTY_RX_MED, Gender, Mode, Source, SourceButton(), editDistance() (+4 more)
 
 ### Community 84 - "Community 84"
-Cohesion: 0.24
-Nodes (8): LanguageContext, LanguageContextValue, PharmacyContext, PharmacyContextValue, PharmacyMembership, Lang, storage, MemberRole
+Cohesion: 0.11
+Nodes (18): Campaign, CampaignAnalyticsDialog(), DELIVERED, FunnelBar(), Props, RateTile(), REACHED, RecipientRow (+10 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.13
-Nodes (17): MsgEvent, Activity(), ActivityRow, EmptyState(), Filter, FILTERS, Group, groupByDate() (+9 more)
+Cohesion: 0.06
+Nodes (56): CampaignRecipient, fetchCustomerCampaignVars(), finalizeCampaign(), markCampaignSending(), recordCampaignRecipient(), resolveSegmentCustomers(), BotStatus, canSendNow() (+48 more)
 
 ### Community 86 - "Community 86"
 Cohesion: 0.22
@@ -446,32 +530,192 @@ Cohesion: 0.40
 Nodes (4): 1. High-Level Architecture Overview, 2. Locating Code and Relationships (Dynamic Queries), 3. Mandatory Development Rules, Graphify Navigation & Development Guide for AI Agents
 
 ### Community 90 - "Community 90"
-Cohesion: 0.25
-Nodes (5): ReminderRuleDialogProps, Rule, Stop(), Template, UnitInput()
+Cohesion: 0.12
+Nodes (15): 1. Initialize Convergence Context, 2. Load Artifacts (Progressive Disclosure), 3. Build the Intent Inventory, 4. Assess the Codebase and Classify Findings, 5. Assign Severity, 6. Present the In-Session Findings Summary, 7. Append Convergence Tasks (or report converged), 8. Provide Next Actions (Handoff) (+7 more)
 
 ### Community 91 - "Community 91"
+Cohesion: 0.25
+Nodes (12): clean(), extractFromPdf(), extractQty(), extractTextFromPdf(), isRealDate(), looksLikeMedicine(), parseAmount(), parseBillText() (+4 more)
+
+### Community 92 - "Community 92"
+Cohesion: 0.13
+Nodes (14): files, .agents/skills/speckit-analyze/SKILL.md, .agents/skills/speckit-checklist/SKILL.md, .agents/skills/speckit-clarify/SKILL.md, .agents/skills/speckit-constitution/SKILL.md, .agents/skills/speckit-converge/SKILL.md, .agents/skills/speckit-implement/SKILL.md, .agents/skills/speckit-plan/SKILL.md (+6 more)
+
+### Community 93 - "Community 93"
+Cohesion: 0.13
+Nodes (14): files, .specify/scripts/powershell/check-prerequisites.ps1, .specify/scripts/powershell/common.ps1, .specify/scripts/powershell/create-new-feature.ps1, .specify/scripts/powershell/setup-plan.ps1, .specify/scripts/powershell/setup-tasks.ps1, .specify/templates/checklist-template.md, .specify/templates/constitution-template.md (+6 more)
+
+### Community 94 - "Community 94"
+Cohesion: 0.22
+Nodes (10): Find-SpecifyRoot(), Format-SpecKitCommand(), Get-CurrentBranch(), Get-FeaturePathsEnv(), Get-InvokeSeparator(), Get-Python3Command(), Get-RepoRoot(), Resolve-SpecifyInitDir() (+2 more)
+
+### Community 95 - "Community 95"
+Cohesion: 0.15
+Nodes (12): Assumptions, Edge Cases, Feature Specification: [FEATURE NAME], Functional Requirements, Key Entities *(include if feature involves data)*, Measurable Outcomes, Requirements *(mandatory)*, Success Criteria *(mandatory)* (+4 more)
+
+### Community 96 - "Community 96"
+Cohesion: 0.18
+Nodes (10): Core Principles, Governance, [PRINCIPLE_1_NAME], [PRINCIPLE_2_NAME], [PRINCIPLE_3_NAME], [PRINCIPLE_4_NAME], [PRINCIPLE_5_NAME], [PROJECT_NAME] Constitution (+2 more)
+
+### Community 97 - "Community 97"
+Cohesion: 0.18
+Nodes (10): Completion Report, Done When, Key rules, Mandatory Post-Execution Hooks, Outline, Phase 0: Outline & Research, Phase 1: Design & Contracts, Phases (+2 more)
+
+### Community 98 - "Community 98"
+Cohesion: 0.18
+Nodes (10): Completion Report, Done When, For AI Generation, Mandatory Post-Execution Hooks, Outline, Pre-Execution Checks, Quick Guidelines, Section Requirements (+2 more)
+
+### Community 99 - "Community 99"
+Cohesion: 0.18
+Nodes (10): Checklist Format (REQUIRED), Completion Report, Done When, Mandatory Post-Execution Hooks, Outline, Phase Structure, Pre-Execution Checks, Task Generation Rules (+2 more)
+
+### Community 100 - "Community 100"
+Cohesion: 0.18
+Nodes (10): Core Principles, Governance, [PRINCIPLE_1_NAME], [PRINCIPLE_2_NAME], [PRINCIPLE_3_NAME], [PRINCIPLE_4_NAME], [PRINCIPLE_5_NAME], [PROJECT_NAME] Constitution (+2 more)
+
+### Community 101 - "Community 101"
+Cohesion: 0.20
+Nodes (9): invoke_separator, script, default_integration, installed_integrations, integration, integration_settings, agy, integration_state_schema (+1 more)
+
+### Community 102 - "Community 102"
+Cohesion: 0.20
+Nodes (9): schema_version, description, installed_at, name, source, updated_at, version, workflows (+1 more)
+
+### Community 103 - "Community 103"
+Cohesion: 0.22
+Nodes (8): Complexity Tracking, Constitution Check, Documentation (this feature), Implementation Plan: [FEATURE], Project Structure, Source Code (repository root), Summary, Technical Context
+
+### Community 104 - "Community 104"
+Cohesion: 0.25
+Nodes (7): arrowParens, plugins, printWidth, semi, singleQuote, tabWidth, trailingComma
+
+### Community 105 - "Community 105"
+Cohesion: 0.25
+Nodes (7): ai, ai_skills, feature_numbering, here, integration, script, speckit_version
+
+### Community 106 - "Community 106"
+Cohesion: 0.25
+Nodes (7): Anti-Examples: What NOT To Do, Checklist Purpose: "Unit Tests for English", Example Checklist Types & Sample Items, Execution Steps, Post-Execution Checks, Pre-Execution Checks, User Input
+
+### Community 107 - "Community 107"
+Cohesion: 0.12
+Nodes (15): [0.1.3](https://github.com/supabase/agent-skills/compare/v0.1.2...v0.1.3) (2026-06-02), [0.1.4](https://github.com/supabase/agent-skills/compare/v0.1.3...v0.1.4) (2026-06-05), [0.1.5](https://github.com/supabase/agent-skills/compare/v0.1.4...v0.1.5) (2026-07-10), [0.1.6](https://github.com/supabase/agent-skills/compare/v0.1.5...supabase-v0.1.6) (2026-07-30), [0.1.7](https://github.com/supabase/agent-skills/compare/v0.1.6...supabase-v0.1.7) (2026-08-12), Bug Fixes, Bug Fixes, Bug Fixes (+7 more)
+
+### Community 108 - "Community 108"
+Cohesion: 0.29
+Nodes (6): Completion Report, Done When, Mandatory Post-Execution Hooks, Outline, Pre-Execution Checks, User Input
+
+### Community 109 - "Community 109"
+Cohesion: 0.29
+Nodes (6): Completion Report, Done When, Mandatory Post-Execution Hooks, Outline, Pre-Execution Checks, User Input
+
+### Community 110 - "Community 110"
+Cohesion: 0.23
+Nodes (11): claimInvites(), inviteMember(), listMembers(), Member, MemberRole, PendingInvite, removeMember(), revokeInvite() (+3 more)
+
+### Community 111 - "Community 111"
 Cohesion: 0.40
 Nodes (5): getNotifyInterval(), getSnoozedUntil(), NOTIFY_INTERVAL_OPTIONS, setNotifyInterval(), snoozePopup()
 
+### Community 113 - "Community 113"
+Cohesion: 0.33
+Nodes (5): Outline, Post-Execution Checks, Pre-Execution Checks, Scope Guard, User Input
+
+### Community 114 - "Community 114"
+Cohesion: 0.60
+Nodes (4): DueReminder, handler(), recordOutcome(), renderTemplate()
+
+### Community 115 - "Community 115"
+Cohesion: 0.40
+Nodes (4): Outline, Post-Execution Checks, Pre-Execution Checks, User Input
+
+### Community 116 - "Community 116"
+Cohesion: 0.40
+Nodes (4): [Category 1], [Category 2], [CHECKLIST TYPE] Checklist: [FEATURE NAME], Notes
+
+### Community 122 - "Community 122"
+Cohesion: 0.18
+Nodes (10): Core Principles, Debugging, Making and Committing Schema Changes, Option A: Declarative schemas, Option B: Imperative migrations, Reference Guides, Supabase, Supabase CLI (+2 more)
+
+### Community 123 - "Community 123"
+Cohesion: 0.20
+Nodes (9): 1. Query Performance (query), 2. Connection Management (conn), 3. Security & RLS (security), 4. Schema Design (schema), 5. Concurrency & Locking (lock), 6. Data Access Patterns (data), 7. Monitoring & Diagnostics (monitor), 8. Advanced Features (advanced) (+1 more)
+
+### Community 124 - "Community 124"
+Cohesion: 0.33
+Nodes (5): How to Use, References, Rule Categories by Priority, Supabase Postgres Best Practices, When to Apply
+
+### Community 125 - "Community 125"
+Cohesion: 0.50
+Nodes (3): mcpServers, supabase, serverUrl
+
+### Community 126 - "Community 126"
+Cohesion: 0.50
+Nodes (3): Fix suggestion, Source, What happened
+
+### Community 160 - "Community 160"
+Cohesion: 0.13
+Nodes (19): ComposeDrawer(), ComposeDrawerProps, ALLOWED_TYPES, KIND_OPTIONS, Template, TemplateDialog(), TemplateDialogProps, TplLang (+11 more)
+
+### Community 161 - "Community 161"
+Cohesion: 0.29
+Nodes (5): cardVariants, itemVariants, ReferralCard(), ReferralCardProps, ReferralStep
+
+### Community 165 - "Community 165"
+Cohesion: 0.09
+Nodes (20): brandSubtitle, brandTitle, container, contentSection, ctaButton, ctaSection, divider, featureCard (+12 more)
+
+### Community 166 - "Community 166"
+Cohesion: 0.06
+Nodes (36): LanguageContextValue, PharmacyContextValue, PharmacyMembership, MsgEvent, ALL_SEGMENT, getSegment(), SEGMENT_OPTIONS, SegmentMetadata (+28 more)
+
+### Community 169 - "Community 169"
+Cohesion: 0.14
+Nodes (18): signedBillUrl(), toObjectPath(), PharmacyContext, EMPTY_MED, PrescriptionDialog(), getGeminiKey(), hasGeminiKey(), setGeminiKey() (+10 more)
+
+### Community 171 - "Community 171"
+Cohesion: 0.12
+Nodes (15): dependencies, react, react-dom, react-email, devDependencies, @react-email/ui, @types/react, @types/react-dom (+7 more)
+
+### Community 176 - "Community 176"
+Cohesion: 0.15
+Nodes (11): code, codeContainer, container, footer, link, logo, main, paragraph (+3 more)
+
+### Community 177 - "Community 177"
+Cohesion: 0.17
+Nodes (11): compilerOptions, composite, jsx, module, moduleResolution, noEmit, skipLibCheck, strict (+3 more)
+
+### Community 178 - "Community 178"
+Cohesion: 0.20
+Nodes (8): code, container, footer, h1, link, main, NotionMagicLinkEmailProps, text
+
+### Community 179 - "Community 179"
+Cohesion: 0.20
+Nodes (8): anchor, box, button, container, footer, hr, main, paragraph
+
+### Community 181 - "Community 181"
+Cohesion: 0.50
+Nodes (3): Getting Started, License, React Email Starter
+
 ## Knowledge Gaps
-- **568 isolated node(s):** `total_bugs`, `critical`, `high`, `medium`, `low` (+563 more)
+- **1009 isolated node(s):** `serverUrl`, `singleQuote`, `semi`, `tabWidth`, `trailingComma` (+1004 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **42 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useT()` connect `ui_card / ui_card_card` to `contexts_languagecontext_uset / pages_settings`, `contexts_pharmacycontext / src_app`, `contexts_languagecontext / crm_templatedialog`, `pages_customerprofile / pages_customers`, `crm_quickreminderdialog / crm_customerformdialog`, `crm_composedrawer / layout_remindersbell`, `graphify_detect`, `crm_reminderruledialog / ui_button`, `Community 83`, `Community 84`, `lib_utils_cn / lib_utils`, `Community 85`, `pages_reminders / pages_reminders_reminderrow`, `pages_segments / pages_segments_hasfilter`, `Community 90`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`, `lib_supabase / pages_campaigns`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
-- **Why does `cn()` connect `pages_activity / pages_activity_activity` to `contexts_languagecontext_uset / pages_settings`, `ui_tabs / ui_tabs_tabstrigger`, `contexts_languagecontext / crm_templatedialog`, `pages_customerprofile / pages_customers`, `crm_quickreminderdialog / crm_customerformdialog`, `crm_composedrawer / layout_remindersbell`, `graphify_detect`, `ui_card / ui_card_card`, `crm_reminderruledialog / ui_button`, `Community 83`, `lib_utils_cn / lib_utils`, `Community 85`, `pages_reminders / pages_reminders_reminderrow`, `pages_segments / pages_segments_hasfilter`, `Community 90`, `crm_prescriptiondialog / crm_batchrefilldialog`, `lib_supabase / pages_campaigns`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `useActivePharmacy()` connect `pages_activity / pages_activity_activity` to `contexts_languagecontext / crm_templatedialog`, `pages_customerprofile / pages_customers`, `crm_quickreminderdialog / crm_customerformdialog`, `crm_composedrawer / layout_remindersbell`, `ui_card / ui_card_card`, `crm_reminderruledialog / ui_button`, `Community 83`, `Community 84`, `lib_utils_cn / lib_utils`, `Community 85`, `pages_reminders / pages_reminders_reminderrow`, `pages_segments / pages_segments_hasfilter`, `Community 90`, `crm_prescriptiondialog / crm_batchrefilldialog`, `lib_supabase / pages_campaigns`?**
+- **Why does `useT()` connect `ui_card / ui_card_card` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `contexts_pharmacycontext / src_app`, `pages_customerprofile / pages_customers`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `Community 166`, `Community 169`, `Community 110`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `cn()` connect `pages_activity / pages_activity_activity` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `Community 161`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `Community 166`, `pages_customerprofile / pages_customers`, `Community 169`, `ui_card / ui_card_card`, `Community 110`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **What connects `total_bugs`, `critical`, `high` to the rest of the system?**
-  _572 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `useActivePharmacy()` connect `pages_reminders / pages_reminders_reminderrow` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `pages_customerprofile / pages_customers`, `Community 166`, `Community 169`, `ui_card / ui_card_card`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **What connects `serverUrl`, `singleQuote`, `semi` to the rest of the system?**
+  _1013 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `contexts_languagecontext_uset / pages_settings` be split into smaller, more focused modules?**
-  _Cohesion score 0.09116809116809117 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08994708994708994 - nodes in this community are weakly interconnected._
 - **Should `contexts_pharmacycontext / src_app` be split into smaller, more focused modules?**
-  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
 - **Should `contexts_languagecontext / crm_templatedialog` be split into smaller, more focused modules?**
-  _Cohesion score 0.13105413105413105 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10869565217391304 - nodes in this community are weakly interconnected._

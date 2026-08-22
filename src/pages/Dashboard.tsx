@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BellRing, Megaphone, Send, ClipboardList, AlertTriangle, FileText, CheckCircle2, MessageSquare, Smartphone, PhoneCall, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { BellRing, Megaphone, Send, ClipboardList, AlertTriangle, FileText, CheckCircle2, MessageSquare, Smartphone, PhoneCall, Check } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import { supabase, rpc } from '@/lib/supabase';
@@ -13,7 +13,7 @@ import { CustomerPickerDialog } from '@/components/crm/CustomerPickerDialog';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
 import { sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { markReminderSent, renderReminderMessage } from '@/lib/api/reminders';
-import { cn, formatINR } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { CustomerWithStats } from '@/lib/api/customers';
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
@@ -36,84 +36,19 @@ import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
  * one hero number, then quiet supporting stats, then the work queue.
  */
 
-/** One day in the 7-day revenue trend. */
-interface DayPoint {
-  /** Local YYYY-MM-DD, used only as a React key. */
-  key: string;
-  /** Short weekday label, e.g. "Mon". */
-  label: string;
-  total: number;
-  isToday: boolean;
-}
-
-/**
- * Simple bars for the last 7 days of revenue.
- *
- * Theme §11 permits "simple bars/numbers" and no more, and the audit called
- * out the total absence of trend visualisation (§9) as a top gap — a single
- * "revenue today" figure cannot tell a slow Tuesday from a collapsing week.
- */
-function RevenueTrend({ days, loading }: { days: DayPoint[]; loading: boolean }) {
-  const t = useT();
-  if (loading) return <Skeleton className="h-[68px] w-full sm:w-[260px]" />;
-
-  const peak = Math.max(...days.map((d) => d.total), 1);
-
-  return (
-    <div className="w-full sm:w-[260px]">
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t('dash.trend.label')}
-        </span>
-        <span className="mono-num text-[10px] tabular-nums text-muted-foreground">
-          {t('dash.trend.peak')} {formatINRCompact(peak)}
-        </span>
-      </div>
-      <div className="flex h-11 items-end gap-1.5" role="img" aria-label={t('dash.trend.label')}>
-        {days.map((d) => (
-          <div key={d.key} className="group relative flex flex-1 flex-col items-center gap-1">
-            <div
-              // min-height keeps a zero day visible as a baseline tick rather
-              // than a gap the eye reads as missing data.
-              className={cn(
-                'w-full rounded-sm transition-colors',
-                d.isToday ? 'bg-primary' : 'bg-muted-foreground/25 group-hover:bg-muted-foreground/40'
-              )}
-              style={{ height: `${Math.max((d.total / peak) * 100, 4)}%` }}
-              title={`${d.label}: ${formatINRCompact(d.total)}`}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="mt-1.5 flex gap-1.5">
-        {days.map((d) => (
-          <span
-            key={d.key}
-            className={cn(
-              'flex-1 text-center text-[9px] font-medium',
-              d.isToday ? 'text-primary' : 'text-muted-foreground/70'
-            )}
-          >
-            {d.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /**
  * Quiet supporting stat. No icon chip, no coloured border, no per-metric hue —
- * these are context for the hero number, so they read as a row of facts.
+ * these are context for the dashboard, so they read as a row of facts.
  */
 function StatCell({
-  label, value, sub, tone = 'default', onClick,
+  label, value, sub, tone = 'default', onClick, loading = false,
 }: {
   label: string;
   value: string | number;
   sub: string;
   tone?: 'default' | 'attention';
   onClick?: () => void;
+  loading?: boolean;
 }) {
   return (
     <button
@@ -124,138 +59,25 @@ function StatCell({
       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span className={cn(
-        'mono-num mt-1.5 text-2xl font-semibold leading-none tabular-nums',
-        tone === 'attention' ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
-      )}>
-        {value}
-      </span>
-      <span className="mt-1.5 truncate text-[11px] text-muted-foreground" title={sub}>
-        {sub}
-      </span>
+      {loading ? (
+        <Skeleton className="mt-1.5 h-6 w-16" />
+      ) : (
+        <span className={cn(
+          'mono-num mt-1.5 text-2xl font-semibold leading-none tabular-nums',
+          tone === 'attention' ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
+        )}>
+          {value}
+        </span>
+      )}
+      {loading ? (
+        <Skeleton className="mt-1.5 h-3 w-20" />
+      ) : (
+        <span className="mt-1.5 truncate text-[11px] text-muted-foreground" title={sub}>
+          {sub}
+        </span>
+      )}
     </button>
   );
-}
-
-/**
- * Hero panel. Today's revenue is the one number a pharmacy owner opens this
- * screen for, so it gets display size and the only elevated surface on the
- * page (theme §4: "at most one elevated layer per screen"). Everything else
- * on the dashboard steps down from here.
- */
-function TodayPanel({
-  dash, isLoading, trend, trendLoading,
-}: {
-  dash: DashboardCounts | undefined;
-  isLoading: boolean;
-  trend: DayPoint[];
-  trendLoading: boolean;
-}) {
-  const t = useT();
-
-  const delta = dash && dash.revenue_yesterday > 0
-    ? Math.round(((dash.revenue_today - dash.revenue_yesterday) / dash.revenue_yesterday) * 100)
-    : null;
-  const trendUp = delta != null && delta >= 0;
-
-  const counts = dash ? [
-    { value: dash.refills_today,       label: t('dash.pulse.refills')  },
-    { value: dash.new_customers_today, label: t('dash.pulse.new_cust') },
-    { value: dash.msgs_out_today,      label: t('dash.pulse.msgs')     },
-    { value: dash.reminders_due_today, label: t('dash.pulse.due'), attention: true },
-  ] : [];
-
-  return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {t('dash.pulse.revenue_today')}
-            </span>
-            {/* Live indicator as a small dot, not a chip — it is a status, not
-                a headline. */}
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground/70">
-              <span className="h-1 w-1 rounded-full bg-emerald-500" />
-              {t('dash.pulse.live')}
-            </span>
-          </div>
-
-          {isLoading || !dash ? (
-            <Skeleton className="mt-2 h-11 w-44" />
-          ) : (
-            <>
-              <div className="mt-1.5 flex flex-wrap items-baseline gap-3">
-                <span className="mono-num text-4xl font-semibold leading-none tracking-tight tabular-nums sm:text-[2.75rem]">
-                  {formatINR(dash.revenue_today)}
-                </span>
-                {delta != null && (
-                  <span className={cn(
-                    'inline-flex items-center gap-0.5 text-sm font-semibold tabular-nums',
-                    trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
-                  )}>
-                    {trendUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                    {Math.abs(delta)}%
-                  </span>
-                )}
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t('dash.pulse.vs_yesterday')}{' '}
-                <span className="mono-num tabular-nums text-foreground">
-                  {formatINR(dash.revenue_yesterday)}
-                </span>
-              </p>
-            </>
-          )}
-        </div>
-
-        <RevenueTrend days={trend} loading={trendLoading} />
-      </div>
-
-      {/* Today's counts — one divided strip of plain numbers. No icon chips:
-          four coloured chips beside four coloured numerals was the noisiest
-          part of the old layout and none of it aided the scan. */}
-      <div className="grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
-        {isLoading || !dash
-          ? [0, 1, 2, 3].map((i) => (
-              <div key={i} className="px-5 py-3.5">
-                <Skeleton className="h-5 w-10" />
-                <Skeleton className="mt-1.5 h-3 w-14" />
-              </div>
-            ))
-          : counts.map((c) => (
-              <div key={c.label} className="px-5 py-3.5">
-                <div className={cn(
-                  'mono-num text-lg font-semibold leading-none tabular-nums',
-                  c.attention && c.value > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
-                )}>
-                  {c.value}
-                </div>
-                <div className="mt-1 truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {c.label}
-                </div>
-              </div>
-            ))}
-      </div>
-    </Card>
-  );
-}
-
-interface SaleRow { sold_at: string | null; bill_amount: number | null }
-interface RefillRow { refilled_at: string | null; bill_amount: number | null }
-
-/** Local-time YYYY-MM-DD bucket key. Uses local parts rather than
- *  toISOString() so a late-evening sale lands on the day the pharmacist
- *  actually made it, not the next UTC day. */
-function dayKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-/** Compact ₹ formatter — switches to "₹1.2k" / "₹1.5L" past thresholds. */
-function formatINRCompact(amount: number): string {
-  if (amount >= 100_000) return `₹${(amount / 100_000).toFixed(1)}L`;
-  if (amount >= 1_000)   return `₹${(amount / 1_000).toFixed(1)}k`;
-  return `₹${Math.round(amount).toLocaleString('en-IN')}`;
 }
 
 /* ─── Recent Prescriptions widget ─────────────────────────────────────────── */
@@ -431,62 +253,6 @@ export default function Dashboard() {
     },
   });
 
-  // ── 7-day revenue trend ─────────────────────────────────────────────
-  // Sales + refills, matching how crm_dashboard_counts computes revenue_today
-  // (20260627_01:46-49) so the last bar always agrees with the hero figure.
-  // Bounded to 7 days, so this stays a small read even for a busy counter.
-  const { data: trend = [], isLoading: loadingTrend } = useQuery<DayPoint[]>({
-    queryKey: ['revenue-7d', pharmacyId],
-    enabled: !!pharmacyId,
-    staleTime: 300_000,
-    queryFn: async () => {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      start.setDate(start.getDate() - 6);
-
-      const [sales, refills] = await Promise.all([
-        supabase.from('crm_customer_sales')
-          .select('sold_at, bill_amount')
-          .eq('pharmacy_id', pharmacyId)
-          .gte('sold_at', start.toISOString()),
-        supabase.from('crm_prescription_refills')
-          .select('refilled_at, bill_amount')
-          .eq('pharmacy_id', pharmacyId)
-          .gte('refilled_at', start.toISOString()),
-      ]);
-      if (sales.error) throw new Error(sales.error.message);
-      if (refills.error) throw new Error(refills.error.message);
-
-      // Seed all 7 buckets first so quiet days render as zero bars rather
-      // than vanishing from the axis.
-      const buckets = new Map<string, number>();
-      const days: DayPoint[] = [];
-      const todayKey = dayKey(new Date());
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        const key = dayKey(d);
-        buckets.set(key, 0);
-        days.push({
-          key,
-          label: d.toLocaleDateString('en-IN', { weekday: 'short' }),
-          total: 0,
-          isToday: key === todayKey,
-        });
-      }
-
-      const add = (iso: string | null, amount: number | null) => {
-        if (!iso) return;
-        const key = dayKey(new Date(iso));
-        if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + (amount ?? 0));
-      };
-      for (const r of (sales.data ?? []) as unknown as SaleRow[]) add(r.sold_at, r.bill_amount);
-      for (const r of (refills.data ?? []) as unknown as RefillRow[]) add(r.refilled_at, r.bill_amount);
-
-      return days.map((d) => ({ ...d, total: buckets.get(d.key) ?? 0 }));
-    },
-  });
-
   // ── Realtime: invalidate dashboard on any relevant table change ──────
   useRealtimeInvalidate({ table: 'crm_customers',           pharmacyId, queryKeys: [['dashboard', pharmacyId], ['customers', pharmacyId]] });
   useRealtimeInvalidate({ table: 'crm_scheduled_reminders', pharmacyId, queryKeys: [['dashboard', pharmacyId], ['upcoming-reminders', pharmacyId], ['due-reminders', pharmacyId]] });
@@ -497,6 +263,7 @@ export default function Dashboard() {
     id: string;
     scheduled_for: string;
     status: string;
+    sent_at?: string | null;
     variables?: Record<string, string> | null;
     customer: { id: string; name: string; phone: string; whatsapp_opted_in: boolean };
     template: { name: string; body: string };
@@ -507,22 +274,45 @@ export default function Dashboard() {
     enabled: !!pharmacyId,
     staleTime: 60_000,
     queryFn: async () => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOf7d = new Date(Date.now() + 7 * 86400000);
+
       const { data, error } = await supabase
         .from('crm_scheduled_reminders')
         .select(`
-          id, scheduled_for, status, variables,
+          id, scheduled_for, status, sent_at, variables,
           customer:crm_customers!inner(id, name, phone, whatsapp_opted_in),
           template:crm_templates!inner(name, body)
         `)
         .eq('pharmacy_id', pharmacyId)
-        .eq('status', 'pending')
-        // No date filter: show ALL pending reminders (overdue + upcoming)
+        .or(`and(status.eq.pending,scheduled_for.lt.${endOf7d.toISOString()}),and(status.in.(sent,converted),sent_at.gte.${startOfDay.toISOString()})`)
         .order('scheduled_for')
         .limit(8);
       if (error) throw error;
       return (data ?? []) as unknown as UpcomingRow[];
     },
   });
+
+  // Auto-refresh dashboard when returning to tab
+  useEffect(() => {
+    const onReturn = () => {
+      if (document.visibilityState === 'visible') {
+        for (const key of [
+          'upcoming-reminders', 'due-reminders', 'dashboard-counts',
+          'scheduled-reminders', 'reminders-today', 'reminders-overdue',
+        ]) {
+          qc.invalidateQueries({ queryKey: [key] });
+        }
+      }
+    };
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onReturn);
+    return () => {
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onReturn);
+    };
+  }, [qc]);
 
   // Quick WhatsApp send for a today's-reminder row — renders the template,
   // opens WhatsApp (bot or click-to-chat), logs the send, marks reminder sent.
@@ -543,9 +333,12 @@ export default function Dashboard() {
       body,
     });
     await markReminderSent(row.id, result.messageId ?? messageId);
-    qc.invalidateQueries({ queryKey: ['upcoming-reminders', pharmacyId] });
-    qc.invalidateQueries({ queryKey: ['due-reminders', pharmacyId] });
-    qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
+    for (const key of [
+      'upcoming-reminders', 'due-reminders', 'dashboard-counts',
+      'scheduled-reminders', 'reminders-today', 'reminders-overdue', 'messages',
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
   };
 
   // Start of tomorrow — a reminder is "due today / overdue" if it's before this.
@@ -594,44 +387,37 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Hero: today's revenue + 7-day trend + today's counts */}
-      <TodayPanel
-        dash={counts}
-        isLoading={loadingCounts}
-        trend={trend}
-        trendLoading={loadingTrend}
-      />
-
       {/* ── Practice stats ──────────────────────────────────────────────
-          Standing totals, not today's activity — deliberately one quiet card
-          rather than four competing tiles. Only "pending reminders" can take
-          colour, and only when it is non-zero, because it is the only one of
-          the four that ever asks for action.
+          Standing totals — deliberately one quiet card rather than competing tiles.
       ── */}
       <Card className="grid grid-cols-2 divide-x divide-y overflow-hidden md:grid-cols-4 md:divide-y-0">
         <StatCell
           label={t('dash.kpi.customers')}
           value={counts?.total_customers != null ? counts.total_customers.toLocaleString('en-IN') : '—'}
           sub={`+${counts?.this_week ?? 0} ${t('dash.this_week')}`}
+          loading={loadingCounts}
           onClick={() => navigate('/customers')}
         />
         <StatCell
-          label={t('dash.kpi.today_reminders')}
+          label={t('dash.kpi.reminders')}
           value={counts?.today_pending ?? '—'}
           sub={`${counts?.today_sent ?? 0} ${t('dash.sent')} ${t('dash.today')}`}
           tone={counts && counts.today_pending > 0 ? 'attention' : 'default'}
+          loading={loadingCounts}
           onClick={() => navigate('/reminders')}
         />
         <StatCell
           label={t('dash.kpi.visits_month')}
           value={counts?.visits_month != null ? counts.visits_month.toLocaleString('en-IN') : '—'}
           sub={t('dash.total_visits')}
+          loading={loadingCounts}
           onClick={() => navigate('/activity')}
         />
         <StatCell
           label={t('dash.kpi.chronic')}
           value={counts?.chronic_count ?? '—'}
           sub={`${counts && counts.total_customers > 0 ? Math.round((counts.chronic_count / counts.total_customers) * 100) : 0}% ${t('dash.of_total')}`}
+          loading={loadingCounts}
           onClick={() => navigate('/customers?segment=chronic')}
         />
       </Card>
@@ -680,13 +466,13 @@ export default function Dashboard() {
                       <div className="mt-0.5 flex items-center gap-1.5">
                         <span className={cn(
                           'text-[11px] font-mono',
-                          new Date(row.scheduled_for) < endOfToday ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                          row.status === 'pending' && new Date(row.scheduled_for) < endOfToday ? 'text-destructive font-semibold' : 'text-muted-foreground'
                         )}>
                           {new Date(row.scheduled_for).toLocaleString('en-IN', {
                             day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
                           })}
                         </span>
-                        {new Date(row.scheduled_for) < new Date() && (
+                        {row.status === 'pending' && new Date(row.scheduled_for) < new Date() && (
                           <span className="rounded bg-destructive/10 px-1 py-px text-[9px] font-bold uppercase tracking-wider text-destructive">
                             overdue
                           </span>
@@ -695,8 +481,12 @@ export default function Dashboard() {
                     </div>
                   </button>
 
-                  {/* Quick WhatsApp send — only for reminders due today / overdue */}
-                  {new Date(row.scheduled_for) < endOfToday && (
+                  {/* Sent badge or Quick WhatsApp send button */}
+                  {row.status === 'sent' || row.status === 'converted' ? (
+                    <span className="flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      <Check className="h-3 w-3" /> Done
+                    </span>
+                  ) : new Date(row.scheduled_for) < endOfToday ? (
                     <button
                       type="button"
                       onClick={() => quickWhatsApp(row)}
@@ -712,7 +502,7 @@ export default function Dashboard() {
                     >
                       <WhatsAppIcon className="h-4 w-4" />
                     </button>
-                  )}
+                  ) : null}
                 </div>
               ))}
             </div>

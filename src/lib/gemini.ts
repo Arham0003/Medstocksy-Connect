@@ -32,9 +32,10 @@ type GenAiType = Record<'OBJECT' | 'STRING' | 'NUMBER' | 'INTEGER' | 'ARRAY', un
  * https://ai.google.dev/gemini-api/docs/models when quota errors get common.
  */
 const FREE_TIER_MODELS = [
+  'gemini-3.7-flash',
+  'gemini-3.5-flash',
   'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash-lite',
 ];
 
 /**
@@ -178,10 +179,8 @@ export async function extractBillData(
         );
       }
 
-      // Quota or retired model — try the next one.
-      if (/429|RESOURCE_EXHAUSTED|quota|404|not found/i.test(msg)) continue;
-
-      throw new Error(msg || 'Extraction failed.');
+      // Quota, retired model, or model-not-found — try the next fallback model.
+      continue;
     }
   }
 

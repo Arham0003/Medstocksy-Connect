@@ -60,28 +60,28 @@ export interface PrescriptionInput {
   doctor_name: string | null;
   prescription_date: string;        // YYYY-MM-DD
   follow_up_date: string | null;    // YYYY-MM-DD
+  follow_up_time?: string | null;   // HH:mm (e.g. '09:00')
   diagnosis: string | null;
   notes: string | null;
   attachment_url?: string | null;   // public URL of an uploaded scan (optional)
   total_cost?: number | null;
 }
 
-export async function listPrescriptions(customerId: string): Promise<PrescriptionWithMeds[]> {
-  // Single RPC call replaces the 3-level waterfall:
-  // prescriptions → medicines → refills (sequential)
-  // Now: 1 DB call with LATERAL joins returns nested JSON.
-  const { data, error } = await rpc<unknown[]>('crm_get_prescriptions_for_customer', {
-    p_customer_id: customerId,
-  });
 
-  if (error) {
-    console.error('[prescriptions] RPC failed, falling back to waterfall:', error.message);
-    return listPrescriptionsFallback(customerId);
+export async function listPrescriptions(customerId: string): Promise<PrescriptionWithMeds[]> {
+  try {
+    const { data, error } = await rpc<unknown[]>('crm_get_prescriptions_for_customer', {
+      p_customer_id: customerId,
+    });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data as PrescriptionWithMeds[];
+    }
+  } catch (e) {
+    console.warn('[prescriptions] RPC failed, falling back:', e);
   }
 
-  // The RPC returns a jsonb array — parse it back into our typed interface.
-  const rows = data ?? [];
-  return rows as PrescriptionWithMeds[];
+  return listPrescriptionsFallback(customerId);
 }
 
 /** Fallback: 3-level sequential query used when the RPC is unavailable. */
@@ -94,6 +94,10 @@ async function listPrescriptionsFallback(customerId: string): Promise<Prescripti
     .limit(50);
   if (rxErr) throw new Error(rxErr.message);
   const prescriptionList = ((rxRows ?? []) as unknown) as Prescription[];
+
+  if (prescriptionList.length === 0) {
+    return [];
+  }
 
   const { data: medRows, error: medErr } = await supabase
     .from('crm_prescription_medicines')
@@ -226,19 +230,29 @@ export async function createPrescription(args: {
     .select();
   if (medsErr) throw new Error(medsErr.message);
 
-  // 3. Best-effort auto-schedule. ONE reminder for the prescription, plus one
-  //    extra only for medicines explicitly flagged as overrides. `.select()`
-  //    above returns the rows in insert order, so index i lines up with
-  //    args.medicines[i] — that mapping is what lets an override reminder
-  //    point at its own medicine row.
-  const insertedIds = ((meds ?? []) as unknown as { id: string }[]).map((m) => m.id);
-  await scheduleRefillReminders({
-    prescriptionId: header.id,
-    pharmacyId: args.pharmacyId,
-    customerId: args.customerId,
-    medicines: args.medicines,
-    medicineIds: insertedIds,
-  }).catch((e) => console.warn('[prescription] auto-reminder skipped:', e));
+  // 3. Best-effort auto-schedule.
+  // If follow_up_date is explicitly set, prioritize that as the prescription follow-up reminder.
+  // Otherwise, auto-schedule refill reminders based on medicine refill intervals.
+  const medNames = args.medicines.map((m) => m.medicine_name.trim()).filter(Boolean).join(', ');
+  if (args.rx.follow_up_date) {
+    await syncFollowUpReminder({
+      prescriptionId: header.id,
+      pharmacyId: args.pharmacyId,
+      customerId: args.customerId,
+      followUpDate: args.rx.follow_up_date,
+      followUpTime: args.rx.follow_up_time,
+      medicineNames: medNames,
+    }).catch((e) => console.warn('[prescription] follow-up reminder sync skipped:', e));
+  } else {
+    const insertedIds = ((meds ?? []) as unknown as { id: string }[]).map((m) => m.id);
+    await scheduleRefillReminders({
+      prescriptionId: header.id,
+      pharmacyId: args.pharmacyId,
+      customerId: args.customerId,
+      medicines: args.medicines,
+      medicineIds: insertedIds,
+    }).catch((e) => console.warn('[prescription] auto-reminder skipped:', e));
+  }
 
   // Freshly-created prescriptions have zero refills — attach empty stats so
   // the return type matches PrescriptionWithMeds.
@@ -254,7 +268,7 @@ export async function updatePrescription(args: {
   rx: PrescriptionInput;
   medicines: MedicineInput[];
 }): Promise<void> {
-  const { error: headErr } = await supabase
+  const { data: rxHead, error: headErr } = await supabase
     .from('crm_prescriptions')
     .update({
       doctor_name: args.rx.doctor_name?.trim() || null,
@@ -264,7 +278,9 @@ export async function updatePrescription(args: {
       notes: args.rx.notes?.trim() || null,
       total_cost: args.rx.total_cost ?? null,
     } as never)
-    .eq('id', args.id);
+    .eq('id', args.id)
+    .select('pharmacy_id, customer_id')
+    .single();
   if (headErr) throw new Error(headErr.message);
 
   // Replace the medicine rows wholesale — simpler than diffing.
@@ -291,13 +307,29 @@ export async function updatePrescription(args: {
       substitution_allowed: m.substitution_allowed,
       medicine_notes: m.medicine_notes?.trim() || null,
       price: m.price ?? null,
+      reminder_override: m.reminder_override ?? false,
     }));
     const { error: insErr } = await supabase
       .from('crm_prescription_medicines')
       .insert(rows as never);
     if (insErr) throw new Error(insErr.message);
   }
+
+  // Keep follow-up reminders in sync with updated date/time
+  if (rxHead) {
+    const headMeta = ((rxHead as unknown) as { pharmacy_id: string; customer_id: string });
+    const medNames = args.medicines.map((m) => m.medicine_name.trim()).filter(Boolean).join(', ');
+    await syncFollowUpReminder({
+      prescriptionId: args.id,
+      pharmacyId: headMeta.pharmacy_id,
+      customerId: headMeta.customer_id,
+      followUpDate: args.rx.follow_up_date || null,
+      followUpTime: args.rx.follow_up_time || null,
+      medicineNames: medNames,
+    }).catch((e) => console.warn('[prescription] follow-up reminder sync skipped:', e));
+  }
 }
+
 
 export async function deletePrescription(id: string): Promise<void> {
   // Cancel any pending reminders linked to this prescription first
@@ -476,4 +508,85 @@ async function scheduleRefillReminders(args: {
     console.warn('[prescriptions] reminder scheduling failed:', error.message);
   }
 }
+
+function parseScheduledFor(dateStr: string, timeStr?: string | null): string {
+  const parts = dateStr.split('-').map(Number);
+  const y = parts[0] || new Date().getFullYear();
+  const m = parts[1] || (new Date().getMonth() + 1);
+  const d = parts[2] || new Date().getDate();
+  const timeParts = (timeStr || '09:00').split(':').map(Number);
+  const h = timeParts[0] || 9;
+  const min = timeParts[1] || 0;
+  const dt = new Date();
+  dt.setFullYear(y, m - 1, d);
+  dt.setHours(h, min, 0, 0);
+  return dt.toISOString();
+}
+
+async function syncFollowUpReminder(args: {
+  prescriptionId: string;
+  pharmacyId: string;
+  customerId: string;
+  followUpDate: string | null;
+  followUpTime?: string | null;
+  medicineNames?: string;
+}): Promise<void> {
+  if (!args.followUpDate) {
+    await supabase
+      .from('crm_scheduled_reminders')
+      .update({ status: 'cancelled' } as never)
+      .eq('prescription_id', args.prescriptionId)
+      .eq('status', 'pending');
+    return;
+  }
+
+  const scheduledFor = parseScheduledFor(args.followUpDate, args.followUpTime);
+
+  const { data } = await supabase
+    .from('crm_scheduled_reminders')
+    .select('id, variables')
+    .eq('prescription_id', args.prescriptionId)
+    .eq('status', 'pending')
+    .limit(1)
+    .maybeSingle();
+
+  const existing = (data as unknown) as { id: string; variables?: Record<string, unknown> } | null;
+
+  if (existing?.id) {
+    const prevVars = ((existing.variables as Record<string, unknown>) || {});
+    await supabase
+      .from('crm_scheduled_reminders')
+      .update({
+        scheduled_for: scheduledFor,
+        variables: {
+          ...prevVars,
+          medicine: args.medicineNames || (prevVars.medicine as string) || 'Follow-up Consultation',
+        },
+      } as never)
+      .eq('id', existing.id);
+  } else {
+    const { data: tpl } = await supabase
+      .from('crm_templates')
+      .select('id')
+      .or(`pharmacy_id.is.null,pharmacy_id.eq.${args.pharmacyId}`)
+      .order('is_built_in', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const templateId = (tpl as { id?: string } | null)?.id;
+    if (!templateId) return;
+
+    await supabase.from('crm_scheduled_reminders').insert({
+      pharmacy_id: args.pharmacyId,
+      customer_id: args.customerId,
+      prescription_id: args.prescriptionId,
+      template_id: templateId,
+      scheduled_for: scheduledFor,
+      variables: {
+        medicine: args.medicineNames || 'Follow-up Consultation',
+      },
+    } as never);
+  }
+}
+
 

@@ -7,16 +7,18 @@ import { useT } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import medstocksyLogo from '@/assets/brand/medstocksy.png';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'forgot';
 
 export default function Login() {
   const t = useT();
-  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPasswordForEmail } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [mode, setMode] = useState<Mode>('signin');
+  const initialMode = (location.state as { initialMode?: Mode } | null)?.initialMode ?? 'signin';
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +27,7 @@ export default function Login() {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmSentTo, setConfirmSentTo] = useState<string | null>(null);
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
 
   // Google button only shows once you've enabled the provider in Supabase.
   const googleEnabled = import.meta.env.VITE_ENABLE_GOOGLE_AUTH === 'true';
@@ -41,6 +44,7 @@ export default function Login() {
     setError(null);
     setNotice(null);
     setConfirmSentTo(null);
+    setResetSentTo(null);
   };
 
   const onGoogle = async () => {
@@ -56,6 +60,14 @@ export default function Login() {
     setError(null);
     setNotice(null);
     setPending(true);
+
+    if (mode === 'forgot') {
+      // ponytail: Anti-enumeration — always show confirmation even if email isn't in DB
+      await resetPasswordForEmail(email);
+      setPending(false);
+      setResetSentTo(email);
+      return;
+    }
 
     if (mode === 'signin') {
       const { error: err } = await signInWithEmail(email, password);
@@ -103,10 +115,15 @@ export default function Login() {
         {/* Brand mark */}
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
-            style={{ background: 'hsl(226 71% 55%)' }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl"
+            style={{ background: 'hsl(226 71% 55% / 0.15)', boxShadow: 'inset 0 0 0 1px hsl(226 71% 55% / 0.3)' }}
           >
-            <span className="text-base font-bold tracking-tight">M</span>
+            <img
+              src={medstocksyLogo}
+              alt="Medstocksy Connect"
+              draggable={false}
+              className="h-full w-full object-contain p-1"
+            />
           </div>
           <span className="text-[15px] font-bold" style={{ color: 'hsl(var(--sidebar-fg-active))' }}>Medstocksy Connect</span>
         </div>
@@ -159,10 +176,20 @@ export default function Login() {
         <AnimatePresence mode="wait">
           {confirmSentTo ? (
             <ConfirmEmailPanel
+              key="confirm"
               email={confirmSentTo}
               onBack={() => {
                 setConfirmSentTo(null);
-                switchMode('signin');
+                setMode('signin');
+              }}
+            />
+          ) : resetSentTo ? (
+            <ResetLinkSentPanel
+              key="reset-sent"
+              email={resetSentTo}
+              onBack={() => {
+                setResetSentTo(null);
+                setMode('signin');
               }}
             />
           ) : (
@@ -177,24 +204,34 @@ export default function Login() {
               {/* Card wrapper — white card on neutral bg, consistent with app cards */}
               <div className="rounded-2xl border bg-card p-8 card-elev space-y-6">
 
-                {/* Mode tabs */}
-                <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
-                  {(['signin', 'signup'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => switchMode(m)}
-                      className={cn(
-                        'rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                        mode === m
-                          ? 'bg-background text-foreground shadow-card'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {m === 'signin' ? t('login.tab.signin') : t('login.tab.signup')}
-                    </button>
-                  ))}
-                </div>
+                {/* Mode tabs (hidden in forgot mode) */}
+                {mode !== 'forgot' ? (
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                    {(['signin', 'signup'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => switchMode(m)}
+                        className={cn(
+                          'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                          mode === m
+                            ? 'bg-background text-foreground shadow-card'
+                            : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {m === 'signin' ? t('login.tab.signin') : t('login.tab.signup')}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => switchMode('signin')}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {t('login.back_to_signin')}
+                  </button>
+                )}
 
                 {/* Heading */}
                 <div>
@@ -202,14 +239,22 @@ export default function Login() {
                     {mode === 'signin' ? t('login.welcome_back') : ''}
                   </p>
                   <h2 className="mt-1 text-2xl font-bold tracking-tight">
-                    {mode === 'signin' ? t('login.title') : t('login.signup_title')}
+                    {mode === 'forgot'
+                      ? t('login.forgot_title')
+                      : mode === 'signin'
+                        ? t('login.title')
+                        : t('login.signup_title')}
                   </h2>
                   <p className="mt-1.5 text-sm text-muted-foreground">
-                    {mode === 'signin' ? t('login.subtitle') : t('login.signup_subtitle')}
+                    {mode === 'forgot'
+                      ? t('login.forgot_subtitle')
+                      : mode === 'signin'
+                        ? t('login.subtitle')
+                        : t('login.signup_subtitle')}
                   </p>
                 </div>
 
-                {googleEnabled && (
+                {googleEnabled && mode !== 'forgot' && (
                   <>
                     <Button
                       variant="outline"
@@ -238,7 +283,7 @@ export default function Login() {
                   </div>
                 )}
 
-                {/* Form fields — labels are small-caps above inputs (not placeholder-only) */}
+                {/* Form fields */}
                 <form onSubmit={onSubmit} className="space-y-4">
                   {mode === 'signup' && (
                     <div className="space-y-1.5">
@@ -272,22 +317,36 @@ export default function Login() {
                       className="h-11"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {t('login.password')}
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder={mode === 'signin' ? '••••••••' : 'min. 8 characters'}
-                      required
-                      minLength={mode === 'signup' ? 8 : undefined}
-                      autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={pending}
-                      className="h-11"
-                    />
-                  </div>
+
+                  {mode !== 'forgot' && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {t('login.password')}
+                        </label>
+                        {mode === 'signin' && (
+                          <button
+                            type="button"
+                            onClick={() => switchMode('forgot')}
+                            className="text-[11px] font-medium text-primary hover:underline"
+                          >
+                            {t('login.forgot_password')}
+                          </button>
+                        )}
+                      </div>
+                      <Input
+                        type="password"
+                        placeholder={mode === 'signin' ? '••••••••' : 'min. 8 characters'}
+                        required
+                        minLength={mode === 'signup' ? 8 : undefined}
+                        autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={pending}
+                        className="h-11"
+                      />
+                    </div>
+                  )}
 
                   {/* Error state */}
                   {error && (
@@ -298,24 +357,78 @@ export default function Login() {
                   )}
 
                   <Button type="submit" size="lg" className="w-full h-11 text-sm font-semibold" disabled={pending}>
-                    {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {pending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     {pending
-                      ? mode === 'signin'
-                        ? t('btn.signing_in')
-                        : t('login.creating')
-                      : mode === 'signin'
-                        ? t('login.signin')
-                        : t('login.signup')}
+                      ? mode === 'forgot'
+                        ? t('login.sending_reset_link')
+                        : mode === 'signin'
+                          ? t('btn.signing_in')
+                          : t('login.creating')
+                      : mode === 'forgot'
+                        ? t('login.send_reset_link')
+                        : mode === 'signin'
+                          ? t('login.signin')
+                          : t('login.signup')}
                   </Button>
                 </form>
 
-                <p className="text-center text-xs text-muted-foreground">{t('login.terms')}</p>
+                {mode !== 'forgot' ? (
+                  <p className="text-center text-xs text-muted-foreground">{t('login.terms')}</p>
+                ) : (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => switchMode('signin')}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {t('login.back_to_signin')}
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+function ResetLinkSentPanel({ email, onBack }: { email: string; onBack: () => void }) {
+  const t = useT();
+  return (
+    <motion.div
+      key="reset-sent"
+      className="w-full max-w-sm space-y-5 text-center"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+        <Mail className="h-6 w-6 text-primary" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{t('login.reset_link_sent_title')}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          {t('login.reset_link_sent_desc').split('{email}').map((part, i, arr) =>
+            i < arr.length - 1
+              ? [<span key={i}>{part}</span>, <span key={`e${i}`} className="font-mono font-medium text-foreground">{email}</span>]
+              : <span key={i}>{part}</span>
+          )}
+        </p>
+      </div>
+      <div className="flex items-center justify-center gap-2 rounded-md bg-emerald-500/10 px-4 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        Password reset link sent.
+      </div>
+      <button
+        onClick={onBack}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {t('login.back_to_signin')}
+      </button>
+    </motion.div>
   );
 }
 

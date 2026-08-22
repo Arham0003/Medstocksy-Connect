@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { openWhatsAppCompose, logManualSend } from '@/lib/api/messages';
+import { renderReminderMessage } from '@/lib/api/reminders';
 import { renderTemplate, cn } from '@/lib/utils';
 import { useT } from '@/contexts/LanguageContext';
 import {
@@ -50,6 +51,8 @@ export function BulkReminderSendDialog({ open, onOpenChange, pharmacyId, reminde
   const [awaitingReturn, setAwaitingReturn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [previewBody, setPreviewBody] = useState<string>('');
+
   // Only whatsapp-channel reminders with a phone can go through this flow.
   // Opted-out customers are excluded outright — sending to them is the one
   // failure mode here with legal consequences, so it is filtered rather than
@@ -74,6 +77,26 @@ export function BulkReminderSendDialog({ open, onOpenChange, pharmacyId, reminde
       setError(null);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!current?.customer || !current?.template?.body) {
+      setPreviewBody('');
+      return;
+    }
+    let active = true;
+    renderReminderMessage({
+      body: current.template.body,
+      customerName: current.customer.name,
+      customerPhone: current.customer.phone,
+      storedVars: current.variables,
+      pharmacyId,
+    }).then((rendered) => {
+      if (active) setPreviewBody(rendered);
+    });
+    return () => {
+      active = false;
+    };
+  }, [current, pharmacyId]);
 
   const markSent = useMutation<void, Error, { reminder: BulkReminder; body: string }>({
     mutationFn: async ({ reminder, body }) => {
@@ -131,7 +154,13 @@ export function BulkReminderSendDialog({ open, onOpenChange, pharmacyId, reminde
     setError(null);
 
     const body = current.template?.body
-      ? renderTemplate(current.template.body, current.variables)
+      ? await renderReminderMessage({
+          body: current.template.body,
+          customerName: current.customer.name,
+          customerPhone: current.customer.phone,
+          storedVars: current.variables,
+          pharmacyId,
+        })
       : '';
 
     const opened = openWhatsAppCompose({ phone: current.customer.phone, body });
@@ -149,7 +178,7 @@ export function BulkReminderSendDialog({ open, onOpenChange, pharmacyId, reminde
       setError(e instanceof Error ? e.message : 'Failed to record send.');
     }
     returnHandlerRef.current();
-  }, [current, markSent, t]);
+  }, [current, markSent, pharmacyId, t]);
 
   const skipCurrent = () => {
     if (!current) return;
@@ -218,7 +247,7 @@ export function BulkReminderSendDialog({ open, onOpenChange, pharmacyId, reminde
                 </div>
                 {current.template?.body && (
                   <p className="mt-2 line-clamp-3 whitespace-pre-wrap text-xs text-muted-foreground">
-                    {renderTemplate(current.template.body, current.variables)}
+                    {previewBody || renderTemplate(current.template.body, current.variables)}
                   </p>
                 )}
               </div>
