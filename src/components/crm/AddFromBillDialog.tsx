@@ -14,6 +14,7 @@ import {
   Loader2, Receipt, FileText, Users, ExternalLink, X as XIcon,
   Calendar as CalendarIcon, IndianRupee, Pill, Stethoscope,
   Paperclip, Upload, File as FileIcon, Image as ImageIcon, Pencil, ClipboardPaste,
+  Sparkles, AlertTriangle,
 } from 'lucide-react';
 
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
@@ -23,7 +24,14 @@ import {
 } from '@/lib/api/customers';
 import { createPrescription, type MedicineInput } from '@/lib/api/prescriptions';
 import { supabase } from '@/lib/supabase';
+import { signedBillUrl } from '@/lib/api/attachments';
 import { validateIndianPhone, initials, cn } from '@/lib/utils';
+import { getGeminiKey, hasGeminiKey } from '@/lib/aiKey';
+import { extractBillData } from '@/lib/gemini';
+import { BILL_FIELDS, PRESCRIPTION_FIELDS } from '@/lib/ocr/fields';
+import { validateExtraction, type ExtractionReport } from '@/lib/ocr/validate';
+import { loadKnownMedicines, matchMedicines, type MedicineMatch } from '@/lib/ocr/matchMedicines';
+import { usePdfExtraction } from '@/lib/pdf/usePdfExtraction';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -95,11 +103,24 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     .map(name => ({ ...EMPTY_RX_MED, medicine_name: name }));
 
   // ── Attachment (PDF or image of the bill / prescription) ──
-  const [attachment, setAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [attachment, setAttachment] = useState<{ url: string; path: string; name: string; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // ── AI extraction (optional; needs a Gemini key on this device) ──
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractedCount, setExtractedCount] = useState(0);
+  /** Per-field warnings from validation — shown so the user knows what to check. */
+  const [issues, setIssues] = useState<{ key: string; issue: string }[]>([]);
+  /** Medicine names whose match against history was too weak to apply. */
+  const [medMatches, setMedMatches] = useState<MedicineMatch[]>([]);
+  const [totalsCheck, setTotalsCheck] = useState<ExtractionReport['totalsCheck'] | null>(null);
+
+  // ── PDF extraction (client-side, no API) ──
+  const pdfExtraction = usePdfExtraction();
 
   const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   const MAX_BYTES = 10 * 1024 * 1024;
@@ -122,14 +143,176 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
         .from('crm-bill-attachments')
         .upload(path, file, { upsert: false, contentType: file.type });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('crm-bill-attachments').getPublicUrl(path);
-      setAttachment({ url: pub.publicUrl, name: file.name, type: file.type });
+      // Persist the object PATH, not a URL. The bucket is private now, so a
+      // stored link would expire; the path stays valid forever and is signed
+      // on demand at read time.
+      const preview = await signedBillUrl(path);
+      setAttachment({ url: preview ?? '', path, name: file.name, type: file.type });
+
+      // Extraction runs in two branches:
+      // 1. PDF → client-side pdf.js parser (no API, always available)
+      // 2. Image + Gemini key → Gemini vision extraction
+      if (file.type === 'application/pdf') {
+        void autofillFromPdf(file);
+      } else if (file.type.startsWith('image/') && hasGeminiKey()) {
+        void autofillFrom(file);
+      }
     } catch (err) {
       console.error('[bill attachment]', err);
       setUploadError(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  /**
+   * Autofill from a PDF bill using client-side pdf.js parsing.
+   * Only writes into empty fields. Sets extractError on scanned/corrupt PDFs.
+   */
+  const autofillFromPdf = async (file: File) => {
+    setExtracting(true);
+    setExtractError(null);
+    setExtractedCount(0);
+    setIssues([]);
+    setMedMatches([]);
+    setTotalsCheck(null);
+    try {
+      const parsed = await pdfExtraction.extract(file);
+      if (!parsed) {
+        setExtractError(pdfExtraction.error ?? 'Could not read that PDF.');
+        return;
+      }
+      if (parsed.isScanned) {
+        if (hasGeminiKey()) {
+          void autofillFrom(file);
+          return;
+        }
+        setExtractError('Scanned PDF — no text layer found. Configure Gemini API key in Settings → AI to enable AI extraction.');
+        return;
+      }
+
+      let filled = 0;
+      const fill = (value: string | null, current: string, set: (v: string) => void) => {
+        if (value && !current.trim()) { set(value); filled += 1; }
+      };
+
+      if (parsed.patientName) fill(parsed.patientName, name, setName);
+      if (parsed.patientPhone) fill(parsed.patientPhone, phone, setPhone);
+
+      const meds = parsed.medicines.map((m) => m.name);
+
+      if (source === 'bill') {
+        if (parsed.totalAmount !== null) fill(String(parsed.totalAmount), billAmount, setBillAmount);
+        if (parsed.date) {
+          if (!billDate || billDate === today) { setBillDate(parsed.date); filled += 1; }
+        }
+        if (meds.length && billMeds.length === 0) { setBillMeds(meds); filled += 1; }
+      } else {
+        fill(parsed.doctorName, doctor, setDoctor);
+        fill(parsed.diagnosis, diagnosis, setDiagnosis);
+        if (parsed.totalAmount !== null) fill(String(parsed.totalAmount), billAmount, setBillAmount);
+        if (parsed.date && rxDate === today) { setRxDate(parsed.date); filled += 1; }
+        if (meds.length && !rxMedsText.trim()) {
+          setRxMedsText(meds.join('\n')); filled += 1;
+        }
+      }
+
+      setExtractedCount(filled);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  /**
+   * Fill blank fields from a scanned bill/prescription image via Gemini.
+   *
+   * Only ever writes into fields the user has left empty — an extraction is a
+   * suggestion, and silently overwriting something already typed (or a phone
+   * number that drove the duplicate-check) would be worse than not helping.
+   * Everything stays editable before save.
+   */
+  const autofillFrom = async (file: File) => {
+    setExtracting(true);
+    setExtractError(null);
+    setExtractedCount(0);
+    setIssues([]);
+    setMedMatches([]);
+    setTotalsCheck(null);
+    try {
+      // The form declares its own fields, so extraction adapts to whichever
+      // mode is active rather than pulling a fixed shape and discarding half.
+      const specs = source === 'bill' ? BILL_FIELDS : PRESCRIPTION_FIELDS;
+      const raw = await extractBillData(getGeminiKey(), file, file.type, specs);
+
+      // Nothing reaches a form field before it has been validated.
+      const report = validateExtraction(specs, raw);
+      setIssues(
+        [...report.suspect, ...report.invalid]
+          .map((k) => ({ key: k, issue: report.fields[k]?.issue ?? '' }))
+          .filter((i) => i.issue)
+      );
+      setTotalsCheck(report.totalsCheck ?? null);
+
+      /** Only 'ok' and 'suspect' values are offered; 'invalid' is dropped. */
+      const take = (key: string): string | null => {
+        const f = report.fields[key];
+        if (!f || f.value === null || f.verdict === 'invalid') return null;
+        return String(f.value);
+      };
+      const takeList = (key: string): string[] => {
+        const f = report.fields[key];
+        return f && Array.isArray(f.value) && f.verdict !== 'invalid' ? f.value : [];
+      };
+
+      let filled = 0;
+      const fill = (value: string | null, current: string, set: (v: string) => void) => {
+        if (value && !current.trim()) { set(value); filled += 1; }
+      };
+
+      fill(take('name'), name, setName);
+      fill(take('phone'), phone, setPhone);
+      fill(take('age'), age, setAge);
+      const g = take('gender');
+      if (g && !gender) { setGender(g as Gender); filled += 1; }
+
+      // Suggest the pharmacy's own spelling where a confident match exists,
+      // but keep the OCR text whenever the match is uncertain — the spec
+      // forbids overwriting on low confidence.
+      const meds = takeList('medicines');
+      let resolved = meds;
+      if (meds.length > 0) {
+        const known = await loadKnownMedicines(pharmacyId);
+        const matches = matchMedicines(meds, known);
+        setMedMatches(matches.filter((m) => m.confidence === 'low'));
+        resolved = matches.map((m) => (m.confidence === 'high' && m.match ? m.match : m.extracted));
+      } else {
+        setMedMatches([]);
+      }
+
+      if (source === 'bill') {
+        fill(take('billAmount'), billAmount, setBillAmount);
+        const d = take('billDate');
+        if (d && billDate === today) { setBillDate(d); filled += 1; }
+        if (resolved.length && billMeds.length === 0) { setBillMeds(resolved); filled += 1; }
+      } else {
+        fill(take('doctor'), doctor, setDoctor);
+        fill(take('diagnosis'), diagnosis, setDiagnosis);
+        fill(take('billAmount'), billAmount, setBillAmount);
+        const d = take('billDate');
+        if (d && rxDate === today) { setRxDate(d); filled += 1; }
+        if (resolved.length && !rxMedsText.trim()) {
+          setRxMedsText(resolved.join('\n')); filled += 1;
+        }
+      }
+
+      setExtractedCount(filled);
+    } catch (err) {
+      // Never block the manual path — the file is already attached and every
+      // field can still be typed.
+      setExtractError(err instanceof Error ? err.message : 'Could not read that scan.');
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -146,6 +329,8 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
     setDoctor(''); setRxDate(today); setDiagnosis('');
     setRxMedsText(''); setRxError(null);
     setAttachment(null); setUploadError(null); setDragOver(false);
+    setExtracting(false); setExtractError(null); setExtractedCount(0);
+    setIssues([]); setMedMatches([]); setTotalsCheck(null);
   }, [open, today]);
 
   // ── Shared submit pipeline ─────────────────────────────────────────────────
@@ -196,7 +381,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
             follow_up_date: null,
             diagnosis: diagnosis.trim() || null,
             notes: null,
-            attachment_url: attachment?.url ?? null,
+            attachment_url: attachment?.path ?? null,
           },
           medicines: parsedRxMeds.length > 0
             ? parsedRxMeds
@@ -210,6 +395,7 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
       await qc.invalidateQueries({ queryKey: ['customers'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
       await qc.invalidateQueries({ queryKey: ['customer', c.id] });
+      await qc.invalidateQueries({ queryKey: ['prescriptions', c.id] });
       onOpenChange(false);
       onCreated?.(c);
     },
@@ -418,6 +604,66 @@ export function AddFromBillDialog({ open, onOpenChange, onCreated }: AddFromBill
 
               {uploadError && (
                 <p className="mt-2 text-xs text-destructive">{uploadError}</p>
+              )}
+
+              {/* AI extraction status. Silent when no key is configured — the
+                  manual flow is the default, not a degraded state. */}
+              {extracting && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {t('add_bill.ai_reading')}
+                </p>
+              )}
+              {!extracting && extractedCount > 0 && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-primary">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {t('add_bill.ai_filled')}
+                </p>
+              )}
+              {!extracting && extractError && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t('add_bill.ai_failed')}
+                </p>
+              )}
+
+              {/* Validation warnings. Extraction is a suggestion, so anything
+                  the validator could not vouch for is named explicitly rather
+                  than dropped into a field and hoped for. */}
+              {!extracting && issues.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {issues.map((i) => (
+                    <li key={i.key} className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                      <AlertTriangle aria-hidden="true" className="mt-px h-3 w-3 shrink-0" />
+                      <span><span className="font-semibold">{i.key}</span> — {i.issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Bill arithmetic cross-check. */}
+              {!extracting && totalsCheck && !totalsCheck.ok && (
+                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                  <AlertTriangle aria-hidden="true" className="mt-px h-3 w-3 shrink-0" />
+                  {t('add_bill.ai_totals_mismatch')
+                    .replace('{expected}', totalsCheck.expected.toFixed(2))
+                    .replace('{stated}', totalsCheck.stated.toFixed(2))}
+                </p>
+              )}
+
+              {/* Medicines that resemble a known name but not closely enough to
+                  substitute automatically — the user decides. */}
+              {!extracting && medMatches.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground">
+                    {t('add_bill.ai_check_medicines')}
+                  </p>
+                  {medMatches.map((m) => (
+                    <p key={m.extracted} className="text-[11px] text-muted-foreground">
+                      “{m.extracted}” → {t('add_bill.ai_did_you_mean')}{' '}
+                      <span className="font-semibold text-foreground">{m.match}</span>?
+                    </p>
+                  ))}
+                </div>
               )}
             </section>
           )}

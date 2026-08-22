@@ -14,7 +14,7 @@ import { useT } from '@/contexts/LanguageContext';
 import { supabase, type Tables } from '@/lib/supabase';
 import {
   resolveSegmentCustomers, markCampaignSending, recordCampaignRecipient,
-  finalizeCampaign, type CampaignRecipient,
+  finalizeCampaign, fetchCustomerCampaignVars, type CampaignRecipient,
 } from '@/lib/api/campaigns';
 import {
   isBotConfigured, getBotStatus, sendViaBot, openWhatsAppCompose, logManualSend, canSendNow,
@@ -36,11 +36,6 @@ interface CampaignSendDialogProps {
 
 type Phase = 'idle' | 'sending' | 'done';
 
-const SAMPLE_VARS = {
-  pharmacy_name: 'Your pharmacy', amount: '₹2,150', medicine: 'your medicine',
-  category: 'vitamins', discount: '20', date: 'soon', pharmacy_phone: '',
-};
-
 export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSendDialogProps) {
   const t = useT();
   const { pharmacyId } = useActivePharmacy();
@@ -50,6 +45,7 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
   const [index, setIndex] = useState(0);   // current recipient pointer
   const [sentCount, setSentCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [currentBody, setCurrentBody] = useState<string>('');
   const cancelRef = useRef(false);
 
   // Resolve template + recipients when the dialog opens.
@@ -81,17 +77,19 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
   // Reset transient state when (re)opening.
   useEffect(() => {
     if (!open) return;
-    setPhase('idle'); setIndex(0); setSentCount(0); setError(null);
+    setPhase('idle'); setIndex(0); setSentCount(0); setError(null); setCurrentBody('');
     cancelRef.current = false;
   }, [open, campaign?.id]);
-
-  const renderBody = (r: CampaignRecipient): string =>
-    template ? renderTemplate(template.body, { name: r.name, ...SAMPLE_VARS }) : '';
 
   // ── Send one recipient ──────────────────────────────────────────────────
   const sendOne = async (r: CampaignRecipient): Promise<boolean> => {
     if (!campaign || !template) return false;
-    const body = renderBody(r);
+    
+    // Fetch real data for this exact customer
+    const actualVars = await fetchCustomerCampaignVars(pharmacyId, r.id, r.name);
+    const body = renderTemplate(template.body, actualVars);
+    setCurrentBody(body);
+    
     let messageId: string | undefined;
     try {
       if (botReady) {
@@ -234,7 +232,7 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
             {phase === 'sending' && current && !botReady && (
               <div className="rounded-md border bg-muted/30 p-2 text-xs">
                 <div className="font-semibold">{current.name} <span className="font-mono text-muted-foreground">{current.phone}</span></div>
-                <p className="mt-1 line-clamp-2 text-muted-foreground">{renderBody(current)}</p>
+                <p className="mt-1 line-clamp-2 text-muted-foreground">{currentBody}</p>
               </div>
             )}
             {phase === 'done' && (

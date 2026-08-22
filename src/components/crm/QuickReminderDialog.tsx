@@ -52,6 +52,7 @@ export function QuickReminderDialog({
   customerId,
   customerName,
   customerPhone,
+  prescriptionId,
   medicineName,
   onScheduled,
 }: QuickReminderDialogProps) {
@@ -140,6 +141,7 @@ export function QuickReminderDialog({
       const { error } = await supabase.from('crm_scheduled_reminders').insert({
         pharmacy_id: pharmacyId,
         customer_id: customerId,
+        prescription_id: prescriptionId || null,
         template_id: templateId,
         scheduled_for: scheduledFor,
         variables: {
@@ -150,11 +152,22 @@ export function QuickReminderDialog({
         },
       } as never);
       if (error) throw new Error(error.message);
+
+      if (prescriptionId) {
+        await supabase
+          .from('crm_prescriptions')
+          .update({
+            follow_up_date: scheduledFor.slice(0, 10),
+          } as never)
+          .eq('id', prescriptionId);
+      }
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['upcoming-reminders'] });
       await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
       await qc.invalidateQueries({ queryKey: ['scheduled-reminders'] });
+      await qc.invalidateQueries({ queryKey: ['prescriptions', customerId] });
+      await qc.invalidateQueries({ queryKey: ['customer-activity', customerId] });
       setSuccess(true);
       setTimeout(() => {
         onScheduled?.();
@@ -236,7 +249,7 @@ export function QuickReminderDialog({
                       )}
                     >
                       {m === 'days' ? <Clock className="h-3 w-3" /> : m === 'months' ? <Calendar className="h-3 w-3" /> : <Zap className="h-3 w-3" />}
-                      {t(`rem.timing.${m}` as any)}
+                      {t(`rem.timing.${m}`)}
                     </button>
                   ))}
                 </div>

@@ -6,9 +6,14 @@ import { useT } from '@/contexts/LanguageContext';
 import { Layout } from '@/components/layout/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import Dashboard from '@/pages/Dashboard';
-import Login from '@/pages/Login';
-import AuthCallback from '@/pages/AuthCallback';
+// Dashboard and Login are mutually exclusive — you are either signed in or
+// you are not — so eagerly bundling both into the entry chunk meant every
+// visitor downloaded a screen they could not reach. Split like every other
+// route; the auth check resolves before either is needed.
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Login = lazy(() => import('@/pages/Login'));
+const AuthCallback = lazy(() => import('@/pages/AuthCallback'));
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Customers = lazy(() => import('@/pages/Customers'));
 const CustomerProfile = lazy(() => import('@/pages/CustomerProfile'));
 const Segments = lazy(() => import('@/pages/Segments'));
@@ -104,6 +109,7 @@ function AppShell() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/onboarding"
           element={

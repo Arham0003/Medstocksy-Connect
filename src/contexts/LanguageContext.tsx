@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { translations, type Lang, type TranslationKey } from '@/i18n/translations';
+import { en, loadLocale, type Dictionary, type Lang, type TranslationKey } from '@/i18n/translations';
 import { storage } from '@/lib/utils';
 
 const STORAGE_KEY = 'medcrm.lang';
@@ -30,6 +30,40 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang;
   }, [lang]);
 
+  // Devanagari is ~4 font files that English users never render a glyph from,
+  // so it is kept out of index.html and injected the first time Hindi is
+  // selected. Idempotent: the id check makes repeated language toggles free.
+  useEffect(() => {
+    if (lang !== 'hi') return;
+    const ID = 'medcrm-font-devanagari';
+    if (document.getElementById(ID)) return;
+    const link = document.createElement('link');
+    link.id = ID;
+    link.rel = 'stylesheet';
+    link.href =
+      'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap';
+    document.head.appendChild(link);
+  }, [lang]);
+
+  // English ships in the entry chunk; other locales arrive over the network.
+  // Until the requested one lands, `dict` stays on English rather than
+  // blocking render — a brief English flash beats a blank screen, and the
+  // swap is a single re-render.
+  const [dict, setDict] = useState<Dictionary>(en);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (lang === 'en') { setDict(en); return; }
+    loadLocale(lang)
+      .then((loaded) => { if (!cancelled) setDict(loaded); })
+      .catch((err) => {
+        // Staying on English is a working app in the wrong language, which is
+        // far better than an unhandled rejection during startup.
+        console.warn(`[i18n] could not load "${lang}", staying on English:`, err);
+      });
+    return () => { cancelled = true; };
+  }, [lang]);
+
   const setLang = (next: Lang) => {
     setLangState(next);
     storage.set(STORAGE_KEY, next);
@@ -39,13 +73,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     () => ({
       lang,
       setLang,
-      t: (key) => {
-        const dict = translations[lang] as Record<string, string>;
-        const fallback = translations.en as Record<string, string>;
-        return dict[key] ?? fallback[key] ?? key;
-      },
+      // en is the fallback for any key the active locale has not translated.
+      t: (key) => dict[key] ?? en[key] ?? key,
     }),
-    [lang]
+    [lang, dict]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

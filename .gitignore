@@ -34,6 +34,8 @@ yarn-error.log*
 # Build artefacts
 *.tsbuildinfo
 .tmp/
+dev-dist/
+scratch/
 
 # Supabase local
 supabase/.branches

@@ -30,6 +30,15 @@ const segmentChips: { key: Segment; labelKey: TranslationKey }[] = [
   { key: 'optout', labelKey: 'customers.tag.optout' },
 ];
 
+// ponytail: static — module scope, no useMemo needed
+const SORT_OPTIONS: { value: CustomerSort; labelKey: TranslationKey }[] = [
+  { value: 'newest',        labelKey: 'customers.sort.newest' },
+  { value: 'oldest',        labelKey: 'customers.sort.oldest' },
+  { value: 'name',          labelKey: 'customers.sort.name' },
+  { value: 'recent_visit',  labelKey: 'customers.sort.recent_visit' },
+  { value: 'top_spend',     labelKey: 'customers.sort.top_spend' },
+];
+
 export default function Customers() {
   const t = useT();
   const navigate = useNavigate();
@@ -44,21 +53,17 @@ export default function Customers() {
   const [sort, setSort] = useState<CustomerSort>('newest');
   const [newOpen, setNewOpen] = useState(false);
 
-  const SORT_OPTIONS: { value: CustomerSort; labelKey: TranslationKey }[] = useMemo(() => ([
-    { value: 'newest',        labelKey: 'customers.sort.newest' },
-    { value: 'oldest',        labelKey: 'customers.sort.oldest' },
-    { value: 'name',          labelKey: 'customers.sort.name' },
-    { value: 'recent_visit',  labelKey: 'customers.sort.recent_visit' },
-    { value: 'top_spend',     labelKey: 'customers.sort.top_spend' },
-  ]), []);
-
-  // Sync segment ↔ URL so deep links from Dashboard tiles work
+  // Sync segment ↔ URL so deep links from Dashboard tiles work.
+  // Dep: only `segment` + stable `setSearchParams` — NOT `searchParams` itself
+  // (including it caused a re-render loop: URL change → re-render → setSearchParams → loop).
   useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    if (segment === 'all') params.delete('segment');
-    else params.set('segment', segment);
-    setSearchParams(params, { replace: true });
-  }, [segment, searchParams, setSearchParams]);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (segment === 'all') params.delete('segment');
+      else params.set('segment', segment);
+      return params;
+    }, { replace: true });
+  }, [segment, setSearchParams]);
 
   // Realtime: auto-invalidate when any customer changes in this pharmacy
   useRealtimeInvalidate({
@@ -157,7 +162,7 @@ export default function Customers() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); if (e.target.value) setSegment('all'); }}
             placeholder={t('customers.search_placeholder')}
             className="pl-10"
           />

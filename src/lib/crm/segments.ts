@@ -12,7 +12,7 @@ export interface SegmentMetadata {
 /** Guaranteed-present "all customers" segment. Exported so lookups always
  *  have a non-undefined fallback (Record<string,…> access is optional under
  *  strict mode). */
-export const ALL_SEGMENT: SegmentMetadata = {
+const ALL_SEGMENT: SegmentMetadata = {
   key: 'all',
   labelKey: 'campaigns.seg.all',
   descKey: 'campaigns.seg.all', // fallback
@@ -20,7 +20,7 @@ export const ALL_SEGMENT: SegmentMetadata = {
   color: 'bg-muted text-muted-foreground',
 };
 
-export const SEGMENTS: Record<string, SegmentMetadata> = {
+const SEGMENTS: Record<string, SegmentMetadata> = {
   all: ALL_SEGMENT,
   new: {
     key: 'new',

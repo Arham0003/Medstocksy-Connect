@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { BellRing, Megaphone, Send, Users, Activity as ActivityIcon, HeartPulse, ClipboardList, AlertTriangle, FileText, Zap, MessageSquare, Smartphone, PhoneCall, IndianRupee, ArrowUpRight, ArrowDownRight, UserPlus, RefreshCcw, Clock } from 'lucide-react';
+import { BellRing, Megaphone, Send, ClipboardList, AlertTriangle, FileText, CheckCircle2, MessageSquare, Smartphone, PhoneCall, Check } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
-import { supabase } from '@/lib/supabase';
+import { supabase, rpc } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -19,218 +18,66 @@ import type { CustomerWithStats } from '@/lib/api/customers';
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
 /**
- * Compact stat tile: icon chip + label + value + subtitle on a tight rhythm.
- * Optional accent color tints the value (orange/coral) for at-a-glance scanning.
+ * ── Dashboard visual rules ───────────────────────────────────────────────
+ * Per medstocksy_connect_theme.md, colour carries meaning here; it is not
+ * decoration. The palette is deliberately four-wide:
+ *
+ *   foreground   default for every number — most stats mean nothing on their own
+ *   primary      brand / interactive / "this is today"
+ *   emerald      a good outcome (revenue up, nothing failed)
+ *   amber        needs a human soon (due, overdue)
+ *   destructive  something broke (failed sends)
+ *
+ * The previous tiles assigned a different hue per metric — teal customers,
+ * violet visits, coral chronic — which made four unrelated things shout at
+ * equal volume and left nothing for real status to say. Violet is also
+ * reserved for the Chronic *tag* (theme §2.4), so spending it on "visits this
+ * month" broke the tag mapping. Hierarchy now comes from size and position:
+ * one hero number, then quiet supporting stats, then the work queue.
  */
-interface StatTileProps {
+
+/**
+ * Quiet supporting stat. No icon chip, no coloured border, no per-metric hue —
+ * these are context for the dashboard, so they read as a row of facts.
+ */
+function StatCell({
+  label, value, sub, tone = 'default', onClick, loading = false,
+}: {
   label: string;
   value: string | number;
   sub: string;
-  icon: typeof BellRing;
-  /** Brand semantics — used for the icon chip background and the value tint when valueColor is set. */
-  dotColor: string;
-  /** Tint the value itself (orange today-reminders + coral chronic) */
-  valueColor?: string;
-  delay?: number;
-}
-
-function StatTile({
-  label, value, sub, icon: Icon, dotColor, valueColor, delay = 0, onClick, href,
-}: StatTileProps & { onClick?: () => void; href?: string }) {
-  const interactive = !!(onClick || href);
-  const Wrapper = interactive ? 'button' : 'div';
+  tone?: 'default' | 'attention';
+  onClick?: () => void;
+  loading?: boolean;
+}) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, delay }}
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex w-full flex-col items-start px-5 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
-      <Wrapper
-        onClick={onClick}
-        type={interactive ? 'button' : undefined}
-        className={cn(
-          // KarigarCred-style: left-color-accent bar + white card + clean shadow
-          'group flex w-full items-center gap-3.5 rounded-xl border-l-4 bg-card px-4 py-3.5 text-left card-elev transition-all',
-          'rounded-l-none rounded-r-xl', // left side is flat for the accent bar
-          interactive &&
-            'cursor-pointer hover:-translate-y-0.5 hover:shadow-popover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-        )}
-        style={{ borderLeftColor: dotColor }}
-      >
-        {/* Icon chip — 48px for pre-attentive scan affordance */}
-        <span
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-          style={{
-            backgroundColor: `${dotColor}15`,
-            color: dotColor,
-          }}
-          aria-hidden
-        >
-          <Icon className="h-5 w-5" strokeWidth={2} />
-        </span>
-
-        <div className="min-w-0 flex-1">
-          {/* Label — small-caps, muted, reads as category not value */}
-          <div className="truncate text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground" title={label}>
-            {label}
-          </div>
-          {/* Value — JetBrains Mono for data (Cognitive Load Theory: distinct visual channels) */}
-          <div className="mt-1 flex items-baseline gap-2">
-            <span
-              className={cn(
-                'mono-num truncate text-[28px] font-bold leading-none',
-                !valueColor && 'text-foreground'
-              )}
-              style={valueColor ? { color: valueColor } : undefined}
-            >
-              {value ?? '—'}
-            </span>
-          </div>
-          <div className="mt-1 truncate text-[11px] text-muted-foreground" title={sub}>{sub}</div>
-        </div>
-
-        {/* Arrow hint on interactive tiles */}
-        {interactive && (
-          <span className="shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground/70">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </span>
-        )}
-      </Wrapper>
-    </motion.div>
-  );
-}
-
-// Updated palette — more vibrant, better contrast against white cards
-const TILE_COLORS = {
-  greenDot:  '#0D9488',  // teal-600 — trust + health
-  orangeDot: '#D97706',  // amber-600 — urgency + attention
-  purpleDot: '#7C3AED',  // violet-600 — analytics
-  coralDot:  '#DC2626',  // red-600 — chronic / alerts
-} as const;
-
-/* ─── Today's Pulse widget — driven by unified dashboard RPC ─────────── */
-function TodaysPulse({
-  pharmacyId,
-  dash,
-  isLoading,
-}: {
-  pharmacyId: string;
-  dash: DashboardCounts | undefined;
-  isLoading: boolean;
-}) {
-  const t = useT();
-
-  const data = dash ? {
-    revenueToday:      dash.revenue_today,
-    revenueYesterday:  dash.revenue_yesterday,
-    refillsToday:      dash.refills_today,
-    newCustomersToday: dash.new_customers_today,
-    messagesSentToday: dash.msgs_out_today,
-    remindersDueToday: dash.reminders_due_today,
-  } : undefined;
-
-  const delta = data && data.revenueYesterday > 0
-    ? Math.round(((data.revenueToday - data.revenueYesterday) / data.revenueYesterday) * 100)
-    : null;
-  const trendUp = delta != null && delta >= 0;
-
-  // pharmacyId unused here but kept for component interface consistency
-  void pharmacyId;
-
-  return (
-    <Card className="p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Zap className="h-4 w-4 text-primary" />
-          {t('dash.pulse.title')}
-        </h2>
-        <span className="text-[11px] text-muted-foreground">{t('dash.pulse.live')}</span>
-      </div>
-
-      {isLoading || !data ? (
-        <div className="space-y-3">
-          <Skeleton className="h-12 w-2/3" />
-          <Skeleton className="h-4 w-1/2" />
-          <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16" />)}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* Revenue today + delta vs yesterday */}
-          <div>
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <IndianRupee className="h-3 w-3" />
-              {t('dash.pulse.revenue_today')}
-            </div>
-            <div className="mt-1 flex items-baseline gap-2 font-mono">
-              <span className="text-3xl font-bold tabular-nums">
-                {formatINRCompact(data.revenueToday)}
-              </span>
-              {delta != null && (
-                <span className={cn(
-                  'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-bold',
-                  trendUp
-                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-destructive/10 text-destructive'
-                )}>
-                  {trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                  {Math.abs(delta)}%
-                </span>
-              )}
-            </div>
-            <div className="mt-0.5 text-[11px] text-muted-foreground">
-              {t('dash.pulse.vs_yesterday')} {formatINRCompact(data.revenueYesterday)}
-            </div>
-          </div>
-
-          {/* 4-stat grid */}
-          <div className="grid grid-cols-2 gap-2 border-t pt-4 sm:grid-cols-4">
-            <PulseStat icon={<RefreshCcw className="h-3.5 w-3.5" />} value={data.refillsToday}      label={t('dash.pulse.refills')} tone="emerald" />
-            <PulseStat icon={<UserPlus className="h-3.5 w-3.5" />}   value={data.newCustomersToday} label={t('dash.pulse.new_cust')} tone="primary" />
-            <PulseStat icon={<Send className="h-3.5 w-3.5" />}       value={data.messagesSentToday} label={t('dash.pulse.msgs')}    tone="sky" />
-            <PulseStat icon={<Clock className="h-3.5 w-3.5" />}      value={data.remindersDueToday} label={t('dash.pulse.due')}     tone="amber" />
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function PulseStat({
-  icon, value, label, tone,
-}: {
-  icon: React.ReactNode; value: number; label: string;
-  tone: 'primary' | 'emerald' | 'sky' | 'amber';
-}) {
-  const colorMap: Record<typeof tone, { chip: string; val: string }> = {
-    primary: { chip: 'bg-primary/10 text-primary',                               val: 'hsl(226 71% 45%)' },
-    emerald: { chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300', val: '#059669' },
-    sky:     { chip: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',             val: '#0284C7' },
-    amber:   { chip: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',       val: '#B45309' },
-  };
-  const { chip, val } = colorMap[tone];
-  return (
-    <div className="flex min-w-0 flex-col items-start gap-2 rounded-lg border bg-card/60 p-3">
-      <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', chip)}>
-        {icon}
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
       </span>
-      <div className="min-w-0 max-w-full">
-        {/* JetBrains Mono for pulse stats — same visual channel as KPI tiles */}
-        <div className="mono-num truncate text-xl font-bold leading-none" style={{ color: val }}>{value}</div>
-        <div className="mt-0.5 truncate text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground" title={label}>{label}</div>
-      </div>
-    </div>
+      {loading ? (
+        <Skeleton className="mt-1.5 h-6 w-16" />
+      ) : (
+        <span className={cn(
+          'mono-num mt-1.5 text-2xl font-semibold leading-none tabular-nums',
+          tone === 'attention' ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'
+        )}>
+          {value}
+        </span>
+      )}
+      {loading ? (
+        <Skeleton className="mt-1.5 h-3 w-20" />
+      ) : (
+        <span className="mt-1.5 truncate text-[11px] text-muted-foreground" title={sub}>
+          {sub}
+        </span>
+      )}
+    </button>
   );
-}
-
-/** Compact ₹ formatter — switches to "₹1.2k" / "₹1.5L" past thresholds. */
-function formatINRCompact(amount: number): string {
-  if (amount >= 100_000) return `₹${(amount / 100_000).toFixed(1)}L`;
-  if (amount >= 1_000)   return `₹${(amount / 1_000).toFixed(1)}k`;
-  return `₹${Math.round(amount).toLocaleString('en-IN')}`;
 }
 
 /* ─── Recent Prescriptions widget ─────────────────────────────────────────── */
@@ -263,7 +110,7 @@ function RecentPrescriptions({
     <Card>
       <div className="flex items-center justify-between border-b px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <FileText className="h-4 w-4 text-primary" /> Recent Prescriptions
+          <FileText className="h-4 w-4 text-muted-foreground" /> Recent prescriptions
         </h2>
         <button onClick={() => onNavigate('/customers')} className="text-xs text-muted-foreground hover:text-primary">View all →</button>
       </div>
@@ -328,7 +175,7 @@ function FailedReminders({
     <Card>
       <div className="flex items-center justify-between border-b px-5 py-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <AlertTriangle className="h-4 w-4 text-red-500" /> Failed Reminders
+          <AlertTriangle className="h-4 w-4 text-destructive" /> Failed reminders
         </h2>
         <button onClick={() => onNavigate('/reminders')} className="text-xs text-muted-foreground hover:text-primary">Manage →</button>
       </div>
@@ -340,16 +187,14 @@ function FailedReminders({
           </div>
         )) : failed.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="flex justify-center mb-2">
-              <Zap className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div className="text-sm font-medium text-emerald-700 dark:text-emerald-400">All reminders delivered!</div>
-            <div className="text-xs text-muted-foreground mt-1">No failures to report.</div>
+            <CheckCircle2 className="mx-auto h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="mt-2 text-sm font-medium">Nothing has failed</div>
+            <div className="mt-1 text-xs text-muted-foreground">Every reminder so far went out.</div>
           </div>
         ) : failed.map(r => (
           <button key={r.id} onClick={() => r.customer && onNavigate(`/customers/${r.customer.id}`)}
             className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/40">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
@@ -400,9 +245,9 @@ export default function Dashboard() {
     staleTime: 60_000,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as unknown as {
-        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-      }).rpc('crm_dashboard_counts', { p_pharmacy_id: pharmacyId });
+      const { data, error } = await rpc<DashboardCounts>('crm_dashboard_counts', {
+        p_pharmacy_id: pharmacyId,
+      });
       if (error) throw new Error(error.message);
       return data as DashboardCounts;
     },
@@ -418,7 +263,8 @@ export default function Dashboard() {
     id: string;
     scheduled_for: string;
     status: string;
-    variables?: Record<string, any> | null;
+    sent_at?: string | null;
+    variables?: Record<string, string> | null;
     customer: { id: string; name: string; phone: string; whatsapp_opted_in: boolean };
     template: { name: string; body: string };
   }
@@ -428,21 +274,45 @@ export default function Dashboard() {
     enabled: !!pharmacyId,
     staleTime: 60_000,
     queryFn: async () => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOf7d = new Date(Date.now() + 7 * 86400000);
+
       const { data, error } = await supabase
         .from('crm_scheduled_reminders')
         .select(`
-          id, scheduled_for, status, variables,
+          id, scheduled_for, status, sent_at, variables,
           customer:crm_customers!inner(id, name, phone, whatsapp_opted_in),
           template:crm_templates!inner(name, body)
         `)
         .eq('pharmacy_id', pharmacyId)
-        .eq('status', 'pending')
+        .or(`and(status.eq.pending,scheduled_for.lt.${endOf7d.toISOString()}),and(status.in.(sent,converted),sent_at.gte.${startOfDay.toISOString()})`)
         .order('scheduled_for')
         .limit(8);
       if (error) throw error;
       return (data ?? []) as unknown as UpcomingRow[];
     },
   });
+
+  // Auto-refresh dashboard when returning to tab
+  useEffect(() => {
+    const onReturn = () => {
+      if (document.visibilityState === 'visible') {
+        for (const key of [
+          'upcoming-reminders', 'due-reminders', 'dashboard-counts',
+          'scheduled-reminders', 'reminders-today', 'reminders-overdue',
+        ]) {
+          qc.invalidateQueries({ queryKey: [key] });
+        }
+      }
+    };
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onReturn);
+    return () => {
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onReturn);
+    };
+  }, [qc]);
 
   // Quick WhatsApp send for a today's-reminder row — renders the template,
   // opens WhatsApp (bot or click-to-chat), logs the send, marks reminder sent.
@@ -463,9 +333,12 @@ export default function Dashboard() {
       body,
     });
     await markReminderSent(row.id, result.messageId ?? messageId);
-    qc.invalidateQueries({ queryKey: ['upcoming-reminders', pharmacyId] });
-    qc.invalidateQueries({ queryKey: ['due-reminders', pharmacyId] });
-    qc.invalidateQueries({ queryKey: ['dashboard-counts', pharmacyId] });
+    for (const key of [
+      'upcoming-reminders', 'due-reminders', 'dashboard-counts',
+      'scheduled-reminders', 'reminders-today', 'reminders-overdue', 'messages',
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
   };
 
   // Start of tomorrow — a reminder is "due today / overdue" if it's before this.
@@ -514,102 +387,106 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* ── KPI tiles ───────────────────────────────────────────────────
-          Left-accent border pattern (KarigarCred-inspired)
-          2-up on phones → 4-up on desktop (pre-attentive color + number scan)
+      {/* ── Practice stats ──────────────────────────────────────────────
+          Standing totals — deliberately one quiet card rather than competing tiles.
       ── */}
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
+      <Card className="grid grid-cols-2 divide-x divide-y overflow-hidden md:grid-cols-4 md:divide-y-0">
+        <StatCell
           label={t('dash.kpi.customers')}
-          value={counts?.total_customers != null ? counts.total_customers.toLocaleString() : '—'}
+          value={counts?.total_customers != null ? counts.total_customers.toLocaleString('en-IN') : '—'}
           sub={`+${counts?.this_week ?? 0} ${t('dash.this_week')}`}
-          icon={Users}
-          dotColor={TILE_COLORS.greenDot}
+          loading={loadingCounts}
           onClick={() => navigate('/customers')}
-          delay={0}
         />
-        <StatTile
-          label={t('dash.kpi.today_reminders')}
-          value={counts ? (counts.today_pending + counts.today_sent) : '—'}
-          sub={`${counts?.today_sent ?? 0} ${t('dash.sent')} · ${counts?.today_pending ?? 0} ${t('dash.pending')}`}
-          icon={BellRing}
-          dotColor={TILE_COLORS.orangeDot}
-          valueColor={TILE_COLORS.orangeDot}
+        <StatCell
+          label={t('dash.kpi.reminders')}
+          value={counts?.today_pending ?? '—'}
+          sub={`${counts?.today_sent ?? 0} ${t('dash.sent')} ${t('dash.today')}`}
+          tone={counts && counts.today_pending > 0 ? 'attention' : 'default'}
+          loading={loadingCounts}
           onClick={() => navigate('/reminders')}
-          delay={0.04}
         />
-        <StatTile
+        <StatCell
           label={t('dash.kpi.visits_month')}
-          value={counts?.visits_month != null ? counts.visits_month.toLocaleString() : '—'}
+          value={counts?.visits_month != null ? counts.visits_month.toLocaleString('en-IN') : '—'}
           sub={t('dash.total_visits')}
-          icon={ActivityIcon}
-          dotColor={TILE_COLORS.purpleDot}
+          loading={loadingCounts}
           onClick={() => navigate('/activity')}
-          delay={0.08}
         />
-        <StatTile
+        <StatCell
           label={t('dash.kpi.chronic')}
           value={counts?.chronic_count ?? '—'}
           sub={`${counts && counts.total_customers > 0 ? Math.round((counts.chronic_count / counts.total_customers) * 100) : 0}% ${t('dash.of_total')}`}
-          icon={HeartPulse}
-          dotColor={TILE_COLORS.coralDot}
-          valueColor={TILE_COLORS.coralDot}
+          loading={loadingCounts}
           onClick={() => navigate('/customers?segment=chronic')}
-          delay={0.12}
         />
-      </section>
+      </Card>
 
-      {/* Two-col: upcoming + health — on tablets and up side by side */}
-      <div className="grid gap-4 md:grid-cols-[1.5fr_1fr]">
-        <Card>
-          <div className="flex items-center justify-between border-b px-5 py-4">
-            <h2 className="text-base font-semibold">{t('dash.upcoming.title')}</h2>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/reminders')}>
-              {t('btn.view_all')} →
-            </Button>
-          </div>
-          <div className="divide-y">
-            {loadingReminders ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3 w-1/3" />
-                  </div>
+      {/* Upcoming reminders — full width */}
+      <Card>
+        <div className="flex items-center justify-between border-b px-5 py-4">
+          <h2 className="text-base font-semibold">{t('dash.upcoming.title')}</h2>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/reminders')}>
+            {t('btn.view_all')} →
+          </Button>
+        </div>
+        <div className="divide-y">
+          {loadingReminders ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-1/3" />
                 </div>
-              ))
-            ) : upcoming && upcoming.length > 0 ? (
-              upcoming.map((row) => (
+              </div>
+            ))
+          ) : upcoming && upcoming.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3">
+              {upcoming.map((row) => (
                 <div
                   key={row.id}
-                  className="flex w-full items-center gap-3 p-4 transition-colors hover:bg-muted/40"
+                  className="flex w-full min-w-0 items-center gap-3 border-b p-4 transition-colors hover:bg-muted/40 sm:border-r last:border-b-0"
                 >
                   <button
                     onClick={() => navigate(`/customers/${row.customer.id}`)}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
                       {row.variables?.channel === 'whatsapp' ? <MessageSquare className="h-4 w-4 text-emerald-600" />
                         : row.variables?.channel === 'sms' ? <Smartphone className="h-4 w-4 text-blue-600" />
                         : row.variables?.channel === 'call' ? <PhoneCall className="h-4 w-4 text-amber-600" />
                         : <BellRing className="h-4 w-4 text-muted-foreground" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold">{row.customer.name}</div>
+                      <div className="truncate text-sm font-semibold">{row.customer.name}</div>
                       <div className="truncate text-xs text-muted-foreground">
                         {row.variables?.medicine || 'Reminder'} · {row.template.name}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">
-                        {new Date(row.scheduled_for).toLocaleString('en-IN', {
-                          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-                        })}
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className={cn(
+                          'text-[11px] font-mono',
+                          row.status === 'pending' && new Date(row.scheduled_for) < endOfToday ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                        )}>
+                          {new Date(row.scheduled_for).toLocaleString('en-IN', {
+                            day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+                          })}
+                        </span>
+                        {row.status === 'pending' && new Date(row.scheduled_for) < new Date() && (
+                          <span className="rounded bg-destructive/10 px-1 py-px text-[9px] font-bold uppercase tracking-wider text-destructive">
+                            overdue
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
 
-                  {/* Quick WhatsApp send — only for reminders due today / overdue */}
-                  {new Date(row.scheduled_for) < endOfToday && (
+                  {/* Sent badge or Quick WhatsApp send button */}
+                  {row.status === 'sent' || row.status === 'converted' ? (
+                    <span className="flex shrink-0 items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                      <Check className="h-3 w-3" /> Done
+                    </span>
+                  ) : new Date(row.scheduled_for) < endOfToday ? (
                     <button
                       type="button"
                       onClick={() => quickWhatsApp(row)}
@@ -617,7 +494,7 @@ export default function Dashboard() {
                       aria-label={t('dash.quick_whatsapp')}
                       title={row.customer.whatsapp_opted_in ? t('dash.quick_whatsapp') : t('bell.opted_out')}
                       className={cn(
-                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors',
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors',
                         row.customer.whatsapp_opted_in
                           ? 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400'
                           : 'cursor-not-allowed bg-muted text-muted-foreground/50'
@@ -625,20 +502,18 @@ export default function Dashboard() {
                     >
                       <WhatsAppIcon className="h-4 w-4" />
                     </button>
-                  )}
+                  ) : null}
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center text-sm text-muted-foreground">{t('dash.upcoming.empty')}</div>
-            )}
-          </div>
-        </Card>
-
-        <TodaysPulse pharmacyId={pharmacyId} dash={counts} isLoading={loadingCounts} />
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-sm text-muted-foreground">{t('dash.upcoming.empty')}</div>
+          )}
+        </div>
+      </Card>
 
       {/* Bottom row: recent prescriptions + failed reminders */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Recent Prescriptions */}
         <RecentPrescriptions pharmacyId={pharmacyId} onNavigate={navigate} />
         {/* Failed Reminders */}

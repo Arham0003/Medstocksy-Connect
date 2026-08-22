@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { claimInvites } from '@/lib/api/members';
 import type { MemberRole } from '@/types/database';
 import { useAuth } from './AuthContext';
 import { storage } from '@/lib/utils';
@@ -38,6 +39,13 @@ export function PharmacyProvider({ children }: { children: ReactNode }) {
     pharmacy_name: string;
     pharmacy_logo_url: string | null;
   }
+
+  // Claim any pending invites addressed to this user's email — once per
+  // login, not on every refetch. No-op when nothing is pending.
+  useEffect(() => {
+    if (!user) return;
+    claimInvites().catch((e) => console.warn('[PharmacyContext] invite claim skipped:', e));
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: memberships = [], isLoading, isError, error: queryError, isSuccess } =
     useQuery<PharmacyMembership[]>({

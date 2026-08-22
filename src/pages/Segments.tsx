@@ -10,7 +10,7 @@ import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import { supabase } from '@/lib/supabase';
 import { listCustomers } from '@/lib/api/customers';
-import { cn, formatINR, relativeTime } from '@/lib/utils';
+import { cn, formatINR, relativeTime, initials } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -242,7 +242,7 @@ function CustomerDrawer({ segmentKey, segmentLabel, pharmacyId, onClose }: Custo
                   className="flex items-center gap-3 px-6 py-3 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    {c.name.split(' ').slice(0, 2).map((s: string) => s[0]).join('')}
+                    {initials(c.name)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -371,6 +371,14 @@ function CustomFilterBuilder({ pharmacyId, onStartCampaign }: CustomFilterBuilde
         const list = tagsMap.get(row.customer_id) ?? [];
         if (!list.includes(row.tag_key)) list.push(row.tag_key);
         tagsMap.set(row.customer_id, list);
+      }
+
+      for (const c of (customers ?? []) as Array<{ id: string; whatsapp_opted_in: boolean }>) {
+        if (!c.whatsapp_opted_in) {
+          const list = tagsMap.get(c.id) ?? [];
+          if (!list.includes('optout')) list.push('optout');
+          tagsMap.set(c.id, list);
+        }
       }
 
       const now = Date.now();

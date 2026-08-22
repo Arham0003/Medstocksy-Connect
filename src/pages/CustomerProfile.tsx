@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
-import { getCustomer, listManualTags, addTag, removeTag, setOptOut, setOptIn } from '@/lib/api/customers';
+import { getCustomer, listManualTags, addTag, removeTag, setOptOut, setOptIn, deleteCustomer } from '@/lib/api/customers';
 import {
   listPrescriptions, deletePrescription, renewPrescription,
   type PrescriptionWithMeds, type MedicineWithRefills,
@@ -17,6 +17,7 @@ import { formatINR, initials, relativeTime, formatDateTime, cn } from '@/lib/uti
 import { Tag } from '@/components/ui/tag';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ComposeDrawer } from '@/components/crm/ComposeDrawer';
 import { CustomerFormDialog } from '@/components/crm/CustomerFormDialog';
 import { VisitNoteDialog } from '@/components/crm/VisitNoteDialog';
@@ -28,6 +29,7 @@ import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
 
 export default function CustomerProfile() {
   const t = useT();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { pharmacyId } = useActivePharmacy();
   const qc = useQueryClient();
@@ -35,6 +37,7 @@ export default function CustomerProfile() {
   const [editOpen, setEditOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [rxOpen, setRxOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [editingRx, setEditingRx] = useState<PrescriptionWithMeds | null>(null);
   const [batchRefillRx, setBatchRefillRx] = useState<PrescriptionWithMeds | null>(null);
   const [refillMed, setRefillMed] = useState<{ med: MedicineWithRefills; rxId: string } | null>(null);
@@ -58,6 +61,11 @@ export default function CustomerProfile() {
     table: 'crm_customers',
     pharmacyId,
     queryKeys: [['customer', id], ['customers', pharmacyId]],
+  });
+  useRealtimeInvalidate({
+    table: 'crm_prescriptions',
+    pharmacyId,
+    queryKeys: [['prescriptions', id], ['customer', id]],
   });
   useRealtimeInvalidate({
     table: 'crm_prescription_refills',
@@ -130,6 +138,16 @@ export default function CustomerProfile() {
       await qc.invalidateQueries({ queryKey: ['customer', id] });
     },
   });
+
+  const deleteCustomerMutation = useMutation({
+    mutationFn: () => deleteCustomer(id!),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['customers'] });
+      await qc.invalidateQueries({ queryKey: ['dashboard-counts'] });
+      navigate('/customers');
+    },
+  });
+
 
   if (isLoading) {
     return (
@@ -257,6 +275,14 @@ export default function CustomerProfile() {
           <Button onClick={() => setComposeOpen(true)} disabled={!customer.whatsapp_opted_in} className="min-w-0">
             <Send className="h-4 w-4" />
             <span className="truncate">{t('btn.send_message')}</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setDeleteConfirmOpen(true)}
+            className="col-span-2 min-w-0 border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground sm:col-span-1"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="truncate">{t('btn.delete')}</span>
           </Button>
         </div>
       </motion.header>
@@ -461,6 +487,49 @@ export default function CustomerProfile() {
         customerId={customer.id}
         prescription={batchRefillRx}
       />
+
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              {t('profile.delete_title')}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm text-muted-foreground">
+              {t('profile.delete_desc').replace('{name}', customer.name)}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+              disabled={deleteCustomerMutation.isPending}
+            >
+              {t('btn.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => deleteCustomerMutation.mutate()}
+              disabled={deleteCustomerMutation.isPending}
+              className="gap-2"
+            >
+              {deleteCustomerMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('btn.saving')}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  {t('btn.delete')}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

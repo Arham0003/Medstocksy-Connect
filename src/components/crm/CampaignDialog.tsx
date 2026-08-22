@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, AlertTriangle, Users } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
@@ -122,6 +122,13 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
     },
   });
 
+  // Read the *latest* initialSegmentKey when hydrating, without making it a
+  // dependency — listing it would re-run the whole hydration (and wipe the
+  // user's in-progress name/template edits) if the parent changed it while the
+  // dialog was already open.
+  const initialSegmentKeyRef = useRef(initialSegmentKey);
+  initialSegmentKeyRef.current = initialSegmentKey;
+
   // Hydrate form
   useEffect(() => {
     if (!open) return;
@@ -132,7 +139,7 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
       setScheduledFor(campaign.scheduled_for ? campaign.scheduled_for.slice(0, 16) : '');
     } else {
       setName('');
-      setSegmentKey(initialSegmentKey ?? 'all');
+      setSegmentKey(initialSegmentKeyRef.current ?? 'all');
       setTemplateId(templates[0]?.id ?? '');
       setScheduledFor('');
     }

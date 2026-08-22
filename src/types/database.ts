@@ -34,10 +34,21 @@ export interface Database {
           send_window_end: string;
           rate_limit_per_hour: number;
           bulk_approval_threshold: number;
+          // Segment thresholds (migration 20260809_03). Defaults match the
+          // constants that used to be hardcoded in crm_customer_auto_tags.
+          new_customer_days: number;
+          inactive_days: number;
+          high_value_amount: number;
+          repeat_min_visits: number;
           created_at: string;
           updated_at: string;
         };
-        Insert: { name: string; owner_id?: string; phone?: string; address?: string; whatsapp_number?: string; logo_url?: string | null };
+        Insert: {
+          name: string; owner_id?: string; phone?: string; address?: string;
+          whatsapp_number?: string; logo_url?: string | null;
+          new_customer_days?: number; inactive_days?: number;
+          high_value_amount?: number; repeat_min_visits?: number;
+        };
         Update: Partial<Database['public']['Tables']['crm_pharmacies']['Insert']>;
       };
       crm_members: {
@@ -95,10 +106,11 @@ export interface Database {
       crm_scheduled_reminders: {
         Row: {
           id: string; pharmacy_id: string; customer_id: string; rule_id: string | null;
+          prescription_id: string | null;
           template_id: string; variables: Json; scheduled_for: string; status: ReminderStatus;
           message_id: string | null; created_at: string; sent_at: string | null;
         };
-        Insert: { pharmacy_id: string; customer_id: string; template_id: string; scheduled_for: string; rule_id?: string; variables?: Json };
+        Insert: { pharmacy_id: string; customer_id: string; template_id: string; scheduled_for: string; rule_id?: string; prescription_id?: string | null; variables?: Json };
         Update: Partial<Database['public']['Tables']['crm_scheduled_reminders']['Insert']>;
       };
       crm_campaigns: {
@@ -172,6 +184,9 @@ export interface Database {
           substitution_allowed: boolean;
           medicine_notes: string | null;
           price: number | null;
+          /** Migration 20260814_02 — opts this medicine out of the shared
+           *  prescription reminder and into its own schedule. */
+          reminder_override: boolean;
         };
         Insert: {
           prescription_id: string; medicine_name: string; position?: number;

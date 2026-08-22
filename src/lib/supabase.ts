@@ -36,6 +36,25 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
   },
 });
 
+/**
+ * Call a Postgres function the hand-written `Database` shim doesn't model yet.
+ *
+ * `supabase.rpc` is typed against `Database['public']['Functions']`, which our
+ * shim leaves empty, so every RPC call would otherwise need an `as any` that
+ * also throws away the *result* type. This narrows the escape hatch to the
+ * function-name/args pair and keeps `data` typed as `T` at the call site.
+ *
+ * Delete this once `npm run supabase:types` regenerates the shim with real
+ * Functions entries — the generated overloads make it redundant.
+ */
+export async function rpc<T>(
+  fn: string,
+  args: Record<string, unknown>
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  // ponytail: direct call preserves 'this' context for supabase client
+  return (supabase.rpc as unknown as (f: string, a: Record<string, unknown>) => Promise<{ data: T | null; error: { message: string } | null }>)(fn, args);
+}
+
 /** Type-safe table references — use throughout the app. */
 export type Tables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Row'];

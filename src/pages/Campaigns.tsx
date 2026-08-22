@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Send } from 'lucide-react';
+import { Plus, Send, BarChart3 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import { supabase, type Tables } from '@/lib/supabase';
@@ -11,6 +11,7 @@ import type { CampaignStatus } from '@/types/database';
 import { cn, relativeTime } from '@/lib/utils';
 import { CampaignDialog } from '@/components/crm/CampaignDialog';
 import { CampaignSendDialog } from '@/components/crm/CampaignSendDialog';
+import { CampaignAnalyticsDialog } from '@/components/crm/CampaignAnalyticsDialog';
 import { getSegment } from '@/lib/crm/segments';
 
 type Campaign = Tables<'crm_campaigns'>;
@@ -32,6 +33,7 @@ export default function Campaigns() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
   const [sending, setSending] = useState<Campaign | null>(null);
+  const [reporting, setReporting] = useState<Campaign | null>(null);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openEdit = (c: Campaign) => { setEditing(c); setDialogOpen(true); };
@@ -51,12 +53,12 @@ export default function Campaigns() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs text-muted-foreground">{t('nav.section.crm')}</p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">{t('campaigns.title')}</h1>
         </div>
-        <Button onClick={openNew}>
+        <Button onClick={openNew} className="shrink-0">
           <Plus className="h-4 w-4" />
           {t('btn.create')}
         </Button>
@@ -79,7 +81,7 @@ export default function Campaigns() {
             const editable = c.status === 'draft' || c.status === 'scheduled';
             return (
               <Card key={c.id} className={cn('overflow-hidden', editable && 'cursor-pointer transition-colors hover:bg-accent/50')}>
-                <div className="flex items-center justify-between gap-3 p-5">
+                <div className="flex flex-wrap items-start gap-3 p-5">
                   <button
                     type="button"
                     onClick={() => editable && openEdit(c)}
@@ -111,7 +113,7 @@ export default function Campaigns() {
                       )}
                     </p>
                   </button>
-                  {editable && (
+                  {editable ? (
                     <div className="flex shrink-0 gap-2">
                       <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
                         {t('btn.edit')}
@@ -119,6 +121,16 @@ export default function Campaigns() {
                       <Button size="sm" onClick={() => setSending(c)}>
                         <Send className="h-3.5 w-3.5" />
                         {t('campaigns.send_now')}
+                      </Button>
+                    </div>
+                  ) : (
+                    // Anything past draft/scheduled has recipient rows worth
+                    // reading — including 'failed', where the per-recipient
+                    // breakdown is the only way to see what actually went out.
+                    <div className="flex shrink-0 gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setReporting(c)}>
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        {t('campaigns.analytics.view')}
                       </Button>
                     </div>
                   )}
@@ -139,6 +151,12 @@ export default function Campaigns() {
         open={!!sending}
         onOpenChange={(v) => { if (!v) setSending(null); }}
         campaign={sending}
+      />
+
+      <CampaignAnalyticsDialog
+        open={!!reporting}
+        onOpenChange={(v) => { if (!v) setReporting(null); }}
+        campaign={reporting}
       />
     </div>
   );
