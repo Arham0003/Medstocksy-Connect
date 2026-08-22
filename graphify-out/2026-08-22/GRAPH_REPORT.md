@@ -1,11 +1,11 @@
 # Graph Report - Medstocksy-Connect 18-05-26  (2026-08-22)
 
 ## Corpus Check
-- 241 files · ~348,403 words
+- 241 files · ~348,345 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1808 nodes · 3024 edges · 172 communities (130 shown, 42 thin omitted)
+- 1825 nodes · 3044 edges · 172 communities (130 shown, 42 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -210,16 +210,16 @@
 ## Communities (172 total, 42 thin omitted)
 
 ### Community 0 - "contexts_languagecontext_uset / pages_settings"
-Cohesion: 0.08
-Nodes (27): addVisitNote(), listVisitNotes(), VisitNote, AttachmentLink(), BillBody(), BillEvent, CustomerActivityTimeline(), DateGroup() (+19 more)
+Cohesion: 0.09
+Nodes (25): addVisitNote(), listVisitNotes(), VisitNote, AttachmentLink(), BillBody(), BillEvent, CustomerActivityTimeline(), DateGroup() (+17 more)
 
 ### Community 1 - "contexts_pharmacycontext / src_app"
-Cohesion: 0.06
-Nodes (32): sendResetPasswordEmail(), sendWelcomeEmail(), AuthContext, AuthContextValue, AuthProvider(), useAuth(), PharmacyProvider(), AuthCallback() (+24 more)
+Cohesion: 0.10
+Nodes (17): Activity, AuthCallback, Campaigns, CustomerProfile, Customers, Dashboard, FullScreenLoader(), Login (+9 more)
 
 ### Community 2 - "contexts_languagecontext / crm_templatedialog"
-Cohesion: 0.16
-Nodes (13): BILL_FIELDS, CROSS_CHECK_ONLY, FieldSpec, FieldType, MEDICINES, PATIENT, PRESCRIPTION_FIELDS, ExtractionReport (+5 more)
+Cohesion: 0.11
+Nodes (21): buildPrompt(), buildSchema(), extractBillData(), FREE_TIER_MODELS, GeminiAuthError, GenAiType, RESPONSE_SCHEMA, toBase64() (+13 more)
 
 ### Community 3 - "medstocksy_connect_rules_medstocksy_connect_agent_rules_for_claude_sonnet_4_7 / medstocksy_connect_rules_operational_rules"
 Cohesion: 0.05
@@ -234,8 +234,8 @@ Cohesion: 0.07
 Nodes (29): 10. Theme Quick-Reference (paste into design reviews), 11. Theme Acceptance Checklist (every screen), 1. Brand Essence, 2.1 Brand Palette (Pharmacy Blue + Green), 2.2 Semantic Status Colors, 2.3 Neutrals (Surface & Text), 2.4 Tag Color Mapping (auto-generated tags from PRD §2.1), 2.5 shadcn/ui CSS Variable Mapping (+21 more)
 
 ### Community 6 - "pages_customerprofile / pages_customers"
-Cohesion: 0.08
-Nodes (33): addTag(), createCustomer(), CustomerSort, CustomerStats, deleteCustomer(), EnrichedRow, findPrimaryByPhone(), getCustomer() (+25 more)
+Cohesion: 0.11
+Nodes (24): addTag(), createCustomer(), Customer, CustomerStats, deleteCustomer(), DuplicatePhoneError, EnrichedRow, findPrimaryByPhone() (+16 more)
 
 ### Community 7 - "Third-Party Dependencies"
 Cohesion: 0.07
@@ -270,8 +270,8 @@ Cohesion: 0.11
 Nodes (25): createPrescription(), deletePrescription(), fetchRefillsByMedicine(), getPrescription(), listPrescriptions(), listPrescriptionsFallback(), MedicineInput, MedicineRefillStats (+17 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.16
-Nodes (14): MsgEvent, Activity(), ActivityRow, ActivityRowItem(), EmptyState(), Filter, FILTERS, Group (+6 more)
+Cohesion: 0.38
+Nodes (5): sendResetPasswordEmail(), sendWelcomeEmail(), AuthContext, AuthContextValue, AuthProvider()
 
 ### Community 16 - "package_devdependencies / package_devdependencies_globals"
 Cohesion: 0.09
@@ -294,8 +294,8 @@ Cohesion: 0.12
 Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
 ### Community 21 - "lib_utils_cn / lib_utils"
-Cohesion: 0.14
-Nodes (13): CustomerDrawerProps, CustomFilter, CustomFilterBuilder(), CustomFilterBuilderProps, EMPTY_FILTER, hasFilter(), SEGMENT_DEFS, SegmentCard() (+5 more)
+Cohesion: 0.08
+Nodes (24): CustomerDrawerProps, CustomFilter, CustomFilterBuilder(), CustomFilterBuilderProps, EMPTY_FILTER, hasFilter(), SEGMENT_DEFS, SegmentCard() (+16 more)
 
 ### Community 22 - "contexts_pharmacycontext_useactivepharmacy / pages_prescriptionworkflow"
 Cohesion: 0.08
@@ -307,11 +307,11 @@ Nodes (6): LanguageProvider(), Theme, ThemeContext, ThemeContextValue, ThemeProv
 
 ### Community 24 - "pages_reminders / pages_reminders_reminderrow"
 Cohesion: 0.16
-Nodes (14): PharmacyContext, PharmacyContextValue, PharmacyMembership, Layout(), storage, validateIndianPhone(), CreatedPharmacy, MemberRole (+6 more)
+Nodes (16): CustomerSort, useActivePharmacy(), AddFromBillDialog(), BatchRefillDialog(), RefillDialog(), VisitNoteDialog(), useDebounce(), useRealtimeInvalidate() (+8 more)
 
 ### Community 25 - "Community 25"
-Cohesion: 0.09
-Nodes (22): BulkReminderSendDialog(), ComposeDrawerProps, ReminderRuleDialog(), ReminderRuleDialogProps, Rule, Stop(), Template, UnitInput() (+14 more)
+Cohesion: 0.29
+Nodes (5): ConfirmEmailPanel(), Login(), Mode, ResetLinkSentPanel(), ResetSentPanel()
 
 ### Community 26 - "medcrm_feature_medstocksy_connect_medcrm_v2_feature_reference / medcrm_feature_14_templates_pages_templates_tsx"
 Cohesion: 0.15
@@ -319,11 +319,11 @@ Nodes (12): 11. Segments (`pages/Segments.tsx`), 14.1 Grid, 14.2 `TemplateDialog
 
 ### Community 27 - "crm_prescriptiondialog / crm_batchrefilldialog"
 Cohesion: 0.14
-Nodes (29): BulkReminder, Outcome, Props, Campaign, CampaignDialog(), CampaignDialogProps, Template, Gender (+21 more)
+Nodes (26): LanguageContext, BulkReminder, Outcome, Props, Campaign, CampaignDialogProps, Template, PRESET_DAYS (+18 more)
 
 ### Community 28 - "pages_activity / pages_activity_activity"
-Cohesion: 0.12
-Nodes (21): CustomerWithStats, ComposeDrawer(), CustomerPickerDialog(), CustomerPickerDialogProps, RateMeter(), RateMeterProps, WhatsAppIcon(), cn() (+13 more)
+Cohesion: 0.08
+Nodes (27): CustomerWithStats, EventIcon(), CustomerPickerDialog(), CustomerPickerDialogProps, RateMeter(), RateMeterProps, ReminderRuleDialog(), ReminderRuleDialogProps (+19 more)
 
 ### Community 29 - "vercel / vercel_functions"
 Cohesion: 0.12
@@ -391,7 +391,7 @@ Nodes (17): computedHash, skillPath, source, sourceType, skills, caveman, supaba
 
 ### Community 45 - "ui_card / ui_card_card"
 Cohesion: 0.09
-Nodes (29): useLanguage(), useT(), useTheme(), MembersSection(), Field(), Section(), Timeline(), maskKey() (+21 more)
+Nodes (27): useLanguage(), useT(), useTheme(), Field(), Section(), Timeline(), maskKey(), NotFound() (+19 more)
 
 ### Community 46 - "medcrm_feature_16_settings_pages_settings_tsx / medcrm_feature_16_5_about_minimal"
 Cohesion: 0.29
@@ -486,32 +486,32 @@ Cohesion: 0.67
 Nodes (3): 5. Roles & Permissions, Admin (Owner), Staff (Pharmacist/Counter)
 
 ### Community 70 - "scratch_check_duplicates / scratch_check_duplicates_supabase"
-Cohesion: 0.13
-Nodes (14): usePharmacy(), AppSidebar(), AppSidebarProps, commsLinks, crmLinks, links, miscLinks, NavLinkSpec (+6 more)
+Cohesion: 0.11
+Nodes (20): useAuth(), PharmacyProvider(), usePharmacy(), MembersSection(), AppSidebar(), AppSidebarProps, commsLinks, crmLinks (+12 more)
 
 ### Community 76 - "graphify_detect"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowImportingTsExtensions, composite, isolatedModules, jsx, lib, module, moduleDetection (+11 more)
 
 ### Community 79 - "readme"
-Cohesion: 0.09
-Nodes (21): 1. Clone the parent's Supabase project credentials, 2. Apply the database migration, 3. Install + run, 4. Build for production, 🚦 Deployment to Vercel, 🟡 Functional stub — needs ~1–2 weeks more, 🚀 Getting started, 🛡 License (+13 more)
+Cohesion: 0.06
+Nodes (38): 1. Clone the parent's Supabase project credentials, 1. Configure Environment Variables, 1. 🔍 Schema-Driven Prescription OCR & AI Extraction, 2. Apply Database Migrations, 2. Apply the database migration, 2. 🔐 Authentication, Reset Password & Transactional Email, 3. Install + run, 3. Install & Run Locally (+30 more)
 
 ### Community 82 - "Community 82"
 Cohesion: 0.13
 Nodes (14): compilerOptions, allowSyntheticDefaultImports, esModuleInterop, isolatedModules, module, moduleResolution, noImplicitAny, outDir (+6 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.13
-Nodes (15): Customer, DuplicatePhoneError, AddFromBillDialogProps, AttachmentPreview(), EMPTY_RX_MED, Gender, Mode, Source (+7 more)
+Cohesion: 0.16
+Nodes (12): recordSale(), AttachmentPreview(), EMPTY_RX_MED, Gender, Mode, Source, SourceButton(), editDistance() (+4 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.11
-Nodes (17): Campaign, CampaignAnalyticsDialog(), DELIVERED, FunnelBar(), Props, RateTile(), REACHED, RecipientRow (+9 more)
+Nodes (18): Campaign, CampaignAnalyticsDialog(), DELIVERED, FunnelBar(), Props, RateTile(), REACHED, RecipientRow (+10 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.07
-Nodes (48): CampaignRecipient, fetchCustomerCampaignVars(), finalizeCampaign(), markCampaignSending(), recordCampaignRecipient(), resolveSegmentCustomers(), BotStatus, canSendNow() (+40 more)
+Cohesion: 0.06
+Nodes (56): CampaignRecipient, fetchCustomerCampaignVars(), finalizeCampaign(), markCampaignSending(), recordCampaignRecipient(), resolveSegmentCustomers(), BotStatus, canSendNow() (+48 more)
 
 ### Community 86 - "Community 86"
 Cohesion: 0.22
@@ -614,8 +614,8 @@ Cohesion: 0.23
 Nodes (11): claimInvites(), inviteMember(), listMembers(), Member, MemberRole, PendingInvite, removeMember(), revokeInvite() (+3 more)
 
 ### Community 111 - "Community 111"
-Cohesion: 0.31
-Nodes (8): buildPrompt(), buildSchema(), extractBillData(), FREE_TIER_MODELS, GeminiAuthError, GenAiType, RESPONSE_SCHEMA, toBase64()
+Cohesion: 0.40
+Nodes (5): getNotifyInterval(), getSnoozedUntil(), NOTIFY_INTERVAL_OPTIONS, setNotifyInterval(), snoozePopup()
 
 ### Community 113 - "Community 113"
 Cohesion: 0.33
@@ -654,8 +654,8 @@ Cohesion: 0.50
 Nodes (3): Fix suggestion, Source, What happened
 
 ### Community 160 - "Community 160"
-Cohesion: 0.11
-Nodes (22): useActivePharmacy(), BatchRefillDialog(), PrescriptionDialog(), RefillDialog(), ALLOWED_TYPES, KIND_OPTIONS, Template, TemplateDialog() (+14 more)
+Cohesion: 0.13
+Nodes (19): ComposeDrawer(), ComposeDrawerProps, ALLOWED_TYPES, KIND_OPTIONS, Template, TemplateDialog(), TemplateDialogProps, TplLang (+11 more)
 
 ### Community 161 - "Community 161"
 Cohesion: 0.29
@@ -666,12 +666,12 @@ Cohesion: 0.09
 Nodes (20): brandSubtitle, brandTitle, container, contentSection, ctaButton, ctaSection, divider, featureCard (+12 more)
 
 ### Community 166 - "Community 166"
-Cohesion: 0.16
-Nodes (15): LanguageContext, LanguageContextValue, ALL_SEGMENT, getSegment(), SEGMENT_OPTIONS, SegmentMetadata, SEGMENTS, TemplateMetadata (+7 more)
+Cohesion: 0.06
+Nodes (36): LanguageContextValue, PharmacyContextValue, PharmacyMembership, MsgEvent, ALL_SEGMENT, getSegment(), SEGMENT_OPTIONS, SegmentMetadata (+28 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.14
-Nodes (15): signedBillUrl(), toObjectPath(), AddFromBillDialog(), getGeminiKey(), hasGeminiKey(), setGeminiKey(), ALLOWED, CustomerStep() (+7 more)
+Nodes (18): signedBillUrl(), toObjectPath(), PharmacyContext, EMPTY_MED, PrescriptionDialog(), getGeminiKey(), hasGeminiKey(), setGeminiKey() (+10 more)
 
 ### Community 171 - "Community 171"
 Cohesion: 0.12
@@ -698,24 +698,24 @@ Cohesion: 0.50
 Nodes (3): Getting Started, License, React Email Starter
 
 ## Knowledge Gaps
-- **997 isolated node(s):** `serverUrl`, `singleQuote`, `semi`, `tabWidth`, `trailingComma` (+992 more)
+- **1009 isolated node(s):** `serverUrl`, `singleQuote`, `semi`, `tabWidth`, `trailingComma` (+1004 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **42 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useT()` connect `ui_card / ui_card_card` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `contexts_pharmacycontext / src_app`, `Community 166`, `pages_customerprofile / pages_customers`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `Community 169`, `Community 110`, `Community 15`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Why does `cn()` connect `pages_activity / pages_activity_activity` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `contexts_pharmacycontext / src_app`, `Community 161`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `pages_customerprofile / pages_customers`, `Community 169`, `ui_card / ui_card_card`, `Community 110`, `Community 15`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`?**
+- **Why does `useT()` connect `ui_card / ui_card_card` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `contexts_pharmacycontext / src_app`, `pages_customerprofile / pages_customers`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `Community 166`, `Community 169`, `Community 110`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
+  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+- **Why does `cn()` connect `pages_activity / pages_activity_activity` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `Community 161`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `Community 166`, `pages_customerprofile / pages_customers`, `Community 169`, `ui_card / ui_card_card`, `Community 110`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `useActivePharmacy()` connect `Community 160` to `contexts_languagecontext_uset / pages_settings`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `pages_customerprofile / pages_customers`, `Community 169`, `ui_card / ui_card_card`, `Community 15`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `pages_reminders / pages_reminders_reminderrow`, `Community 25`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
+- **Why does `useActivePharmacy()` connect `pages_reminders / pages_reminders_reminderrow` to `Community 160`, `contexts_languagecontext_uset / pages_settings`, `scratch_check_duplicates / scratch_check_duplicates_supabase`, `pages_customerprofile / pages_customers`, `Community 166`, `Community 169`, `ui_card / ui_card_card`, `Community 83`, `Community 84`, `Community 85`, `lib_utils_cn / lib_utils`, `crm_prescriptiondialog / crm_batchrefilldialog`, `pages_activity / pages_activity_activity`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `serverUrl`, `singleQuote`, `semi` to the rest of the system?**
-  _1001 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1013 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `contexts_languagecontext_uset / pages_settings` be split into smaller, more focused modules?**
-  _Cohesion score 0.08275862068965517 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08994708994708994 - nodes in this community are weakly interconnected._
 - **Should `contexts_pharmacycontext / src_app` be split into smaller, more focused modules?**
-  _Cohesion score 0.06341463414634146 - nodes in this community are weakly interconnected._
-- **Should `medstocksy_connect_rules_medstocksy_connect_agent_rules_for_claude_sonnet_4_7 / medstocksy_connect_rules_operational_rules` be split into smaller, more focused modules?**
-  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._
+- **Should `contexts_languagecontext / crm_templatedialog` be split into smaller, more focused modules?**
+  _Cohesion score 0.10869565217391304 - nodes in this community are weakly interconnected._

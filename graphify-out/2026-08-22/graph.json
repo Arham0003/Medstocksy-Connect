@@ -3870,7 +3870,7 @@
       "source_file": "src/App.tsx",
       "source_location": "L52",
       "id": "src_app_requireauth",
-      "community": 1,
+      "community": 70,
       "norm_label": "requireauth()"
     },
     {
@@ -3933,7 +3933,7 @@
       "source_file": "src/components/crm/AddFromBillDialog.tsx",
       "source_location": "L41",
       "id": "crm_addfrombilldialog_addfrombilldialogprops",
-      "community": 83,
+      "community": 6,
       "norm_label": "addfrombilldialogprops"
     },
     {
@@ -3978,7 +3978,7 @@
       "source_file": "src/components/crm/AddFromBillDialog.tsx",
       "source_location": "L66",
       "id": "crm_addfrombilldialog_addfrombilldialog",
-      "community": 169,
+      "community": 24,
       "norm_label": "addfrombilldialog()"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_file": "src/components/crm/BatchRefillDialog.tsx",
       "source_location": "L20",
       "id": "crm_batchrefilldialog_batchrefilldialog",
-      "community": 160,
+      "community": 24,
       "norm_label": "batchrefilldialog()"
     },
     {
@@ -4077,7 +4077,7 @@
       "source_file": "src/components/crm/BulkReminderSendDialog.tsx",
       "source_location": "L44",
       "id": "crm_bulkremindersenddialog_bulkremindersenddialog",
-      "community": 25,
+      "community": 85,
       "norm_label": "bulkremindersenddialog()"
     },
     {
@@ -4230,7 +4230,7 @@
       "source_file": "src/components/crm/CampaignDialog.tsx",
       "source_location": "L30",
       "id": "crm_campaigndialog_campaigndialog",
-      "community": 27,
+      "community": 84,
       "norm_label": "campaigndialog()"
     },
     {
@@ -4284,7 +4284,7 @@
       "source_file": "src/components/crm/CampaignSendDialog.tsx",
       "source_location": "L39",
       "id": "crm_campaignsenddialog_campaignsenddialog",
-      "community": 84,
+      "community": 85,
       "norm_label": "campaignsenddialog()"
     },
     {
@@ -4293,7 +4293,7 @@
       "source_file": "src/components/crm/ComposeDrawer.tsx",
       "source_location": "L1",
       "id": "crm_composedrawer",
-      "community": 25,
+      "community": 160,
       "norm_label": "composedrawer.tsx"
     },
     {
@@ -4302,7 +4302,7 @@
       "source_file": "src/components/crm/ComposeDrawer.tsx",
       "source_location": "L15",
       "id": "crm_composedrawer_composedrawerprops",
-      "community": 25,
+      "community": 160,
       "norm_label": "composedrawerprops"
     },
     {
@@ -4311,7 +4311,7 @@
       "source_file": "src/components/crm/ComposeDrawer.tsx",
       "source_location": "L25",
       "id": "crm_composedrawer_composedrawer",
-      "community": 28,
+      "community": 160,
       "norm_label": "composedrawer()"
     },
     {
@@ -4329,7 +4329,7 @@
       "source_file": "src/components/crm/CustomerActivityTimeline.tsx",
       "source_location": "L27",
       "id": "crm_customeractivitytimeline_msgevent",
-      "community": 15,
+      "community": 166,
       "norm_label": "msgevent"
     },
     {
@@ -4419,7 +4419,7 @@
       "source_file": "src/components/crm/CustomerActivityTimeline.tsx",
       "source_location": "L263",
       "id": "crm_customeractivitytimeline_eventicon",
-      "community": 0,
+      "community": 28,
       "norm_label": "eventicon()"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_file": "src/components/crm/CustomerFormDialog.tsx",
       "source_location": "L1",
       "id": "crm_customerformdialog",
-      "community": 27,
+      "community": 6,
       "norm_label": "customerformdialog.tsx"
     },
     {
@@ -4527,7 +4527,7 @@
       "source_file": "src/components/crm/CustomerFormDialog.tsx",
       "source_location": "L17",
       "id": "crm_customerformdialog_mode",
-      "community": 27,
+      "community": 6,
       "norm_label": "mode"
     },
     {
@@ -4536,7 +4536,7 @@
       "source_file": "src/components/crm/CustomerFormDialog.tsx",
       "source_location": "L19",
       "id": "crm_customerformdialog_customerformdialogprops",
-      "community": 83,
+      "community": 6,
       "norm_label": "customerformdialogprops"
     },
     {
@@ -4545,7 +4545,7 @@
       "source_file": "src/components/crm/CustomerFormDialog.tsx",
       "source_location": "L28",
       "id": "crm_customerformdialog_gender",
-      "community": 27,
+      "community": 6,
       "norm_label": "gender"
     },
     {
@@ -4617,7 +4617,7 @@
       "source_file": "src/components/crm/MembersSection.tsx",
       "source_location": "L32",
       "id": "crm_memberssection_memberssection",
-      "community": 45,
+      "community": 70,
       "norm_label": "memberssection()"
     },
     {
@@ -4626,7 +4626,7 @@
       "source_file": "src/components/crm/PrescriptionDialog.tsx",
       "source_location": "L1",
       "id": "crm_prescriptiondialog",
-      "community": 27,
+      "community": 169,
       "norm_label": "prescriptiondialog.tsx"
     },
     {
@@ -4644,7 +4644,7 @@
       "source_file": "src/components/crm/PrescriptionDialog.tsx",
       "source_location": "L40",
       "id": "crm_prescriptiondialog_empty_med",
-      "community": 27,
+      "community": 169,
       "norm_label": "empty_med"
     },
     {
@@ -4653,7 +4653,7 @@
       "source_file": "src/components/crm/PrescriptionDialog.tsx",
       "source_location": "L55",
       "id": "crm_prescriptiondialog_prescriptiondialog",
-      "community": 160,
+      "community": 169,
       "norm_label": "prescriptiondialog()"
     },
     {
@@ -4797,7 +4797,7 @@
       "source_file": "src/components/crm/RefillDialog.tsx",
       "source_location": "L21",
       "id": "crm_refilldialog_refilldialog",
-      "community": 160,
+      "community": 24,
       "norm_label": "refilldialog()"
     },
     {
@@ -4806,7 +4806,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L1",
       "id": "crm_reminderruledialog",
-      "community": 25,
+      "community": 28,
       "norm_label": "reminderruledialog.tsx"
     },
     {
@@ -4815,7 +4815,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L17",
       "id": "crm_reminderruledialog_rule",
-      "community": 25,
+      "community": 28,
       "norm_label": "rule"
     },
     {
@@ -4824,7 +4824,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L18",
       "id": "crm_reminderruledialog_template",
-      "community": 25,
+      "community": 28,
       "norm_label": "template"
     },
     {
@@ -4833,7 +4833,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L20",
       "id": "crm_reminderruledialog_reminderruledialogprops",
-      "community": 25,
+      "community": 28,
       "norm_label": "reminderruledialogprops"
     },
     {
@@ -4842,7 +4842,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L27",
       "id": "crm_reminderruledialog_reminderruledialog",
-      "community": 25,
+      "community": 28,
       "norm_label": "reminderruledialog()"
     },
     {
@@ -4851,7 +4851,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L340",
       "id": "crm_reminderruledialog_section",
-      "community": 25,
+      "community": 28,
       "norm_label": "section()"
     },
     {
@@ -4860,7 +4860,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L356",
       "id": "crm_reminderruledialog_field",
-      "community": 25,
+      "community": 28,
       "norm_label": "field()"
     },
     {
@@ -4869,7 +4869,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L375",
       "id": "crm_reminderruledialog_unitinput",
-      "community": 25,
+      "community": 28,
       "norm_label": "unitinput()"
     },
     {
@@ -4887,7 +4887,7 @@
       "source_file": "src/components/crm/ReminderRuleDialog.tsx",
       "source_location": "L471",
       "id": "crm_reminderruledialog_stop",
-      "community": 25,
+      "community": 28,
       "norm_label": "stop()"
     },
     {
@@ -4914,7 +4914,7 @@
       "source_file": "src/components/crm/RescheduleReminderDialog.tsx",
       "source_location": "L23",
       "id": "crm_reschedulereminderdialog_reschedulereminderdialog",
-      "community": 25,
+      "community": 85,
       "norm_label": "reschedulereminderdialog()"
     },
     {
@@ -5013,7 +5013,7 @@
       "source_file": "src/components/crm/VisitNoteDialog.tsx",
       "source_location": "L21",
       "id": "crm_visitnotedialog_visitnotedialog",
-      "community": 160,
+      "community": 24,
       "norm_label": "visitnotedialog()"
     },
     {
@@ -5049,7 +5049,7 @@
       "source_file": "src/components/layout/AppSidebar.tsx",
       "source_location": "L15",
       "id": "layout_appsidebar_navlinkspec",
-      "community": 70,
+      "community": 166,
       "norm_label": "navlinkspec"
     },
     {
@@ -5121,7 +5121,7 @@
       "source_file": "src/components/layout/Layout.tsx",
       "source_location": "L1",
       "id": "layout_layout",
-      "community": 24,
+      "community": 169,
       "norm_label": "layout.tsx"
     },
     {
@@ -5157,7 +5157,7 @@
       "source_file": "src/components/layout/RemindersBell.tsx",
       "source_location": "L29",
       "id": "layout_remindersbell_remindersbellinner",
-      "community": 160,
+      "community": 85,
       "norm_label": "remindersbellinner()"
     },
     {
@@ -5265,7 +5265,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L1",
       "id": "ui_card",
-      "community": 24,
+      "community": 21,
       "norm_label": "card.tsx"
     },
     {
@@ -5274,7 +5274,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L4",
       "id": "ui_card_card",
-      "community": 24,
+      "community": 21,
       "norm_label": "card"
     },
     {
@@ -5283,7 +5283,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L11",
       "id": "ui_card_cardheader",
-      "community": 24,
+      "community": 21,
       "norm_label": "cardheader"
     },
     {
@@ -5292,7 +5292,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L18",
       "id": "ui_card_cardtitle",
-      "community": 24,
+      "community": 21,
       "norm_label": "cardtitle"
     },
     {
@@ -5301,7 +5301,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L25",
       "id": "ui_card_carddescription",
-      "community": 24,
+      "community": 21,
       "norm_label": "carddescription"
     },
     {
@@ -5310,7 +5310,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L32",
       "id": "ui_card_cardcontent",
-      "community": 24,
+      "community": 21,
       "norm_label": "cardcontent"
     },
     {
@@ -5319,7 +5319,7 @@
       "source_file": "src/components/ui/card.tsx",
       "source_location": "L37",
       "id": "ui_card_cardfooter",
-      "community": 24,
+      "community": 21,
       "norm_label": "cardfooter"
     },
     {
@@ -5472,7 +5472,7 @@
       "source_file": "src/components/ui/skeleton.tsx",
       "source_location": "L1",
       "id": "ui_skeleton",
-      "community": 28,
+      "community": 84,
       "norm_label": "skeleton.tsx"
     },
     {
@@ -5481,7 +5481,7 @@
       "source_file": "src/components/ui/skeleton.tsx",
       "source_location": "L4",
       "id": "ui_skeleton_skeleton",
-      "community": 28,
+      "community": 84,
       "norm_label": "skeleton()"
     },
     {
@@ -5490,7 +5490,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L1",
       "id": "ui_tag",
-      "community": 6,
+      "community": 21,
       "norm_label": "tag.tsx"
     },
     {
@@ -5499,7 +5499,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L3",
       "id": "ui_tag_tagkey",
-      "community": 6,
+      "community": 21,
       "norm_label": "tagkey"
     },
     {
@@ -5508,7 +5508,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L5",
       "id": "ui_tag_tagstyles",
-      "community": 6,
+      "community": 21,
       "norm_label": "tagstyles"
     },
     {
@@ -5517,7 +5517,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L14",
       "id": "ui_tag_taglabels",
-      "community": 6,
+      "community": 21,
       "norm_label": "taglabels"
     },
     {
@@ -5526,7 +5526,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L23",
       "id": "ui_tag_tagprops",
-      "community": 6,
+      "community": 21,
       "norm_label": "tagprops"
     },
     {
@@ -5535,7 +5535,7 @@
       "source_file": "src/components/ui/tag.tsx",
       "source_location": "L32",
       "id": "ui_tag_tag",
-      "community": 6,
+      "community": 21,
       "norm_label": "tag()"
     },
     {
@@ -5544,7 +5544,7 @@
       "source_file": "src/contexts/AuthContext.tsx",
       "source_location": "L1",
       "id": "contexts_authcontext",
-      "community": 1,
+      "community": 15,
       "norm_label": "authcontext.tsx"
     },
     {
@@ -5553,7 +5553,7 @@
       "source_file": "src/contexts/AuthContext.tsx",
       "source_location": "L6",
       "id": "contexts_authcontext_authcontextvalue",
-      "community": 1,
+      "community": 15,
       "norm_label": "authcontextvalue"
     },
     {
@@ -5562,7 +5562,7 @@
       "source_file": "src/contexts/AuthContext.tsx",
       "source_location": "L22",
       "id": "contexts_authcontext_authcontext",
-      "community": 1,
+      "community": 15,
       "norm_label": "authcontext"
     },
     {
@@ -5571,7 +5571,7 @@
       "source_file": "src/contexts/AuthContext.tsx",
       "source_location": "L24",
       "id": "contexts_authcontext_authprovider",
-      "community": 1,
+      "community": 15,
       "norm_label": "authprovider()"
     },
     {
@@ -5580,7 +5580,7 @@
       "source_file": "src/contexts/AuthContext.tsx",
       "source_location": "L115",
       "id": "contexts_authcontext_useauth",
-      "community": 1,
+      "community": 70,
       "norm_label": "useauth()"
     },
     {
@@ -5589,7 +5589,7 @@
       "source_file": "src/contexts/LanguageContext.tsx",
       "source_location": "L1",
       "id": "contexts_languagecontext",
-      "community": 166,
+      "community": 27,
       "norm_label": "languagecontext.tsx"
     },
     {
@@ -5607,7 +5607,7 @@
       "source_file": "src/contexts/LanguageContext.tsx",
       "source_location": "L13",
       "id": "contexts_languagecontext_languagecontext",
-      "community": 166,
+      "community": 27,
       "norm_label": "languagecontext"
     },
     {
@@ -5616,7 +5616,7 @@
       "source_file": "src/contexts/LanguageContext.tsx",
       "source_location": "L15",
       "id": "contexts_languagecontext_detectinitiallang",
-      "community": 166,
+      "community": 27,
       "norm_label": "detectinitiallang()"
     },
     {
@@ -5652,7 +5652,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L1",
       "id": "contexts_pharmacycontext",
-      "community": 24,
+      "community": 169,
       "norm_label": "pharmacycontext.tsx"
     },
     {
@@ -5661,7 +5661,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L9",
       "id": "contexts_pharmacycontext_pharmacymembership",
-      "community": 24,
+      "community": 166,
       "norm_label": "pharmacymembership"
     },
     {
@@ -5670,7 +5670,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L16",
       "id": "contexts_pharmacycontext_pharmacycontextvalue",
-      "community": 24,
+      "community": 166,
       "norm_label": "pharmacycontextvalue"
     },
     {
@@ -5679,7 +5679,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L27",
       "id": "contexts_pharmacycontext_pharmacycontext",
-      "community": 24,
+      "community": 169,
       "norm_label": "pharmacycontext"
     },
     {
@@ -5688,7 +5688,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L30",
       "id": "contexts_pharmacycontext_pharmacyprovider",
-      "community": 1,
+      "community": 70,
       "norm_label": "pharmacyprovider()"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_file": "src/contexts/PharmacyContext.tsx",
       "source_location": "L135",
       "id": "contexts_pharmacycontext_useactivepharmacy",
-      "community": 160,
+      "community": 24,
       "norm_label": "useactivepharmacy()"
     },
     {
@@ -5787,7 +5787,7 @@
       "source_file": "src/hooks/useDebounce.ts",
       "source_location": "L1",
       "id": "hooks_usedebounce",
-      "community": 6,
+      "community": 24,
       "norm_label": "usedebounce.ts"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "src/hooks/useDebounce.ts",
       "source_location": "L13",
       "id": "hooks_usedebounce_usedebounce",
-      "community": 6,
+      "community": 24,
       "norm_label": "usedebounce()"
     },
     {
@@ -5805,7 +5805,7 @@
       "source_file": "src/hooks/useRealtimeInvalidate.ts",
       "source_location": "L1",
       "id": "hooks_userealtimeinvalidate",
-      "community": 25,
+      "community": 160,
       "norm_label": "userealtimeinvalidate.ts"
     },
     {
@@ -5814,7 +5814,7 @@
       "source_file": "src/hooks/useRealtimeInvalidate.ts",
       "source_location": "L20",
       "id": "hooks_userealtimeinvalidate_userealtimeinvalidate",
-      "community": 6,
+      "community": 24,
       "norm_label": "userealtimeinvalidate()"
     },
     {
@@ -6057,7 +6057,7 @@
       "source_file": "src/lib/api/customers.ts",
       "source_location": "L5",
       "id": "api_customers_customer",
-      "community": 83,
+      "community": 6,
       "norm_label": "customer"
     },
     {
@@ -6093,7 +6093,7 @@
       "source_file": "src/lib/api/customers.ts",
       "source_location": "L28",
       "id": "api_customers_customersort",
-      "community": 6,
+      "community": 24,
       "norm_label": "customersort"
     },
     {
@@ -6147,7 +6147,7 @@
       "source_file": "src/lib/api/customers.ts",
       "source_location": "L283",
       "id": "api_customers_duplicatephoneerror",
-      "community": 83,
+      "community": 6,
       "norm_label": "duplicatephoneerror"
     },
     {
@@ -6156,7 +6156,7 @@
       "source_file": "src/lib/api/customers.ts",
       "source_location": "L285",
       "id": "api_customers_duplicatephoneerror_constructor",
-      "community": 83,
+      "community": 6,
       "norm_label": ".constructor()"
     },
     {
@@ -6183,7 +6183,7 @@
       "source_file": "src/lib/api/customers.ts",
       "source_location": "L325",
       "id": "api_customers_recordsale",
-      "community": 6,
+      "community": 83,
       "norm_label": "recordsale()"
     },
     {
@@ -6246,7 +6246,7 @@
       "source_file": "src/lib/api/email.ts",
       "source_location": "L1",
       "id": "api_email",
-      "community": 1,
+      "community": 15,
       "norm_label": "email.ts"
     },
     {
@@ -6255,7 +6255,7 @@
       "source_file": "src/lib/api/email.ts",
       "source_location": "L4",
       "id": "api_email_sendwelcomeemail",
-      "community": 1,
+      "community": 15,
       "norm_label": "sendwelcomeemail()"
     },
     {
@@ -6264,7 +6264,7 @@
       "source_file": "src/lib/api/email.ts",
       "source_location": "L24",
       "id": "api_email_sendresetpasswordemail",
-      "community": 1,
+      "community": 15,
       "norm_label": "sendresetpasswordemail()"
     },
     {
@@ -6903,7 +6903,7 @@
       "source_file": "src/lib/crm/templates.ts",
       "source_location": "L58",
       "id": "crm_templates_deduplicatetemplates",
-      "community": 27,
+      "community": 160,
       "norm_label": "deduplicatetemplates()"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L1",
       "id": "lib_gemini",
-      "community": 111,
+      "community": 2,
       "norm_label": "gemini.ts"
     },
     {
@@ -6921,7 +6921,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L25",
       "id": "lib_gemini_genaitype",
-      "community": 111,
+      "community": 2,
       "norm_label": "genaitype"
     },
     {
@@ -6930,7 +6930,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L34",
       "id": "lib_gemini_free_tier_models",
-      "community": 111,
+      "community": 2,
       "norm_label": "free_tier_models"
     },
     {
@@ -6939,7 +6939,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L50",
       "id": "lib_gemini_buildschema",
-      "community": 111,
+      "community": 2,
       "norm_label": "buildschema()"
     },
     {
@@ -6948,7 +6948,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L92",
       "id": "lib_gemini_buildprompt",
-      "community": 111,
+      "community": 2,
       "norm_label": "buildprompt()"
     },
     {
@@ -6957,7 +6957,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L111",
       "id": "lib_gemini_geminiautherror",
-      "community": 111,
+      "community": 2,
       "norm_label": "geminiautherror"
     },
     {
@@ -6966,7 +6966,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L113",
       "id": "lib_gemini_tobase64",
-      "community": 111,
+      "community": 2,
       "norm_label": "tobase64()"
     },
     {
@@ -6975,7 +6975,7 @@
       "source_file": "src/lib/gemini.ts",
       "source_location": "L130",
       "id": "lib_gemini_extractbilldata",
-      "community": 111,
+      "community": 2,
       "norm_label": "extractbilldata()"
     },
     {
@@ -6984,7 +6984,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L1",
       "id": "lib_notify",
-      "community": 85,
+      "community": 111,
       "norm_label": "notify.ts"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L16",
       "id": "lib_notify_notify_interval_options",
-      "community": 85,
+      "community": 111,
       "norm_label": "notify_interval_options"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L25",
       "id": "lib_notify_getnotifyinterval",
-      "community": 85,
+      "community": 111,
       "norm_label": "getnotifyinterval()"
     },
     {
@@ -7011,7 +7011,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L30",
       "id": "lib_notify_setnotifyinterval",
-      "community": 85,
+      "community": 111,
       "norm_label": "setnotifyinterval()"
     },
     {
@@ -7020,7 +7020,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L37",
       "id": "lib_notify_getsnoozeduntil",
-      "community": 85,
+      "community": 111,
       "norm_label": "getsnoozeduntil()"
     },
     {
@@ -7029,7 +7029,7 @@
       "source_file": "src/lib/notify.ts",
       "source_location": "L43",
       "id": "lib_notify_snoozepopup",
-      "community": 85,
+      "community": 111,
       "norm_label": "snoozepopup()"
     },
     {
@@ -7371,7 +7371,7 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L1",
       "id": "lib_supabase",
-      "community": 25,
+      "community": 160,
       "norm_label": "supabase.ts"
     },
     {
@@ -7380,7 +7380,7 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L26",
       "id": "lib_supabase_supabase",
-      "community": 25,
+      "community": 160,
       "norm_label": "supabase"
     },
     {
@@ -7398,7 +7398,7 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L59",
       "id": "lib_supabase_tables",
-      "community": 25,
+      "community": 160,
       "norm_label": "tables"
     },
     {
@@ -7407,7 +7407,7 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L61",
       "id": "lib_supabase_inserts",
-      "community": 25,
+      "community": 160,
       "norm_label": "inserts"
     },
     {
@@ -7416,7 +7416,7 @@
       "source_file": "src/lib/supabase.ts",
       "source_location": "L63",
       "id": "lib_supabase_updates",
-      "community": 25,
+      "community": 160,
       "norm_label": "updates"
     },
     {
@@ -7488,7 +7488,7 @@
       "source_file": "src/lib/utils.ts",
       "source_location": "L1",
       "id": "lib_utils",
-      "community": 24,
+      "community": 169,
       "norm_label": "utils.ts"
     },
     {
@@ -7533,7 +7533,7 @@
       "source_file": "src/lib/utils.ts",
       "source_location": "L35",
       "id": "lib_utils_validateindianphone",
-      "community": 24,
+      "community": 6,
       "norm_label": "validateindianphone()"
     },
     {
@@ -7551,7 +7551,7 @@
       "source_file": "src/lib/utils.ts",
       "source_location": "L55",
       "id": "lib_utils_storage",
-      "community": 24,
+      "community": 169,
       "norm_label": "storage"
     },
     {
@@ -7587,7 +7587,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L1",
       "id": "pages_activity",
-      "community": 15,
+      "community": 166,
       "norm_label": "activity.tsx"
     },
     {
@@ -7596,7 +7596,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L19",
       "id": "pages_activity_activityrow",
-      "community": 15,
+      "community": 166,
       "norm_label": "activityrow"
     },
     {
@@ -7605,7 +7605,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L30",
       "id": "pages_activity_filter",
-      "community": 15,
+      "community": 166,
       "norm_label": "filter"
     },
     {
@@ -7614,7 +7614,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L32",
       "id": "pages_activity_filters",
-      "community": 15,
+      "community": 166,
       "norm_label": "filters"
     },
     {
@@ -7623,7 +7623,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L40",
       "id": "pages_activity_activity",
-      "community": 15,
+      "community": 166,
       "norm_label": "activity()"
     },
     {
@@ -7632,7 +7632,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L200",
       "id": "pages_activity_stattile",
-      "community": 15,
+      "community": 166,
       "norm_label": "stattile()"
     },
     {
@@ -7641,7 +7641,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L230",
       "id": "pages_activity_activityrowitem",
-      "community": 15,
+      "community": 166,
       "norm_label": "activityrowitem()"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L293",
       "id": "pages_activity_statusbadge",
-      "community": 15,
+      "community": 166,
       "norm_label": "statusbadge()"
     },
     {
@@ -7659,7 +7659,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L324",
       "id": "pages_activity_emptystate",
-      "community": 15,
+      "community": 166,
       "norm_label": "emptystate()"
     },
     {
@@ -7668,7 +7668,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L359",
       "id": "pages_activity_group",
-      "community": 15,
+      "community": 166,
       "norm_label": "group"
     },
     {
@@ -7677,7 +7677,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L365",
       "id": "pages_activity_groupbydate",
-      "community": 15,
+      "community": 166,
       "norm_label": "groupbydate()"
     },
     {
@@ -7686,7 +7686,7 @@
       "source_file": "src/pages/Activity.tsx",
       "source_location": "L397",
       "id": "pages_activity_startofday",
-      "community": 15,
+      "community": 166,
       "norm_label": "startofday()"
     },
     {
@@ -7695,7 +7695,7 @@
       "source_file": "src/pages/AuthCallback.tsx",
       "source_location": "L1",
       "id": "pages_authcallback",
-      "community": 1,
+      "community": 70,
       "norm_label": "authcallback.tsx"
     },
     {
@@ -7704,7 +7704,7 @@
       "source_file": "src/pages/AuthCallback.tsx",
       "source_location": "L7",
       "id": "pages_authcallback_authcallback",
-      "community": 1,
+      "community": 70,
       "norm_label": "authcallback()"
     },
     {
@@ -7785,7 +7785,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L1",
       "id": "pages_customers",
-      "community": 6,
+      "community": 24,
       "norm_label": "customers.tsx"
     },
     {
@@ -7794,7 +7794,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L20",
       "id": "pages_customers_segment",
-      "community": 6,
+      "community": 24,
       "norm_label": "segment"
     },
     {
@@ -7803,7 +7803,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L21",
       "id": "pages_customers_valid_segments",
-      "community": 6,
+      "community": 24,
       "norm_label": "valid_segments"
     },
     {
@@ -7812,7 +7812,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L23",
       "id": "pages_customers_segmentchips",
-      "community": 6,
+      "community": 24,
       "norm_label": "segmentchips"
     },
     {
@@ -7821,7 +7821,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L34",
       "id": "pages_customers_sort_options",
-      "community": 6,
+      "community": 24,
       "norm_label": "sort_options"
     },
     {
@@ -7830,7 +7830,7 @@
       "source_file": "src/pages/Customers.tsx",
       "source_location": "L42",
       "id": "pages_customers_customers",
-      "community": 6,
+      "community": 24,
       "norm_label": "customers()"
     },
     {
@@ -7884,7 +7884,7 @@
       "source_file": "src/pages/Dashboard.tsx",
       "source_location": "L233",
       "id": "pages_dashboard_dashboard",
-      "community": 6,
+      "community": 24,
       "norm_label": "dashboard()"
     },
     {
@@ -7893,7 +7893,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L1",
       "id": "pages_login",
-      "community": 1,
+      "community": 25,
       "norm_label": "login.tsx"
     },
     {
@@ -7902,7 +7902,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L12",
       "id": "pages_login_mode",
-      "community": 1,
+      "community": 25,
       "norm_label": "mode"
     },
     {
@@ -7911,7 +7911,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L14",
       "id": "pages_login_login",
-      "community": 1,
+      "community": 25,
       "norm_label": "login()"
     },
     {
@@ -7920,7 +7920,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L397",
       "id": "pages_login_resetlinksentpanel",
-      "community": 1,
+      "community": 25,
       "norm_label": "resetlinksentpanel()"
     },
     {
@@ -7929,7 +7929,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L435",
       "id": "pages_login_confirmemailpanel",
-      "community": 1,
+      "community": 25,
       "norm_label": "confirmemailpanel()"
     },
     {
@@ -7938,7 +7938,7 @@
       "source_file": "src/pages/Login.tsx",
       "source_location": "L473",
       "id": "pages_login_googleicon",
-      "community": 1,
+      "community": 25,
       "norm_label": "googleicon()"
     },
     {
@@ -7947,7 +7947,7 @@
       "source_file": "src/pages/NotFound.tsx",
       "source_location": "L1",
       "id": "pages_notfound",
-      "community": 45,
+      "community": 27,
       "norm_label": "notfound.tsx"
     },
     {
@@ -7965,7 +7965,7 @@
       "source_file": "src/pages/Onboarding.tsx",
       "source_location": "L1",
       "id": "pages_onboarding",
-      "community": 24,
+      "community": 27,
       "norm_label": "onboarding.tsx"
     },
     {
@@ -7974,7 +7974,7 @@
       "source_file": "src/pages/Onboarding.tsx",
       "source_location": "L15",
       "id": "pages_onboarding_createdpharmacy",
-      "community": 24,
+      "community": 27,
       "norm_label": "createdpharmacy"
     },
     {
@@ -8073,7 +8073,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L1",
       "id": "pages_reminders",
-      "community": 25,
+      "community": 85,
       "norm_label": "reminders.tsx"
     },
     {
@@ -8082,7 +8082,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L22",
       "id": "pages_reminders_rule",
-      "community": 25,
+      "community": 85,
       "norm_label": "rule"
     },
     {
@@ -8091,7 +8091,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L23",
       "id": "pages_reminders_reminderstatus",
-      "community": 25,
+      "community": 85,
       "norm_label": "reminderstatus"
     },
     {
@@ -8100,7 +8100,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L25",
       "id": "pages_reminders_scheduledreminder",
-      "community": 25,
+      "community": 85,
       "norm_label": "scheduledreminder"
     },
     {
@@ -8109,7 +8109,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L35",
       "id": "pages_reminders_tab",
-      "community": 25,
+      "community": 85,
       "norm_label": "tab"
     },
     {
@@ -8118,7 +8118,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L37",
       "id": "pages_reminders_channel_icons",
-      "community": 25,
+      "community": 85,
       "norm_label": "channel_icons"
     },
     {
@@ -8127,7 +8127,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L43",
       "id": "pages_reminders_status_styles",
-      "community": 25,
+      "community": 85,
       "norm_label": "status_styles"
     },
     {
@@ -8136,7 +8136,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L51",
       "id": "pages_reminders_formatrelative",
-      "community": 25,
+      "community": 85,
       "norm_label": "formatrelative()"
     },
     {
@@ -8154,7 +8154,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L114",
       "id": "pages_reminders_reminderrow",
-      "community": 25,
+      "community": 85,
       "norm_label": "reminderrow()"
     },
     {
@@ -8181,7 +8181,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L458",
       "id": "pages_reminders_rulestab",
-      "community": 25,
+      "community": 85,
       "norm_label": "rulestab()"
     },
     {
@@ -8190,7 +8190,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L519",
       "id": "pages_reminders_tabs",
-      "community": 25,
+      "community": 85,
       "norm_label": "tabs"
     },
     {
@@ -8199,7 +8199,7 @@
       "source_file": "src/pages/Reminders.tsx",
       "source_location": "L527",
       "id": "pages_reminders_reminders",
-      "community": 6,
+      "community": 24,
       "norm_label": "reminders()"
     },
     {
@@ -8217,7 +8217,7 @@
       "source_file": "src/pages/ResetPassword.tsx",
       "source_location": "L12",
       "id": "pages_resetpassword_resetpassword",
-      "community": 1,
+      "community": 70,
       "norm_label": "resetpassword()"
     },
     {
@@ -8478,7 +8478,7 @@
       "source_file": "src/pages/Settings.tsx",
       "source_location": "L572",
       "id": "pages_settings_accountsection",
-      "community": 45,
+      "community": 70,
       "norm_label": "accountsection()"
     },
     {
@@ -8622,7 +8622,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L1",
       "id": "types_database",
-      "community": 160,
+      "community": 166,
       "norm_label": "database.ts"
     },
     {
@@ -8631,7 +8631,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L12",
       "id": "types_database_json",
-      "community": 160,
+      "community": 166,
       "norm_label": "json"
     },
     {
@@ -8640,7 +8640,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L14",
       "id": "types_database_memberrole",
-      "community": 24,
+      "community": 166,
       "norm_label": "memberrole"
     },
     {
@@ -8649,7 +8649,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L15",
       "id": "types_database_messagestatus",
-      "community": 15,
+      "community": 166,
       "norm_label": "messagestatus"
     },
     {
@@ -8658,7 +8658,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L16",
       "id": "types_database_messagedirection",
-      "community": 15,
+      "community": 166,
       "norm_label": "messagedirection"
     },
     {
@@ -8667,7 +8667,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L17",
       "id": "types_database_campaignstatus",
-      "community": 160,
+      "community": 166,
       "norm_label": "campaignstatus"
     },
     {
@@ -8676,7 +8676,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L18",
       "id": "types_database_reminderstatus",
-      "community": 160,
+      "community": 166,
       "norm_label": "reminderstatus"
     },
     {
@@ -8694,7 +8694,7 @@
       "source_file": "src/types/database.ts",
       "source_location": "L21",
       "id": "types_database_database",
-      "community": 160,
+      "community": 166,
       "norm_label": "database"
     },
     {
@@ -13153,190 +13153,181 @@
       "norm_label": "readme.md"
     },
     {
-      "label": "medcrm \u2014 Customer Relations for Pharmacies",
+      "label": "Medstocksy Connect (medcrm) \u2014 Customer Relations for Pharmacies",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L1",
-      "id": "readme_medcrm_customer_relations_for_pharmacies",
+      "id": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
       "community": 79,
-      "norm_label": "medcrm \u2014 customer relations for pharmacies"
+      "norm_label": "medstocksy connect (medcrm) \u2014 customer relations for pharmacies"
     },
     {
-      "label": "\u2699\ufe0f Stack",
+      "label": "\u2699\ufe0f Stack & Architecture",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L9",
-      "id": "readme_stack",
+      "source_location": "L7",
+      "id": "readme_stack_architecture",
       "community": 79,
-      "norm_label": "\u2699\ufe0f stack"
+      "norm_label": "\u2699\ufe0f stack & architecture"
     },
     {
-      "label": "\ud83d\ude80 Getting started",
+      "label": "\ud83c\udf1f Key Features & Recent Implementation Updates",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L25",
+      "id": "readme_key_features_recent_implementation_updates",
+      "community": 79,
+      "norm_label": "\ud83c\udf1f key features & recent implementation updates"
+    },
+    {
+      "label": "1. \ud83d\udd0d Schema-Driven Prescription OCR & AI Extraction",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L27",
+      "id": "readme_1_schema_driven_prescription_ocr_ai_extraction",
+      "community": 79,
+      "norm_label": "1. \ud83d\udd0d schema-driven prescription ocr & ai extraction"
+    },
+    {
+      "label": "2. \ud83d\udd10 Authentication, Reset Password & Transactional Email",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L32",
+      "id": "readme_2_authentication_reset_password_transactional_email",
+      "community": 79,
+      "norm_label": "2. \ud83d\udd10 authentication, reset password & transactional email"
+    },
+    {
+      "label": "3. \ud83d\udcf1 Progressive Web App (PWA) & Mobile UX",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L37",
+      "id": "readme_3_progressive_web_app_pwa_mobile_ux",
+      "community": 79,
+      "norm_label": "3. \ud83d\udcf1 progressive web app (pwa) & mobile ux"
+    },
+    {
+      "label": "4. \u23f0 Interactive Reminders & Action Center",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L42",
+      "id": "readme_4_interactive_reminders_action_center",
+      "community": 79,
+      "norm_label": "4. \u23f0 interactive reminders & action center"
+    },
+    {
+      "label": "5. \ud83c\udfaf Customers, Segments & Direct Campaigns",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L48",
+      "id": "readme_5_customers_segments_direct_campaigns",
+      "community": 79,
+      "norm_label": "5. \ud83c\udfaf customers, segments & direct campaigns"
+    },
+    {
+      "label": "6. \ud83c\udf10 Dual Language Support (English & Hindi)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L53",
+      "id": "readme_6_dual_language_support_english_hindi",
+      "community": 79,
+      "norm_label": "6. \ud83c\udf10 dual language support (english & hindi)"
+    },
+    {
+      "label": "7. \ud83d\udee1\ufe0f Database Migrations & Security Hardening",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L56",
+      "id": "readme_7_database_migrations_security_hardening",
+      "community": 79,
+      "norm_label": "7. \ud83d\udee1\ufe0f database migrations & security hardening"
+    },
+    {
+      "label": "\ud83d\ude80 Getting Started",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L63",
       "id": "readme_getting_started",
       "community": 79,
       "norm_label": "\ud83d\ude80 getting started"
     },
     {
-      "label": "1. Clone the parent's Supabase project credentials",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L27",
-      "id": "readme_1_clone_the_parent_s_supabase_project_credentials",
-      "community": 79,
-      "norm_label": "1. clone the parent's supabase project credentials"
-    },
-    {
-      "label": "2. Apply the database migration",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L36",
-      "id": "readme_2_apply_the_database_migration",
-      "community": 79,
-      "norm_label": "2. apply the database migration"
-    },
-    {
-      "label": "3. Install + run",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L47",
-      "id": "readme_3_install_run",
-      "community": 79,
-      "norm_label": "3. install + run"
-    },
-    {
-      "label": "4. Build for production",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L56",
-      "id": "readme_4_build_for_production",
-      "community": 79,
-      "norm_label": "4. build for production"
-    },
-    {
-      "label": "\ud83d\udce1 WhatsApp Business setup (separate from app deployment)",
+      "label": "1. Configure Environment Variables",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": "L65",
-      "id": "readme_whatsapp_business_setup_separate_from_app_deployment",
+      "id": "readme_1_configure_environment_variables",
       "community": 79,
-      "norm_label": "\ud83d\udce1 whatsapp business setup (separate from app deployment)"
+      "norm_label": "1. configure environment variables"
     },
     {
-      "label": "Meta Cloud API path (recommended)",
+      "label": "2. Apply Database Migrations",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L69",
-      "id": "readme_meta_cloud_api_path_recommended",
+      "source_location": "L86",
+      "id": "readme_2_apply_database_migrations",
       "community": 79,
-      "norm_label": "meta cloud api path (recommended)"
+      "norm_label": "2. apply database migrations"
     },
     {
-      "label": "Vercel env vars",
+      "label": "3. Install & Run Locally",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L79",
-      "id": "readme_vercel_env_vars",
+      "source_location": "L100",
+      "id": "readme_3_install_run_locally",
       "community": 79,
-      "norm_label": "vercel env vars"
+      "norm_label": "3. install & run locally"
     },
     {
-      "label": "Wire the webhook",
+      "label": "4. Build & Typecheck",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L90",
-      "id": "readme_wire_the_webhook",
+      "source_location": "L107",
+      "id": "readme_4_build_typecheck",
       "community": 79,
-      "norm_label": "wire the webhook"
+      "norm_label": "4. build & typecheck"
     },
     {
-      "label": "\ud83d\udd10 Security model",
+      "label": "\ud83d\udcc2 Project Structure",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L104",
-      "id": "readme_security_model",
-      "community": 79,
-      "norm_label": "\ud83d\udd10 security model"
-    },
-    {
-      "label": "\ud83d\udcc2 Project structure",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L119",
+      "source_location": "L117",
       "id": "readme_project_structure",
       "community": 79,
       "norm_label": "\ud83d\udcc2 project structure"
     },
     {
-      "label": "\u2705 What's done vs what's left",
+      "label": "\ud83d\udcca Status & Roadmap",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L178",
-      "id": "readme_what_s_done_vs_what_s_left",
+      "source_location": "L204",
+      "id": "readme_status_roadmap",
       "community": 79,
-      "norm_label": "\u2705 what's done vs what's left"
+      "norm_label": "\ud83d\udcca status & roadmap"
     },
     {
-      "label": "\u2705 Production-ready",
+      "label": "\u2705 Shipped & Production Ready",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L182",
-      "id": "readme_production_ready",
+      "source_location": "L206",
+      "id": "readme_shipped_production_ready",
       "community": 79,
-      "norm_label": "\u2705 production-ready"
+      "norm_label": "\u2705 shipped & production ready"
     },
     {
-      "label": "\ud83d\udfe1 Functional stub \u2014 needs ~1\u20132 weeks more",
+      "label": "\ud83d\udfe1 Next Phase Enhancements",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L201",
-      "id": "readme_functional_stub_needs_1_2_weeks_more",
+      "source_location": "L218",
+      "id": "readme_next_phase_enhancements",
       "community": 79,
-      "norm_label": "\ud83d\udfe1 functional stub \u2014 needs ~1\u20132 weeks more"
-    },
-    {
-      "label": "\u274c Not started (V2)",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L211",
-      "id": "readme_not_started_v2",
-      "community": 79,
-      "norm_label": "\u274c not started (v2)"
-    },
-    {
-      "label": "\ud83e\uddea Sanity check after first install",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L222",
-      "id": "readme_sanity_check_after_first_install",
-      "community": 79,
-      "norm_label": "\ud83e\uddea sanity check after first install"
-    },
-    {
-      "label": "\ud83d\udea6 Deployment to Vercel",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L236",
-      "id": "readme_deployment_to_vercel",
-      "community": 79,
-      "norm_label": "\ud83d\udea6 deployment to vercel"
-    },
-    {
-      "label": "\ud83d\udcd6 Source docs",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L257",
-      "id": "readme_source_docs",
-      "community": 79,
-      "norm_label": "\ud83d\udcd6 source docs"
+      "norm_label": "\ud83d\udfe1 next phase enhancements"
     },
     {
       "label": "\ud83d\udee1 License",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L266",
+      "source_location": "L226",
       "id": "readme_license",
       "community": 79,
       "norm_label": "\ud83d\udee1 license"
@@ -15790,6 +15781,168 @@
       "norm_label": "6. volume + safety guidance"
     },
     {
+      "label": "medcrm \u2014 Customer Relations for Pharmacies",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "community": 79,
+      "norm_label": "medcrm \u2014 customer relations for pharmacies",
+      "id": "readme_medcrm_customer_relations_for_pharmacies"
+    },
+    {
+      "label": "\u2699\ufe0f Stack",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L9",
+      "community": 79,
+      "norm_label": "\u2699\ufe0f stack",
+      "id": "readme_stack"
+    },
+    {
+      "label": "1. Clone the parent's Supabase project credentials",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L27",
+      "community": 79,
+      "norm_label": "1. clone the parent's supabase project credentials",
+      "id": "readme_1_clone_the_parent_s_supabase_project_credentials"
+    },
+    {
+      "label": "2. Apply the database migration",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L36",
+      "community": 79,
+      "norm_label": "2. apply the database migration",
+      "id": "readme_2_apply_the_database_migration"
+    },
+    {
+      "label": "3. Install + run",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L47",
+      "community": 79,
+      "norm_label": "3. install + run",
+      "id": "readme_3_install_run"
+    },
+    {
+      "label": "4. Build for production",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L56",
+      "community": 79,
+      "norm_label": "4. build for production",
+      "id": "readme_4_build_for_production"
+    },
+    {
+      "label": "\ud83d\udce1 WhatsApp Business setup (separate from app deployment)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "community": 79,
+      "norm_label": "\ud83d\udce1 whatsapp business setup (separate from app deployment)",
+      "id": "readme_whatsapp_business_setup_separate_from_app_deployment"
+    },
+    {
+      "label": "Meta Cloud API path (recommended)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L69",
+      "community": 79,
+      "norm_label": "meta cloud api path (recommended)",
+      "id": "readme_meta_cloud_api_path_recommended"
+    },
+    {
+      "label": "Vercel env vars",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L79",
+      "community": 79,
+      "norm_label": "vercel env vars",
+      "id": "readme_vercel_env_vars"
+    },
+    {
+      "label": "Wire the webhook",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L90",
+      "community": 79,
+      "norm_label": "wire the webhook",
+      "id": "readme_wire_the_webhook"
+    },
+    {
+      "label": "\ud83d\udd10 Security model",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L104",
+      "community": 79,
+      "norm_label": "\ud83d\udd10 security model",
+      "id": "readme_security_model"
+    },
+    {
+      "label": "\u2705 What's done vs what's left",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L178",
+      "community": 79,
+      "norm_label": "\u2705 what's done vs what's left",
+      "id": "readme_what_s_done_vs_what_s_left"
+    },
+    {
+      "label": "\u2705 Production-ready",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L182",
+      "community": 79,
+      "norm_label": "\u2705 production-ready",
+      "id": "readme_production_ready"
+    },
+    {
+      "label": "\ud83d\udfe1 Functional stub \u2014 needs ~1\u20132 weeks more",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L201",
+      "community": 79,
+      "norm_label": "\ud83d\udfe1 functional stub \u2014 needs ~1\u20132 weeks more",
+      "id": "readme_functional_stub_needs_1_2_weeks_more"
+    },
+    {
+      "label": "\u274c Not started (V2)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L211",
+      "community": 79,
+      "norm_label": "\u274c not started (v2)",
+      "id": "readme_not_started_v2"
+    },
+    {
+      "label": "\ud83e\uddea Sanity check after first install",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L222",
+      "community": 79,
+      "norm_label": "\ud83e\uddea sanity check after first install",
+      "id": "readme_sanity_check_after_first_install"
+    },
+    {
+      "label": "\ud83d\udea6 Deployment to Vercel",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L236",
+      "community": 79,
+      "norm_label": "\ud83d\udea6 deployment to vercel",
+      "id": "readme_deployment_to_vercel"
+    },
+    {
+      "label": "\ud83d\udcd6 Source docs",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L257",
+      "community": 79,
+      "norm_label": "\ud83d\udcd6 source docs",
+      "id": "readme_source_docs"
+    },
+    {
       "label": "jsx",
       "file_type": "code",
       "source_file": "tsconfig.api.json",
@@ -15821,7 +15974,7 @@
       "file_type": "code",
       "source_file": "src/pages/Login.tsx",
       "source_location": "L382",
-      "community": 1,
+      "community": 25,
       "norm_label": "resetsentpanel()",
       "id": "pages_login_resetsentpanel"
     },
@@ -15848,7 +16001,7 @@
       "file_type": "code",
       "source_file": "src/pages/Dashboard.tsx",
       "source_location": "L146",
-      "community": 0,
+      "community": 28,
       "norm_label": "todaypanel()",
       "id": "pages_dashboard_todaypanel"
     },
@@ -16073,7 +16226,7 @@
       "file_type": "code",
       "source_file": "src/lib/gemini.ts",
       "source_location": "L11",
-      "community": 111,
+      "community": 2,
       "norm_label": "response_schema",
       "id": "lib_gemini_response_schema"
     },
@@ -44963,11 +45116,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L236",
+      "source_location": "L1",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_deployment_to_vercel"
+      "source": "readme",
+      "target": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_getting_started",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -44975,89 +45138,119 @@
       "source_file": "README.md",
       "source_location": "L25",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_getting_started"
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_key_features_recent_implementation_updates",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L266",
+      "source_location": "L226",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_license"
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_license",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L119",
+      "source_location": "L117",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_project_structure"
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_project_structure",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L222",
+      "source_location": "L7",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_sanity_check_after_first_install"
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_stack_architecture",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L104",
+      "source_location": "L204",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_security_model"
+      "source": "readme_medstocksy_connect_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_status_roadmap",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L257",
+      "source_location": "L27",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_source_docs"
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_1_schema_driven_prescription_ocr_ai_extraction",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L9",
+      "source_location": "L32",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_stack"
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_2_authentication_reset_password_transactional_email",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L178",
+      "source_location": "L37",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_what_s_done_vs_what_s_left"
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_3_progressive_web_app_pwa_mobile_ux",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L65",
+      "source_location": "L42",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_medcrm_customer_relations_for_pharmacies",
-      "target": "readme_whatsapp_business_setup_separate_from_app_deployment"
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_4_interactive_reminders_action_center",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_5_customers_segments_direct_campaigns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_6_dual_language_support_english_hindi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "readme_key_features_recent_implementation_updates",
+      "target": "readme_7_database_migrations_security_hardening",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -45068,6 +45261,26 @@
       "confidence_score": 1.0,
       "source": "readme_getting_started",
       "target": "readme_1_clone_the_parent_s_supabase_project_credentials"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "readme_getting_started",
+      "target": "readme_1_configure_environment_variables",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "readme_getting_started",
+      "target": "readme_2_apply_database_migrations",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -45093,6 +45306,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
+      "source_location": "L100",
+      "weight": 1.0,
+      "source": "readme_getting_started",
+      "target": "readme_3_install_run_locally",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
       "source_location": "L56",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -45103,61 +45326,61 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L69",
+      "source_location": "L107",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
-      "target": "readme_meta_cloud_api_path_recommended"
+      "source": "readme_getting_started",
+      "target": "readme_4_build_typecheck",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L79",
+      "source_location": "L25",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
-      "target": "readme_vercel_env_vars"
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_getting_started"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L90",
+      "source_location": "L119",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
-      "target": "readme_wire_the_webhook"
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_project_structure"
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L201",
+      "source_location": "L218",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_what_s_done_vs_what_s_left",
-      "target": "readme_functional_stub_needs_1_2_weeks_more"
+      "source": "readme_status_roadmap",
+      "target": "readme_next_phase_enhancements",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L211",
+      "source_location": "L206",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "readme_what_s_done_vs_what_s_left",
-      "target": "readme_not_started_v2"
+      "source": "readme_status_roadmap",
+      "target": "readme_shipped_production_ready",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L182",
+      "source_location": "L266",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "readme_what_s_done_vs_what_s_left",
-      "target": "readme_production_ready"
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_license"
     },
     {
       "relation": "contains",
@@ -47748,6 +47971,136 @@
       "confidence_score": 1.0,
       "source": "wa_bot_readme_3_endpoints",
       "target": "wa_bot_readme_example"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L236",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_deployment_to_vercel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L222",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_sanity_check_after_first_install"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L104",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_security_model"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L257",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_source_docs"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_stack"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L178",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_what_s_done_vs_what_s_left"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L65",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_medcrm_customer_relations_for_pharmacies",
+      "target": "readme_whatsapp_business_setup_separate_from_app_deployment"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L69",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
+      "target": "readme_meta_cloud_api_path_recommended"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
+      "target": "readme_vercel_env_vars"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L90",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_whatsapp_business_setup_separate_from_app_deployment",
+      "target": "readme_wire_the_webhook"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L201",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_what_s_done_vs_what_s_left",
+      "target": "readme_functional_stub_needs_1_2_weeks_more"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L211",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_what_s_done_vs_what_s_left",
+      "target": "readme_not_started_v2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L182",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "readme_what_s_done_vs_what_s_left",
+      "target": "readme_production_ready"
     },
     {
       "relation": "contains",
