@@ -59,6 +59,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             html,
           });
 
+          if (sendResult.error) {
+            console.error('[email/reset-password] Resend send failed:', sendResult.error);
+          }
+
           return res.status(200).json({ success: true, method: 'direct_resend', id: sendResult.data?.id });
         } else {
           console.warn('[email/reset-password] RESEND_API_KEY is not set');
