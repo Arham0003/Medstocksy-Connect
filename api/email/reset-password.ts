@@ -5,7 +5,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-import { getResetPasswordEmailHtml } from './template.js';
+import { getResetPasswordEmailHtml } from './_template.js';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
