@@ -182,13 +182,14 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_total  bigint;
-  v_rows   jsonb;
+  v_clean_search text;
 BEGIN
   IF NOT public.crm_is_member(p_pharmacy_id) THEN
     RAISE EXCEPTION 'not a member of pharmacy %', p_pharmacy_id
       USING ERRCODE = 'insufficient_privilege';
   END IF;
+
+  v_clean_search := trim(coalesce(p_search, ''));
 
   SELECT count(*)
   INTO   v_total
@@ -204,9 +205,10 @@ BEGIN
         OR e.auto_tags_json ? p_segment
          )
     AND  (
-           p_search IS NULL
-        OR e.fts @@ plainto_tsquery('simple', p_search)
-        OR e.phone ILIKE '%' || p_search || '%'
+           v_clean_search = ''
+        OR e.name ILIKE '%' || v_clean_search || '%'
+        OR e.phone ILIKE '%' || v_clean_search || '%'
+        OR e.fts @@ plainto_tsquery('simple', v_clean_search)
          );
 
   SELECT COALESCE(jsonb_agg(row_data), '[]'::jsonb)
@@ -225,9 +227,10 @@ BEGIN
           OR e.auto_tags_json ? p_segment
            )
       AND  (
-             p_search IS NULL
-          OR e.fts @@ plainto_tsquery('simple', p_search)
-          OR e.phone ILIKE '%' || p_search || '%'
+             v_clean_search = ''
+          OR e.name ILIKE '%' || v_clean_search || '%'
+          OR e.phone ILIKE '%' || v_clean_search || '%'
+          OR e.fts @@ plainto_tsquery('simple', v_clean_search)
            )
     ORDER BY
       CASE WHEN p_sort = 'newest'       THEN e.created_at        END DESC NULLS LAST,

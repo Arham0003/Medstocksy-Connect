@@ -46,7 +46,7 @@ export function ReminderRuleDialog({ open, onOpenChange, rule }: ReminderRuleDia
         .from('crm_templates')
         .select('*')
         .or(`pharmacy_id.is.null,pharmacy_id.eq.${pharmacyId}`)
-        .eq('whatsapp_status', 'approved')
+        // ponytail: no API gate — show all pharmacy templates + built-ins
         .order('is_built_in', { ascending: false });
       if (error) throw error;
       return deduplicateTemplates((data ?? []) as unknown as Template[]);

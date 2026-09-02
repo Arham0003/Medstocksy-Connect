@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 const ROLES: MemberRole[] = ['admin', 'manager', 'staff'];
 
@@ -38,6 +39,10 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
   const [role, setRole] = useState<MemberRole>('staff');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Confirmation state
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  const [pendingRole, setPendingRole] = useState<{ id: string; next: MemberRole; prev: MemberRole } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['members', pharmacyId],
@@ -95,6 +100,7 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
   const adminCount = members.filter((m) => m.role === 'admin').length;
 
   return (
+    <>
     <Card className="p-6">
       <div className="mb-5">
         <h2 className="text-lg font-bold">{t('settings.members.heading')}</h2>
@@ -134,6 +140,7 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
           {notice} {t('settings.members.invite_hint')}
         </p>
       )}
+
       {error && (
         <p className="mb-4 flex items-start gap-1.5 text-xs text-destructive">
           <AlertTriangle aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" />
@@ -179,7 +186,10 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
                 {isAdmin && !locked ? (
                   <select
                     value={m.role}
-                    onChange={(e) => changeRole.mutate({ id: m.id, next: e.target.value as MemberRole })}
+                    onChange={(e) => {
+                      const next = e.target.value as MemberRole;
+                      if (next !== m.role) setPendingRole({ id: m.id, next, prev: m.role });
+                    }}
                     disabled={changeRole.isPending}
                     className="h-8 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -196,7 +206,7 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
                 {isAdmin && !locked && (
                   <button
                     type="button"
-                    onClick={() => remove.mutate(m.id)}
+                    onClick={() => setConfirmRemoveId(m.id)}
                     disabled={remove.isPending}
                     aria-label={t('settings.members.remove')}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -225,7 +235,7 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={() => revoke.mutate(inv.id)}
+                  onClick={() => setConfirmRevokeId(inv.id)}
                   disabled={revoke.isPending}
                   aria-label={t('settings.members.revoke')}
                   className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -242,5 +252,39 @@ export function MembersSection({ pharmacyId, isAdmin }: { pharmacyId: string; is
         <p className="mt-4 text-xs text-muted-foreground">{t('settings.members.readonly')}</p>
       )}
     </Card>
+
+    <ConfirmDialog
+      open={confirmRemoveId !== null}
+      title="Remove this member?"
+      description="They will lose access to this pharmacy immediately."
+      confirmLabel="Yes, remove"
+      cancelLabel="No"
+      isPending={remove.isPending}
+      onConfirm={() => { if (confirmRemoveId) remove.mutate(confirmRemoveId); setConfirmRemoveId(null); }}
+      onCancel={() => setConfirmRemoveId(null)}
+    />
+
+    <ConfirmDialog
+      open={confirmRevokeId !== null}
+      title="Revoke this invitation?"
+      description="The invitation link will be cancelled."
+      confirmLabel="Yes, revoke"
+      cancelLabel="No"
+      isPending={revoke.isPending}
+      onConfirm={() => { if (confirmRevokeId) revoke.mutate(confirmRevokeId); setConfirmRevokeId(null); }}
+      onCancel={() => setConfirmRevokeId(null)}
+    />
+
+    <ConfirmDialog
+      open={pendingRole !== null}
+      title={`Change role to ${pendingRole?.next ?? ''}?`}
+      description="This will update the member's access level."
+      confirmLabel="Yes"
+      cancelLabel="No"
+      isPending={changeRole.isPending}
+      onConfirm={() => { if (pendingRole) changeRole.mutate({ id: pendingRole.id, next: pendingRole.next }); setPendingRole(null); }}
+      onCancel={() => setPendingRole(null)}
+    />
+  </>
   );
 }

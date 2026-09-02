@@ -178,26 +178,38 @@ export async function getBotStatus(): Promise<BotStatus | null> {
   }
 }
 
+import { CircuitBreaker } from '@/lib/circuitBreaker';
+
+const botBreaker = new CircuitBreaker<{ messageId: string }>({
+  name: 'OpenWA-Bot',
+  failureThreshold: 2,
+  cooldownMs: 20_000,
+  timeoutMs: 8_000,
+});
+
 /** Send via the wa-bot service. Returns the WA message ID on success. */
 export async function sendViaBot(args: ComposeArgs): Promise<{ messageId: string }> {
   const url = import.meta.env.VITE_WA_BOT_URL;
   const secret = import.meta.env.VITE_WA_BOT_SECRET;
   if (!url || !secret) throw new Error('Bot not configured (VITE_WA_BOT_URL / VITE_WA_BOT_SECRET missing).');
 
-  const res = await fetch(`${url}/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
-    body: JSON.stringify({
-      phone: args.phone,
-      message: args.body,
-      imageUrl: args.imageUrl ?? null,
-    }),
+  return botBreaker.execute(async (signal) => {
+    const res = await fetch(`${url}/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+      body: JSON.stringify({
+        phone: args.phone,
+        message: args.body,
+        imageUrl: args.imageUrl ?? null,
+      }),
+      signal,
+    });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error ?? `Bot send failed: HTTP ${res.status}`);
+    }
+    return (await res.json()) as { messageId: string };
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err.error ?? `Bot send failed: HTTP ${res.status}`);
-  }
-  return (await res.json()) as { messageId: string };
 }
 
 /**
@@ -210,10 +222,14 @@ export async function sendOrCompose(
   args: ComposeArgs
 ): Promise<{ via: 'bot' | 'manual'; messageId?: string }> {
   if (isBotConfigured()) {
-    const status = await getBotStatus();
-    if (status?.ready) {
-      const { messageId } = await sendViaBot(args);
-      return { via: 'bot', messageId };
+    try {
+      const status = await getBotStatus();
+      if (status?.ready) {
+        const { messageId } = await sendViaBot(args);
+        return { via: 'bot', messageId };
+      }
+    } catch (botErr) {
+      console.warn('[sendOrCompose] Bot dispatch failed or circuit open, falling back to manual click-to-chat:', botErr);
     }
   }
   const opened = openWhatsAppCompose(args);

@@ -19,6 +19,7 @@ import {
 import { canSendNow, sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { getSnoozedUntil, snoozePopup } from '@/lib/notify';
 import { cn, initials, renderTemplate } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 const TOP_N = 5;
 
@@ -38,6 +39,8 @@ function TodayRemindersPopupInner() {
   const [open, setOpen] = useState(false);
   const [queue, setQueue] = useState<DueReminder[] | null>(null);
   const [queueTotal, setQueueTotal] = useState(0);
+  const [pendingSend, setPendingSend] = useState<DueReminder | null>(null);
+  const [pendingSkip, setPendingSkip] = useState<DueReminder | null>(null);
   // Bumps every 30s to re-evaluate the snooze window without a full refetch.
   const [tick, setTick] = useState(0);
 
@@ -133,6 +136,7 @@ function TodayRemindersPopupInner() {
   const sendableCount = pendingSendable.length;
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <>
@@ -240,8 +244,8 @@ function TodayRemindersPopupInner() {
                         index={i}
                         reduceMotion={!!reduceMotion}
                         reminder={r}
-                        onSend={() => send.mutate(r)}
-                        onSkip={() => skip.mutate(r)}
+                        onSend={() => setPendingSend(r)}
+                        onSkip={() => setPendingSkip(r)}
                         sending={send.isPending && send.variables?.id === r.id}
                         skipping={skip.isPending && skip.variables?.id === r.id}
                         canSend={canSend !== false}
@@ -351,6 +355,28 @@ function TodayRemindersPopupInner() {
         </>
       )}
     </AnimatePresence>
+
+    <ConfirmDialog
+      open={pendingSend !== null}
+      title="Send this reminder now?"
+      description="This will open WhatsApp for this customer."
+      confirmLabel="Yes, send"
+      cancelLabel="No"
+      isPending={send.isPending}
+      onConfirm={() => { if (pendingSend) send.mutate(pendingSend); setPendingSend(null); }}
+      onCancel={() => setPendingSend(null)}
+    />
+    <ConfirmDialog
+      open={pendingSkip !== null}
+      title="Skip this reminder?"
+      description="It will be marked as cancelled."
+      confirmLabel="Yes, skip"
+      cancelLabel="No"
+      isPending={skip.isPending}
+      onConfirm={() => { if (pendingSkip) skip.mutate(pendingSkip); setPendingSkip(null); }}
+      onCancel={() => setPendingSkip(null)}
+    />
+    </>
   );
 }
 

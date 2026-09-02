@@ -13,10 +13,11 @@ export default defineConfig(({ mode }) => {
     env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     '';
-  const RESEND_API_KEY =
+  const RESEND_API_KEY = (
     env.RESEND_API_KEY ||
     process.env.RESEND_API_KEY ||
-    '';
+    ''
+  ).trim();
   const EMAIL_FROM =
     env.EMAIL_FROM ||
     process.env.EMAIL_FROM ||
@@ -68,7 +69,7 @@ export default defineConfig(({ mode }) => {
                 const cleanEmail = email?.trim().toLowerCase();
                 const { Resend } = await import('resend');
                 const resend = new Resend(RESEND_API_KEY);
-                const { getWelcomeEmailHtml } = await import('./api/email/template');
+                const { getWelcomeEmailHtml } = await import('./api/email/_template');
                 const html = getWelcomeEmailHtml({ fullName, pharmacyName });
 
                 const result = await resend.emails.send({
@@ -115,7 +116,7 @@ export default defineConfig(({ mode }) => {
                 });
 
                 if (!error && data?.properties?.action_link) {
-                  const { getResetPasswordEmailHtml } = await import('./api/email/template');
+                  const { getResetPasswordEmailHtml } = await import('./api/email/_template');
                   const html = getResetPasswordEmailHtml({ resetUrl: data.properties.action_link });
                   const result = await resend.emails.send({
                     from: EMAIL_FROM,

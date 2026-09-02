@@ -5,9 +5,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-import { getResetPasswordEmailHtml } from './_template.js';
+import { getResetPasswordEmailHtml } from './_template';
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+// ponytail: trim key — Vercel env var had embedded newline that crashes Headers.append
+const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim();
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';

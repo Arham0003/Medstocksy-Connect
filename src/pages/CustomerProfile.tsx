@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
-import { getCustomer, listManualTags, addTag, removeTag, setOptOut, setOptIn, deleteCustomer } from '@/lib/api/customers';
+import {
+  getCustomer, listManualTags, addTag, removeTag, setOptOut, setOptIn, deleteCustomer,
+  type CustomerWithStats,
+} from '@/lib/api/customers';
 import {
   listPrescriptions, deletePrescription, renewPrescription,
   type PrescriptionWithMeds, type MedicineWithRefills,
@@ -18,6 +21,7 @@ import { Tag } from '@/components/ui/tag';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ComposeDrawer } from '@/components/crm/ComposeDrawer';
 import { CustomerFormDialog } from '@/components/crm/CustomerFormDialog';
 import { VisitNoteDialog } from '@/components/crm/VisitNoteDialog';
@@ -41,6 +45,12 @@ export default function CustomerProfile() {
   const [editingRx, setEditingRx] = useState<PrescriptionWithMeds | null>(null);
   const [batchRefillRx, setBatchRefillRx] = useState<PrescriptionWithMeds | null>(null);
   const [refillMed, setRefillMed] = useState<{ med: MedicineWithRefills; rxId: string } | null>(null);
+  // Confirmation dialog state
+  const [confirmChronic, setConfirmChronic] = useState(false);
+  const [confirmOptAction, setConfirmOptAction] = useState<'optin' | 'optout' | null>(null);
+  const [optoutReason, setOptoutReason] = useState('');
+  const [confirmRenewId, setConfirmRenewId] = useState<string | null>(null);
+  const [confirmDeleteRxId, setConfirmDeleteRxId] = useState<string | null>(null);
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
@@ -75,12 +85,27 @@ export default function CustomerProfile() {
 
   const isChronic = manualTags.includes('chronic');
 
-  const toggleChronic = useMutation({
+  const toggleChronic = useMutation<void, Error, void, { prevTags?: string[] }>({
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['customer-tags', id] });
+      const prevTags = qc.getQueryData<string[]>(['customer-tags', id]) ?? [];
+      const nextTags = isChronic
+        ? prevTags.filter((t) => t !== 'chronic')
+        : [...prevTags, 'chronic'];
+      qc.setQueryData(['customer-tags', id], nextTags);
+      return { prevTags };
+    },
     mutationFn: async () => {
       if (isChronic) await removeTag(id!, 'chronic');
       else await addTag(pharmacyId, id!, 'chronic');
     },
-    onSuccess: () => {
+    onError: (err, _vars, context) => {
+      if (context?.prevTags) {
+        qc.setQueryData(['customer-tags', id], context.prevTags);
+      }
+      console.error('[toggleChronic] failed:', err);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['customer-tags', id] });
       qc.invalidateQueries({ queryKey: ['customer', id] });
       qc.invalidateQueries({ queryKey: ['customers'] });
@@ -95,29 +120,44 @@ export default function CustomerProfile() {
     queryFn: () => listPrescriptions(id!),
   });
 
-  const toggleOptIn = useMutation<void, Error>({
-    mutationFn: async () => {
+  const toggleOptIn = useMutation<
+    void,
+    Error,
+    { newStatus: boolean; reason?: string },
+    { prevCustomer?: CustomerWithStats | null }
+  >({
+    onMutate: async ({ newStatus }) => {
+      await qc.cancelQueries({ queryKey: ['customer', id] });
+      const prevCustomer = qc.getQueryData<CustomerWithStats | null>(['customer', id]);
+      if (prevCustomer) {
+        qc.setQueryData(['customer', id], {
+          ...prevCustomer,
+          whatsapp_opted_in: newStatus,
+          auto_tags: newStatus
+            ? prevCustomer.auto_tags.filter((t) => t !== 'optout')
+            : [...prevCustomer.auto_tags, 'optout'],
+        });
+      }
+      return { prevCustomer };
+    },
+    mutationFn: async ({ newStatus, reason }) => {
       const c = customer;
       if (!c) throw new Error('Customer not loaded');
-      if (c.whatsapp_opted_in) {
-        // Opting OUT — compliance per Rule 9 wants a reason on file.
-        const reason = window.prompt(t('profile.optout_reason_prompt')) ?? '';
-        // Empty/null means user dismissed the prompt → abort.
-        if (reason === '' && !window.confirm(t('profile.optout_no_reason_confirm'))) {
-          throw new Error('cancelled');
-        }
+      if (!newStatus) {
         await setOptOut(c.id, reason || undefined);
       } else {
-        // Re-activating — simple confirm.
-        if (!window.confirm(t('profile.optin_confirm'))) {
-          throw new Error('cancelled');
-        }
         await setOptIn(c.id);
       }
     },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['customer', id] });
-      await qc.invalidateQueries({ queryKey: ['customers'] });
+    onError: (err, _vars, context) => {
+      if (context?.prevCustomer) {
+        qc.setQueryData(['customer', id], context.prevCustomer);
+      }
+      console.error('[toggleOptIn] failed:', err);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['customer', id] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
     },
   });
 
@@ -130,12 +170,24 @@ export default function CustomerProfile() {
     },
   });
 
-  const remove = useMutation({
+  const remove = useMutation<void, Error, string, { prevRxs?: PrescriptionWithMeds[] }>({
+    onMutate: async (rxId: string) => {
+      await qc.cancelQueries({ queryKey: ['prescriptions', id] });
+      const prevRxs = qc.getQueryData<PrescriptionWithMeds[]>(['prescriptions', id]) ?? [];
+      qc.setQueryData(['prescriptions', id], prevRxs.filter((rx) => rx.id !== rxId));
+      return { prevRxs };
+    },
     mutationFn: (rxId: string) => deletePrescription(rxId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['prescriptions', id] });
-      await qc.invalidateQueries({ queryKey: ['customer-activity', id] });
-      await qc.invalidateQueries({ queryKey: ['customer', id] });
+    onError: (err, _rxId, context) => {
+      if (context?.prevRxs) {
+        qc.setQueryData(['prescriptions', id], context.prevRxs);
+      }
+      console.error('[deletePrescription] failed:', err);
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['prescriptions', id] });
+      qc.invalidateQueries({ queryKey: ['customer-activity', id] });
+      qc.invalidateQueries({ queryKey: ['customer', id] });
     },
   });
 
@@ -198,7 +250,15 @@ export default function CustomerProfile() {
               <h1 className="text-3xl font-bold tracking-tight">{customer.name}</h1>
               <button
                 type="button"
-                onClick={() => toggleOptIn.mutate()}
+                onClick={() => {
+                  if (!customer) return;
+                  if (customer.whatsapp_opted_in) {
+                    setOptoutReason('');
+                    setConfirmOptAction('optout');
+                  } else {
+                    setConfirmOptAction('optin');
+                  }
+                }}
                 disabled={toggleOptIn.isPending}
                 title={customer.whatsapp_opted_in
                   ? t('profile.click_to_optout')
@@ -238,7 +298,7 @@ export default function CustomerProfile() {
               {/* Chronic — interactive manual tag chip */}
               <button
                 type="button"
-                onClick={() => toggleChronic.mutate()}
+                onClick={() => setConfirmChronic(true)}
                 disabled={toggleChronic.isPending}
                 aria-pressed={isChronic}
                 title={isChronic ? t('cust.chronic_remove_hint') : t('cust.chronic_add_hint')}
@@ -410,20 +470,18 @@ export default function CustomerProfile() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => renew.mutate(rx.id)}
+                      onClick={() => setConfirmRenewId(rx.id)}
                       disabled={renew.isPending}
                       aria-label={t('rx.renew')}
                       title={t('rx.renew')}
                       className="h-8 w-8 p-0"
                     >
-                      {renew.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                      {renew.isPending && renew.variables === rx.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (window.confirm(t('rx.confirm_delete'))) remove.mutate(rx.id);
-                      }}
+                      onClick={() => setConfirmDeleteRxId(rx.id)}
                       disabled={remove.isPending}
                       aria-label={t('btn.delete')}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
@@ -530,6 +588,77 @@ export default function CustomerProfile() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Chronic confirm */}
+      <ConfirmDialog
+        open={confirmChronic}
+        title={isChronic ? 'Remove chronic tag?' : 'Mark as chronic patient?'}
+        description={isChronic
+          ? 'This will remove the chronic tag from this customer.'
+          : 'This will mark the customer as a chronic patient and prioritise their refill reminders.'}
+        confirmLabel="Yes"
+        cancelLabel="No"
+        isPending={toggleChronic.isPending}
+        onConfirm={() => { toggleChronic.mutate(); setConfirmChronic(false); }}
+        onCancel={() => setConfirmChronic(false)}
+      />
+
+      {/* Opt-in / Opt-out confirm */}
+      <ConfirmDialog
+        open={confirmOptAction !== null}
+        title={confirmOptAction === 'optout' ? 'Opt this customer out?' : 'Opt this customer back in?'}
+        description={confirmOptAction === 'optout'
+          ? 'They will stop receiving WhatsApp messages.'
+          : 'They will start receiving WhatsApp messages again.'}
+        confirmLabel="Yes"
+        cancelLabel="No"
+        isPending={toggleOptIn.isPending}
+        onConfirm={() => {
+          if (confirmOptAction === 'optout') {
+            toggleOptIn.mutate({ newStatus: false, reason: optoutReason });
+          } else {
+            toggleOptIn.mutate({ newStatus: true });
+          }
+          setConfirmOptAction(null);
+        }}
+        onCancel={() => setConfirmOptAction(null)}
+      >
+        {confirmOptAction === 'optout' && (
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Reason (optional)</label>
+            <input
+              className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="e.g. customer requested"
+              value={optoutReason}
+              onChange={(e) => setOptoutReason(e.target.value)}
+            />
+          </div>
+        )}
+      </ConfirmDialog>
+
+      {/* Renew Rx confirm */}
+      <ConfirmDialog
+        open={confirmRenewId !== null}
+        title="Renew this prescription?"
+        description="A copy of the prescription will be created."
+        confirmLabel="Yes"
+        cancelLabel="No"
+        isPending={renew.isPending}
+        onConfirm={() => { if (confirmRenewId) renew.mutate(confirmRenewId); setConfirmRenewId(null); }}
+        onCancel={() => setConfirmRenewId(null)}
+      />
+
+      {/* Delete Rx confirm */}
+      <ConfirmDialog
+        open={confirmDeleteRxId !== null}
+        title="Delete this prescription?"
+        description="This cannot be undone."
+        confirmLabel="Yes, delete"
+        cancelLabel="No"
+        isPending={remove.isPending}
+        onConfirm={() => { if (confirmDeleteRxId) remove.mutate(confirmDeleteRxId); setConfirmDeleteRxId(null); }}
+        onCancel={() => setConfirmDeleteRxId(null)}
+      />
     </div>
   );
 }

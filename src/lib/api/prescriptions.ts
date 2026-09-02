@@ -389,28 +389,36 @@ export interface RefillInput {
   notes: string | null;
 }
 
+/** Record multiple refills in a single batched multi-row insert. */
+export async function recordRefills(items: RefillInput[]): Promise<PrescriptionRefill[]> {
+  if (items.length === 0) return [];
+  const rows = items.map((args) => ({
+    pharmacy_id: args.pharmacyId,
+    prescription_id: args.prescriptionId,
+    medicine_id: args.medicineId,
+    customer_id: args.customerId,
+    quantity_dispensed: args.quantityDispensed,
+    bill_amount: args.billAmount,
+    notes: args.notes?.trim() || null,
+  }));
+
+  const { data, error } = await supabase
+    .from('crm_prescription_refills')
+    .insert(rows as never)
+    .select();
+  if (error) throw new Error(error.message);
+
+  // The DB trigger `trg_crm_refill_schedule` (migration 06) handles
+  // scheduling the next reminder automatically for each inserted refill.
+  return (data as unknown) as PrescriptionRefill[];
+}
+
 /** Record a refill event and auto-schedule the NEXT reminder for this
  *  medicine using its refill_interval_days (if set). */
 export async function recordRefill(args: RefillInput): Promise<PrescriptionRefill> {
-  const { data, error } = await supabase
-    .from('crm_prescription_refills')
-    .insert({
-      pharmacy_id: args.pharmacyId,
-      prescription_id: args.prescriptionId,
-      medicine_id: args.medicineId,
-      customer_id: args.customerId,
-      quantity_dispensed: args.quantityDispensed,
-      bill_amount: args.billAmount,
-      notes: args.notes?.trim() || null,
-    } as never)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-
-  // The DB trigger `trg_crm_refill_schedule` (migration 06) now handles
-  // scheduling the next reminder automatically — no extra client query needed.
-
-  return (data as unknown) as PrescriptionRefill;
+  const [created] = await recordRefills([args]);
+  if (!created) throw new Error('Failed to record refill');
+  return created;
 }
 
 // ─── internal: auto-schedule reminders ─────────────────────────────────────────

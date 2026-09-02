@@ -17,6 +17,7 @@ import {
 } from '@/lib/api/reminders';
 import { canSendNow, sendOrCompose, logManualSend } from '@/lib/api/messages';
 import { cn, initials, renderTemplate } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export function RemindersBell() {
   const { activePharmacyId } = usePharmacy();
@@ -32,6 +33,8 @@ function RemindersBellInner() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [queue, setQueue] = useState<DueReminder[] | null>(null);  // null = no batch in progress
+  const [pendingSend, setPendingSend] = useState<DueReminder | null>(null);
+  const [pendingSkip, setPendingSkip] = useState<DueReminder | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click + escape
@@ -215,8 +218,8 @@ function RemindersBellInner() {
                     <ReminderRow
                       key={r.id}
                       reminder={r}
-                      onSend={() => send.mutate(r)}
-                      onSkip={() => skip.mutate(r)}
+                      onSend={() => setPendingSend(r)}
+                      onSkip={() => setPendingSkip(r)}
                       sending={send.isPending && send.variables?.id === r.id}
                       skipping={skip.isPending && skip.variables?.id === r.id}
                       canSend={canSend !== false}
@@ -269,6 +272,27 @@ function RemindersBellInner() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={pendingSend !== null}
+        title="Send this reminder now?"
+        description="This will open WhatsApp for this customer."
+        confirmLabel="Yes, send"
+        cancelLabel="No"
+        isPending={send.isPending}
+        onConfirm={() => { if (pendingSend) send.mutate(pendingSend); setPendingSend(null); }}
+        onCancel={() => setPendingSend(null)}
+      />
+      <ConfirmDialog
+        open={pendingSkip !== null}
+        title="Skip this reminder?"
+        description="It will be marked as cancelled."
+        confirmLabel="Yes, skip"
+        cancelLabel="No"
+        isPending={skip.isPending}
+        onConfirm={() => { if (pendingSkip) skip.mutate(pendingSkip); setPendingSkip(null); }}
+        onCancel={() => setPendingSkip(null)}
+      />
     </div>
   );
 }

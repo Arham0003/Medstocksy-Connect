@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Search, BellOff } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
+import { useDebounce } from '@/hooks/useDebounce';
 import { listCustomers, type CustomerWithStats } from '@/lib/api/customers';
 import { initials, cn } from '@/lib/utils';
 import {
@@ -25,11 +26,12 @@ export function CustomerPickerDialog({
   const t = useT();
   const { pharmacyId } = useActivePharmacy();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 250);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['customer-picker', pharmacyId, search],
+    queryKey: ['customer-picker', pharmacyId, debouncedSearch],
     enabled: open,
-    queryFn: () => listCustomers({ pharmacyId, search: search || undefined, limit: 30 }),
+    queryFn: () => listCustomers({ pharmacyId, search: debouncedSearch || undefined, limit: 30 }),
   });
 
   return (

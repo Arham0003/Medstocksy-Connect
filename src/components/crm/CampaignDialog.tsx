@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SEGMENT_OPTIONS } from '@/lib/crm/segments';
 import { deduplicateTemplates } from '@/lib/crm/templates';
 
@@ -38,6 +39,7 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
   const [segmentKey, setSegmentKey] = useState('all');
   const [templateId, setTemplateId] = useState('');
   const [scheduledFor, setScheduledFor] = useState(''); // ISO datetime-local string
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   // Templates picker
   const { data: templates = [] } = useQuery<Template[]>({
@@ -47,8 +49,8 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
       const { data, error } = await supabase
         .from('crm_templates')
         .select('*')
+        // ponytail: no API gate — show all pharmacy templates + built-ins
         .or(`pharmacy_id.is.null,pharmacy_id.eq.${pharmacyId}`)
-        .eq('whatsapp_status', 'approved')
         .order('is_built_in', { ascending: false });
       if (error) throw error;
       return deduplicateTemplates((data ?? []) as unknown as Template[]);
@@ -225,6 +227,7 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
   const canSubmit = !!name.trim() && !!templateId && !save.isPending;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!save.isPending) onOpenChange(v); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -357,7 +360,7 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
                 type="button"
                 variant="ghost"
                 className="text-destructive sm:mr-auto"
-                onClick={() => remove.mutate()}
+                onClick={() => setDeleteConfirm(true)}
                 disabled={save.isPending || remove.isPending}
               >
                 {remove.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -388,5 +391,17 @@ export function CampaignDialog({ open, onOpenChange, campaign, initialSegmentKey
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={deleteConfirm}
+      title="Delete this draft campaign?"
+      description="This cannot be undone."
+      confirmLabel="Yes, delete"
+      cancelLabel="No"
+      isPending={remove.isPending}
+      onConfirm={() => { remove.mutate(); setDeleteConfirm(false); }}
+      onCancel={() => setDeleteConfirm(false)}
+    />
+  </>
   );
 }

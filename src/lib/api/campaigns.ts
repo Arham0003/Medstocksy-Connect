@@ -109,6 +109,19 @@ export async function finalizeCampaign(args: {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Hard-delete a campaign. ON DELETE CASCADE in the schema removes the
+ * related crm_campaign_recipients and crm_messages.campaign_id = SET NULL rows
+ * automatically — no manual cleanup needed.
+ */
+export async function deleteCampaign(campaignId: string): Promise<void> {
+  const { error } = await supabase
+    .from('crm_campaigns')
+    .delete()
+    .eq('id', campaignId);
+  if (error) throw new Error(error.message);
+}
+
 /** Fetch real variables for a recipient so we don't use mock SAMPLE_VARS. */
 export async function fetchCustomerCampaignVars(
   pharmacyId: string,

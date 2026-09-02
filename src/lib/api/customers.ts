@@ -1,4 +1,4 @@
-import { supabase, rpc } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { Tables, Inserts } from '@/lib/supabase';
 import type { TagKey } from '@/components/ui/tag';
 
@@ -50,53 +50,85 @@ export async function listCustomers(opts: {
   const { pharmacyId, search, segment = 'all', sort = 'newest', limit = 25, offset = 0 } = opts;
 
   try {
-    const { data, error } = await rpc<{ total: number; rows: EnrichedRow[] }>(
-      'crm_list_customers',
-      {
-        p_pharmacy_id: pharmacyId,
-        p_segment: segment,
-        p_search: search?.trim() || null,
-        p_sort: sort,
-        p_limit: limit,
-        p_offset: offset,
-      }
-    );
+    let query = supabase
+      .from('crm_customers_enriched')
+      .select('*', { count: 'exact' })
+      .eq('pharmacy_id', pharmacyId);
 
-    if (!error && data && Array.isArray(data.rows)) {
-      const rows = data.rows.map((row): CustomerWithStats => {
-        const { auto_tags_json, visit_count, lifetime_value, last_visit_at,
-                avg_days_between_visits, fts: _fts, ...customer } = row;
-
-        const auto_tags: TagKey[] = (auto_tags_json ?? [])
-          .map((tag) => SEGMENT_TO_TAG[tag])
-          .filter((tag): tag is TagKey => Boolean(tag));
-
-        if (!customer.whatsapp_opted_in && !auto_tags.includes('optout')) {
-          auto_tags.push('optout');
-        }
-
-        return {
-          ...(customer as Customer),
-          stats: visit_count === null
-            ? null
-            : {
-                customer_id: row.id,
-                visit_count,
-                lifetime_value: lifetime_value ?? 0,
-                last_visit_at,
-                avg_days_between_visits,
-              },
-          auto_tags,
-        };
-      });
-
-      return { rows, total: data.total ?? 0 };
+    // Filter by segment
+    if (segment === 'optout') {
+      query = query.eq('whatsapp_opted_in', false);
+    } else if (segment === 'chronic') {
+      const { data: tagRows } = await supabase
+        .from('crm_tags')
+        .select('customer_id')
+        .eq('pharmacy_id', pharmacyId)
+        .eq('tag_key', 'chronic');
+      const tagIds = (tagRows ?? []).map((t: { customer_id: string }) => t.customer_id);
+      if (tagIds.length === 0) return { rows: [], total: 0 };
+      query = query.in('id', tagIds);
+    } else if (segment && segment !== 'all') {
+      query = query.contains('auto_tags_json', JSON.stringify([segment]));
     }
-  } catch (e) {
-    console.warn('[customers] RPC listCustomers failed, falling back:', e);
-  }
 
-  return listCustomersFallback(opts);
+    // Filter by search query (case-insensitive substring on name OR phone)
+    if (search?.trim()) {
+      const q = search.trim().replace(/,/g, '');
+      if (q) {
+        query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%`);
+      }
+    }
+
+    // Sort order
+    if (sort === 'oldest') {
+      query = query.order('created_at', { ascending: true });
+    } else if (sort === 'name') {
+      query = query.order('name', { ascending: true });
+    } else if (sort === 'recent_visit') {
+      query = query.order('last_visit_at', { ascending: false, nullsFirst: false });
+    } else if (sort === 'top_spend') {
+      query = query.order('lifetime_value', { ascending: false, nullsFirst: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: rawRows, count, error } = await query;
+    if (error) throw error;
+
+    const rows = ((rawRows ?? []) as unknown as EnrichedRow[]).map((row): CustomerWithStats => {
+      const { auto_tags_json, visit_count, lifetime_value, last_visit_at,
+              avg_days_between_visits, fts: _fts, ...customer } = row;
+
+      const auto_tags: TagKey[] = (auto_tags_json ?? [])
+        .map((tag) => SEGMENT_TO_TAG[tag])
+        .filter((tag): tag is TagKey => Boolean(tag));
+
+      if (!customer.whatsapp_opted_in && !auto_tags.includes('optout')) {
+        auto_tags.push('optout');
+      }
+
+      return {
+        ...(customer as Customer),
+        stats: visit_count === null
+          ? null
+          : {
+              customer_id: row.id,
+              visit_count,
+              lifetime_value: lifetime_value ?? 0,
+              last_visit_at,
+              avg_days_between_visits,
+            },
+        auto_tags,
+      };
+    });
+
+    return { rows, total: count ?? rows.length };
+  } catch (e) {
+    console.warn('[customers] direct query failed, falling back:', e);
+    return listCustomersFallback(opts);
+  }
 }
 
 async function listCustomersFallback(opts: {
@@ -140,8 +172,11 @@ async function listCustomersFallback(opts: {
   }
 
   if (search?.trim()) {
-    const q = search.trim();
-    query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%`);
+    // ponytail: strip commas so postgrest .or() parser doesn't break
+    const q = search.trim().replace(/,/g, '');
+    if (q) {
+      query = query.or(`name.ilike.%${q}%,phone.ilike.%${q}%`);
+    }
   }
 
   if (sort === 'oldest') {
@@ -372,12 +407,26 @@ export async function updateCustomer(
   return data as unknown as Customer;
 }
 
-/** Add a manual tag to a customer (e.g. 'chronic'). Idempotent via UNIQUE constraint. */
+/** Add manual tag to a customer. Idempotent via UNIQUE constraint. */
 export async function addTag(pharmacyId: string, customerId: string, tagKey: string): Promise<void> {
   const { error } = await supabase
     .from('crm_tags')
     .insert({ pharmacy_id: pharmacyId, customer_id: customerId, tag_key: tagKey } as never);
   // Ignore unique-violation: tag already exists for this customer.
+  if (error && error.code !== '23505') throw error;
+}
+
+/** Add multiple manual tags to a customer in a single batched insert. */
+export async function addTags(pharmacyId: string, customerId: string, tagKeys: string[]): Promise<void> {
+  if (tagKeys.length === 0) return;
+  const rows = tagKeys.map((tagKey) => ({
+    pharmacy_id: pharmacyId,
+    customer_id: customerId,
+    tag_key: tagKey,
+  }));
+  const { error } = await supabase
+    .from('crm_tags')
+    .insert(rows as never);
   if (error && error.code !== '23505') throw error;
 }
 

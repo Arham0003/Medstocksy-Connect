@@ -165,14 +165,16 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
   const { data: canSend } = useQuery({
     queryKey: ['can-send-now', pharmacyId],
     queryFn: () => canSendNow(pharmacyId),
-    enabled: open,
+    // ponytail: only query rate limit when bot is configured; manual WA doesn't need this
+    enabled: open && isBotConfigured(),
     staleTime: 30_000,
   });
 
   const total = recipients.length;
   const current = recipients[index];
   const pct = total > 0 ? Math.round(((phase === 'done' ? total : index) / total) * 100) : 0;
-  const blocked = canSend === false;
+  // Rate-limit block only applies to bot/API mode; manual WhatsApp sends are always allowed
+  const blocked = botReady && canSend === false;
 
   const progress = useMemo(() => `${phase === 'done' ? total : index + (phase === 'sending' ? 1 : 0)} / ${total}`, [index, total, phase]);
 
@@ -217,6 +219,13 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
           </div>
         )}
 
+        {!botReady && phase === 'idle' && total > 0 && (
+          <div className="flex items-start gap-1.5 rounded-md bg-blue-500/10 px-3 py-2 text-[11px] text-blue-800 dark:text-blue-300">
+            <Hand className="mt-0.5 h-3 w-3 shrink-0" />
+            <span>{t('csend.manual_hint')}</span>
+          </div>
+        )}
+
         {/* Progress (sending / done) */}
         {phase !== 'idle' && (
           <div className="space-y-2">
@@ -257,7 +266,9 @@ export function CampaignSendDialog({ open, onOpenChange, campaign }: CampaignSen
                 disabled={loadingRecipients || total === 0 || blocked || !template}
               >
                 <Send className="h-4 w-4" />
-                {botReady ? t('csend.send_auto').replace('{n}', String(total)) : t('csend.send_manual')}
+                {botReady
+                  ? t('csend.send_auto').replace('{n}', String(total))
+                  : t('csend.send_manual').replace('{n}', String(total))}
               </Button>
             </>
           )}

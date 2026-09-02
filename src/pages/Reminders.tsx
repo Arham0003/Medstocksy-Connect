@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { logManualSend, openWhatsAppCompose } from '@/lib/api/messages';
 import { renderReminderMessage } from '@/lib/api/reminders';
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type Rule = Tables<'crm_reminder_rules'>;
 type ReminderStatus = 'pending' | 'sent' | 'failed' | 'cancelled' | 'converted';
@@ -63,6 +64,24 @@ function formatRelative(iso: string) {
 function useMarkReminderSent(pharmacyId: string, onToast?: (msg: string) => void) {
   const qc = useQueryClient();
   return useMutation<void, Error, ScheduledReminder>({
+    onMutate: async (row) => {
+      await qc.cancelQueries({ queryKey: ['scheduled-reminders'] });
+      await qc.cancelQueries({ queryKey: ['due-reminders'] });
+      await qc.cancelQueries({ queryKey: ['reminders-today'] });
+      await qc.cancelQueries({ queryKey: ['reminders-overdue'] });
+
+      const updater = (old: unknown) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((r: ScheduledReminder) =>
+          r.id === row.id ? { ...r, status: 'sent', sent_at: new Date().toISOString() } : r
+        );
+      };
+
+      qc.setQueriesData({ queryKey: ['scheduled-reminders'] }, updater);
+      qc.setQueriesData({ queryKey: ['due-reminders'] }, updater);
+      qc.setQueriesData({ queryKey: ['reminders-today'] }, updater);
+      qc.setQueriesData({ queryKey: ['reminders-overdue'] }, updater);
+    },
     mutationFn: async (row) => {
       const body = row.template?.body
         ? await renderReminderMessage({
@@ -99,7 +118,11 @@ function useMarkReminderSent(pharmacyId: string, onToast?: (msg: string) => void
         }).catch((e) => console.warn('[manual send] log failed:', e));
       }
     },
-    onSuccess: () => {
+    onError: (err) => {
+      console.error('[useMarkReminderSent] recording failed:', err);
+      onToast?.('Failed to update status on server.');
+    },
+    onSettled: () => {
       for (const key of [
         'scheduled-reminders', 'reminders-today', 'reminders-overdue',
         'due-reminders', 'dashboard-counts', 'upcoming-reminders', 'messages', 'reminders-failed-count',
@@ -152,8 +175,25 @@ function ReminderRow({
             {row.status}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground font-mono mt-0.5">
-          {row.customer?.phone} · {row.template?.name ?? 'No template'} · {formatRelative(row.scheduled_for)}
+        <div className="text-xs text-muted-foreground font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
+          <span>{row.customer?.phone}</span>
+          <span>·</span>
+          <span>{row.template?.name ?? 'No template'}</span>
+          <span>·</span>
+          {isSent ? (
+            <>
+              <span className="text-foreground/80 font-medium">
+                Sent {row.sent_at ? formatRelative(row.sent_at) : formatRelative(row.scheduled_for)}
+              </span>
+              {row.scheduled_for && (
+                <span className="inline-flex items-center rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 font-sans font-medium px-1.5 py-0.5 text-[10px]">
+                  Due: {formatRelative(row.scheduled_for)}
+                </span>
+              )}
+            </>
+          ) : (
+            <span>{formatRelative(row.scheduled_for)}</span>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -191,6 +231,8 @@ function ReminderRow({
 function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statusFilter: ReminderStatus[] }) {
   const qc = useQueryClient();
   const [rescheduleRow, setRescheduleRow] = useState<ScheduledReminder | null>(null);
+  const [pendingSend, setPendingSend] = useState<ScheduledReminder | null>(null);
+  const [pendingRetry, setPendingRetry] = useState<string | null>(null);
 
   const { data: rows = [], isLoading } = useQuery<ScheduledReminder[]>({
     queryKey: ['scheduled-reminders', pharmacyId, statusFilter.join(',')],
@@ -227,8 +269,13 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
         .from('crm_scheduled_reminders')
         .select('id, template_id, scheduled_for, status, sent_at, variables, customer:crm_customers(id, name, phone, whatsapp_opted_in), template:crm_templates(name, body)')
         .eq('pharmacy_id', pharmacyId)
-        .in('status', statusFilter)
-        .order('scheduled_for', { ascending: statusFilter.includes('pending') });
+        .in('status', statusFilter);
+
+      if (statusFilter.includes('sent')) {
+        q = q.order('sent_at', { ascending: false, nullsFirst: false });
+      } else {
+        q = q.order('scheduled_for', { ascending: statusFilter.includes('pending') });
+      }
 
       if (statusFilter.includes('pending') && statusFilter.length === 1) {
         // upcoming: only future reminders (on or after start of tomorrow)
@@ -246,12 +293,25 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
   });
 
   const retry = useMutation<void, Error, string>({
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ['scheduled-reminders'] });
+      const updater = (old: unknown) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((r: ScheduledReminder) =>
+          r.id === id ? { ...r, status: 'pending', sent_at: null } : r
+        );
+      };
+      qc.setQueriesData({ queryKey: ['scheduled-reminders'] }, updater);
+    },
     mutationFn: async (id) => {
       const { error } = await supabase.from('crm_scheduled_reminders')
         .update({ status: 'pending', sent_at: null } as never).eq('id', id);
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
+    onError: (err) => {
+      console.error('[retry reminder] failed:', err);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['scheduled-reminders'] });
       qc.invalidateQueries({ queryKey: ['reminders-failed-count'] });
     },
@@ -277,8 +337,8 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
             key={r.id} 
             row={r} 
             isOverdue={r.status === 'pending' && new Date(r.scheduled_for) < new Date()}
-            onRetry={r.status === 'failed' ? () => retry.mutate(r.id) : undefined} 
-            onSend={r.status === 'pending' ? () => markSent.mutate(r) : undefined}
+            onRetry={r.status === 'failed' ? () => setPendingRetry(r.id) : undefined} 
+            onSend={r.status === 'pending' ? () => setPendingSend(r) : undefined}
             onReschedule={() => setRescheduleRow(r)}
           />
         ))}
@@ -288,6 +348,26 @@ function ScheduledList({ pharmacyId, statusFilter }: { pharmacyId: string; statu
         onOpenChange={(v) => { if (!v) setRescheduleRow(null); }}
         reminder={rescheduleRow}
       />
+      <ConfirmDialog
+        open={pendingSend !== null}
+        title="Mark this reminder as sent?"
+        description="This will open WhatsApp and log the send."
+        confirmLabel="Yes, send"
+        cancelLabel="No"
+        isPending={markSent.isPending}
+        onConfirm={() => { if (pendingSend) markSent.mutate(pendingSend); setPendingSend(null); }}
+        onCancel={() => setPendingSend(null)}
+      />
+      <ConfirmDialog
+        open={pendingRetry !== null}
+        title="Retry sending this reminder?"
+        description="Status will be reset to pending."
+        confirmLabel="Yes, retry"
+        cancelLabel="No"
+        isPending={retry.isPending}
+        onConfirm={() => { if (pendingRetry) retry.mutate(pendingRetry); setPendingRetry(null); }}
+        onCancel={() => setPendingRetry(null)}
+      />
     </>
   );
 }
@@ -296,6 +376,7 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
   const t = useT();
   const [bulkOpen, setBulkOpen] = useState(false);
   const [rescheduleRow, setRescheduleRow] = useState<ScheduledReminder | null>(null);
+  const [pendingSend, setPendingSend] = useState<ScheduledReminder | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -407,7 +488,7 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
                 key={r.id}
                 row={r}
                 isOverdue
-                onSend={r.status === 'pending' ? () => markSent.mutate(r) : undefined}
+                onSend={r.status === 'pending' ? () => setPendingSend(r) : undefined}
                 onReschedule={() => setRescheduleRow(r)}
               />
             ))}
@@ -442,7 +523,7 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
               <ReminderRow
                 key={r.id}
                 row={r}
-                onSend={r.status === 'pending' ? () => markSent.mutate(r) : undefined}
+                onSend={r.status === 'pending' ? () => setPendingSend(r) : undefined}
                 onReschedule={() => setRescheduleRow(r)}
               />
             ))}
@@ -451,6 +532,16 @@ function TodayList({ pharmacyId }: { pharmacyId: string }) {
       ) : totalOverdue === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">No reminders scheduled for today 🎉</div>
       ) : null}
+      <ConfirmDialog
+        open={pendingSend !== null}
+        title="Mark this reminder as sent?"
+        description="This will open WhatsApp and log the send."
+        confirmLabel="Yes, send"
+        cancelLabel="No"
+        isPending={markSent.isPending}
+        onConfirm={() => { if (pendingSend) markSent.mutate(pendingSend); setPendingSend(null); }}
+        onCancel={() => setPendingSend(null)}
+      />
     </div>
   );
 }

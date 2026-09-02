@@ -168,7 +168,7 @@ function CustomerDrawer({ segmentKey, segmentLabel, pharmacyId, onClose }: Custo
         role="dialog"
         aria-modal="true"
         aria-label={`${segmentLabel} customers`}
-        className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l bg-background shadow-xl sm:w-[520px]"
+        className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l bg-background shadow-xl sm:w-[520px] top-14 md:top-0"
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
@@ -911,7 +911,7 @@ export default function Segments() {
               totalCustomers={totalCustomers}
               isLoading={isLoading}
               index={i}
-              onViewCustomers={(key) => setDrawerSegment(key)}
+              onViewCustomers={(key) => { window.scrollTo({ top: 0, behavior: 'smooth' }); setDrawerSegment(key); }}
               onSendCampaign={(key) => openCampaign(key)}
             />
           ))}

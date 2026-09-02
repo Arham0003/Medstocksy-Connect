@@ -74,6 +74,15 @@ function splitOnVariables(text: string): Segment[] {
   return segments;
 }
 
+import { CircuitBreaker } from '@/lib/circuitBreaker';
+
+const translationBreaker = new CircuitBreaker<string>({
+  name: 'MyMemory-Translation',
+  failureThreshold: 3,
+  cooldownMs: 20_000,
+  timeoutMs: 6_000,
+});
+
 /**
  * Translate one piece of literal text. Splits long inputs into ≤480-char
  * chunks at sentence boundaries, then re-joins. Whitespace at the edges of
@@ -85,21 +94,26 @@ async function translateLiteral(text: string, from: 'en' | 'hi', to: 'en' | 'hi'
   const core = text.slice(leading.length, text.length - trailing.length);
   if (!core) return text;
 
-  const chunks = splitIntoChunks(core, MAX_CHUNK);
-  const translated: string[] = [];
-  for (const chunk of chunks) {
-    const url = `${ENDPOINT}?q=${encodeURIComponent(chunk)}&langpair=${from}|${to}&de=medstocksy@example.com`;
-    const res = await fetch(url, { method: 'GET' });
-    if (!res.ok) throw new Error(`Translation API returned HTTP ${res.status}`);
-    const json = (await res.json()) as MyMemoryResponse;
-    const out = json.responseData?.translatedText;
-    if (!out || typeof out !== 'string') {
-      throw new Error(json.responseDetails || 'Translation API returned no text.');
-    }
-    translated.push(out);
-  }
-
-  return leading + translated.join(' ') + trailing;
+  return translationBreaker.execute(
+    async (signal) => {
+      const chunks = splitIntoChunks(core, MAX_CHUNK);
+      const translated: string[] = [];
+      for (const chunk of chunks) {
+        const url = `${ENDPOINT}?q=${encodeURIComponent(chunk)}&langpair=${from}|${to}&de=medstocksy@example.com`;
+        const res = await fetch(url, { method: 'GET', signal });
+        if (!res.ok) throw new Error(`Translation API returned HTTP ${res.status}`);
+        const json = (await res.json()) as MyMemoryResponse;
+        const out = json.responseData?.translatedText;
+        if (!out || typeof out !== 'string') {
+          throw new Error(json.responseDetails || 'Translation API returned no text.');
+        }
+        translated.push(out);
+      }
+      return leading + translated.join(' ') + trailing;
+    },
+    // Fallback: return original untranslated text instantly without throwing or stalling
+    () => text
+  );
 }
 
 /**

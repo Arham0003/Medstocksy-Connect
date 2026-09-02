@@ -122,6 +122,15 @@ async function toBase64(blob: Blob): Promise<string> {
   });
 }
 
+import { CircuitBreaker } from '@/lib/circuitBreaker';
+
+const geminiBreaker = new CircuitBreaker<Record<string, unknown>>({
+  name: 'Google-Gemini-AI',
+  failureThreshold: 3,
+  cooldownMs: 30_000,
+  timeoutMs: 15_000,
+});
+
 /**
  * Extract patient / bill fields from a scanned bill or prescription.
  * Everything returned is a suggestion — the caller must show it in editable
@@ -137,55 +146,56 @@ export async function extractBillData(
     throw new GeminiAuthError('No Gemini API key set. Add one in Settings → AI.');
   }
 
-  // Loaded on demand — see the note at the top of this file.
-  const { GoogleGenAI, Type } = await import('@google/genai');
-  const responseSchema = buildSchema(fields, Type);
-  const prompt = buildPrompt(fields);
+  return geminiBreaker.execute(async () => {
+    // Loaded on demand — see the note at the top of this file.
+    const { GoogleGenAI, Type } = await import('@google/genai');
+    const responseSchema = buildSchema(fields, Type);
+    const prompt = buildPrompt(fields);
 
+    const base64Data = await toBase64(fileBlob);
+    const ai = new GoogleGenAI({ apiKey });
 
-  const base64Data = await toBase64(fileBlob);
-  const ai = new GoogleGenAI({ apiKey });
+    let lastError = '';
 
-  let lastError = '';
+    for (const model of FREE_TIER_MODELS) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: {
+            parts: [
+              { text: prompt },
+              { inlineData: { data: base64Data, mimeType } },
+            ],
+          },
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema,
+          },
+        });
 
-  for (const model of FREE_TIER_MODELS) {
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: {
-          parts: [
-            { text: prompt },
-            { inlineData: { data: base64Data, mimeType } },
-          ],
-        },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema,
-        },
-      });
+        const text = response.text;
+        if (!text) throw new Error('The AI returned an empty response.');
 
-      const text = response.text;
-      if (!text) throw new Error('The AI returned an empty response.');
+        return JSON.parse(text) as Record<string, unknown>;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        lastError = msg;
 
-      return JSON.parse(text) as Record<string, unknown>;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      lastError = msg;
+        // Bad or unauthorised key — every model will fail the same way, so stop.
+        if (/401|403|API[_ ]?key|PERMISSION_DENIED|UNAUTHENTICATED/i.test(msg)) {
+          throw new GeminiAuthError(
+            'That Gemini API key was rejected. Check it in Settings → AI.'
+          );
+        }
 
-      // Bad or unauthorised key — every model will fail the same way, so stop.
-      if (/401|403|API[_ ]?key|PERMISSION_DENIED|UNAUTHENTICATED/i.test(msg)) {
-        throw new GeminiAuthError(
-          'That Gemini API key was rejected. Check it in Settings → AI.'
-        );
+        // Quota, retired model, or model-not-found — try the next fallback model.
+        continue;
       }
-
-      // Quota, retired model, or model-not-found — try the next fallback model.
-      continue;
     }
-  }
 
-  throw new Error(
-    `All Gemini models are unavailable or over quota. Try again in a minute, ` +
-    `or enter the details manually. (${lastError})`
-  );
+    throw new Error(
+      `All Gemini models are unavailable or over quota. Try again in a minute, ` +
+      `or enter the details manually. (${lastError})`
+    );
+  });
 }

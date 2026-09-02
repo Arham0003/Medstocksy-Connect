@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Plus, Download, ArrowUpDown, Users } from 'lucide-react';
+import { Search, Plus, Download, ArrowUpDown, Users, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
@@ -162,7 +162,7 @@ export default function Customers() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); if (e.target.value) setSegment('all'); }}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={t('customers.search_placeholder')}
             className="pl-10"
           />
@@ -326,11 +326,16 @@ export default function Customers() {
                     </td>
                     <td className="px-5 py-3 font-mono">{c.stats?.visit_count ?? 0}</td>
                     <td className="px-5 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {c.auto_tags.map((t: TagKey) => (
-                          <Tag key={t} tag={t} />
-                        ))}
-                        {!c.whatsapp_opted_in && <Tag tag="optout" />}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex flex-wrap gap-1">
+                          {c.auto_tags.map((t: TagKey) => (
+                            <Tag key={t} tag={t} />
+                          ))}
+                          {!c.whatsapp_opted_in && <Tag tag="optout" />}
+                        </div>
+                        <Link to={`/customers/${c.id}`} className="text-muted-foreground hover:text-foreground">
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
                       </div>
                     </td>
                   </motion.tr>

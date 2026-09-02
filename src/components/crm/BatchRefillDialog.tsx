@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, IndianRupee, RefreshCcw, CheckCircle2 } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
-import { recordRefill, type PrescriptionWithMeds } from '@/lib/api/prescriptions';
+import { recordRefills, type PrescriptionWithMeds } from '@/lib/api/prescriptions';
 import { cn } from '@/lib/utils';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -56,22 +56,18 @@ export function BatchRefillDialog({
 
       const medsToRefill = prescription.medicines.filter(m => selectedIds.has(m.id));
       
-      // We record a refill for each item. 
-      // If a total bill is provided, we'll associate it with the first item 
-      // (or distribute it, but for now let's just record it once to avoid inflating LTV too much).
-      // Actually, LTV sums all refill bill_amounts. If we put the full bill on one item, it works for LTV.
-      
-      await Promise.all(medsToRefill.map((m, i) => 
-        recordRefill({
+      // Batch multi-row insert: 1 single database round trip
+      await recordRefills(
+        medsToRefill.map((m, i) => ({
           pharmacyId,
           prescriptionId: prescription.id,
           medicineId: m.id,
           customerId,
-          quantityDispensed: m.quantity, // Use default Rx quantity
-          billAmount: i === 0 ? billN : null, // Record total bill on the first item
+          quantityDispensed: m.quantity,
+          billAmount: i === 0 ? billN : null,
           notes: notes.trim() || null,
-        })
-      ));
+        }))
+      );
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['prescriptions', customerId] });

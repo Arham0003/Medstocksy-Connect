@@ -35,8 +35,8 @@
     "semantic_hash": "af2c8e06cb562f4e9560667eb5497828"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\whatsapp\\send.ts": {
-    "mtime": 1787420364.224755,
-    "ast_hash": "c889aa00609172572682b6d868a9f7e3",
+    "mtime": 1787756686.7915964,
+    "ast_hash": "3f8e3630e3bdfd1e7557f81340c72929",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\whatsapp\\webhook.ts": {
@@ -50,8 +50,8 @@
     "semantic_hash": "a547944ace00dc5d5373aaca70a40bc4"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\package.json": {
-    "mtime": 1787423124.1300783,
-    "ast_hash": "19847f7693003327eaeb6ba1701381a4",
+    "mtime": 1787942356.2870355,
+    "ast_hash": "0b90f099e2e8e45dd45b7e654f2e8f8b",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\postcss.config.js": {
@@ -65,8 +65,8 @@
     "semantic_hash": "f7a37f89126221b88392b9cb502a8cd8"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\skills-lock.json": {
-    "mtime": 1787420364.5892158,
-    "ast_hash": "1c2e48750c633423d18d9a1152700afa",
+    "mtime": 1787726359.0265875,
+    "ast_hash": "1d49cb1d017e188bdda4d389bf9c7b66",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\App.tsx": {
@@ -80,19 +80,19 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\BatchRefillDialog.tsx": {
-    "mtime": 1779432282.3035038,
-    "ast_hash": "06a74922a721aa738fe27104dcb68576",
-    "semantic_hash": "06a74922a721aa738fe27104dcb68576"
+    "mtime": 1787755873.4533682,
+    "ast_hash": "42da1f32342131ed82eff9638ae7cdc8",
+    "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\CampaignDialog.tsx": {
-    "mtime": 1787420364.594411,
-    "ast_hash": "770aac26e7121744690b5dd50d8f429e",
+    "mtime": 1788118132.324965,
+    "ast_hash": "ca0b2fd47ce362cba2671d56a962f445",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\ComposeDrawer.tsx": {
-    "mtime": 1779432282.3050158,
-    "ast_hash": "25980ffee110d3cf20f3f0c08e82917d",
-    "semantic_hash": "25980ffee110d3cf20f3f0c08e82917d"
+    "mtime": 1788119771.7175438,
+    "ast_hash": "0ceb3676aa664611eac96dce1e787d9c",
+    "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\CustomerActivityTimeline.tsx": {
     "mtime": 1787420364.5964057,
@@ -105,9 +105,9 @@
     "semantic_hash": "3b0d7271a5b1c976f42722c0c8061c7a"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\CustomerPickerDialog.tsx": {
-    "mtime": 1778483032.5897408,
-    "ast_hash": "5421b141f80321feb83faf3cce0aafa0",
-    "semantic_hash": "5421b141f80321feb83faf3cce0aafa0"
+    "mtime": 1787936894.7799144,
+    "ast_hash": "60a77c4d266577bf9e36100d8b772d2f",
+    "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\PrescriptionDialog.tsx": {
     "mtime": 1787420364.597409,
@@ -130,14 +130,14 @@
     "semantic_hash": "809d1ee3e365f26f1e568385746bbbc9"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\ReminderRuleDialog.tsx": {
-    "mtime": 1786990688.1160269,
-    "ast_hash": "1ac7b40d390ca4069f82a5db25890877",
+    "mtime": 1788119787.2859035,
+    "ast_hash": "c914b86be529dcd092dad69c6ff4ddee",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\TemplateDialog.tsx": {
-    "mtime": 1778488744.235328,
-    "ast_hash": "a03856f8f03eb0ce431730816bbdca8e",
-    "semantic_hash": "a03856f8f03eb0ce431730816bbdca8e"
+    "mtime": 1787944022.0054474,
+    "ast_hash": "a4a7eeac66bd607dea947c32c65a8e6c",
+    "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\VisitNoteDialog.tsx": {
     "mtime": 1778483032.643737,
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\layout\\RemindersBell.tsx": {
-    "mtime": 1787420364.6004238,
-    "ast_hash": "55a5c726edf57fb31de91d0630d4335d",
+    "mtime": 1787944160.234123,
+    "ast_hash": "e335767ee49ed6bffef2099a62277a74",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\ui\\button.tsx": {
@@ -215,18 +215,18 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\customers.ts": {
-    "mtime": 1787420364.6094275,
-    "ast_hash": "8a47a1f4dd1ee3404ebc3f8842c01070",
+    "mtime": 1787942482.94076,
+    "ast_hash": "380f315262e6e1d4ea1322e6d2164db4",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\messages.ts": {
-    "mtime": 1787420364.6144166,
-    "ast_hash": "7efcb6dd22b5a4bb6a3f9cc73fd8b010",
+    "mtime": 1787756678.9894774,
+    "ast_hash": "0c79340a00fa5e14ebccb0c6c4ac7164",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\prescriptions.ts": {
-    "mtime": 1787420364.614933,
-    "ast_hash": "81a6e806acb4341cd74b18be4c99a59b",
+    "mtime": 1787755865.0581324,
+    "ast_hash": "a3d94775c16c34db4c8ef6a725273f4c",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\reminders.ts": {
@@ -250,8 +250,8 @@
     "semantic_hash": "fc7634076def09e8996a5f1ae1112083"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\gemini.ts": {
-    "mtime": 1787420364.6169426,
-    "ast_hash": "94b9fb6d10b1b4634cbdc6e2b3d39f92",
+    "mtime": 1787756664.3836763,
+    "ast_hash": "68ed561f9b2e42396cffdad99b1c387d",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\supabase.ts": {
@@ -260,9 +260,9 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\translate.ts": {
-    "mtime": 1778483032.798737,
-    "ast_hash": "0bf39efb7f2f62dcfee816f9b23dbf2e",
-    "semantic_hash": "0bf39efb7f2f62dcfee816f9b23dbf2e"
+    "mtime": 1787756655.442148,
+    "ast_hash": "c9900d5425a0fb05cd7f5e6284a062f7",
+    "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\utils.ts": {
     "mtime": 1787420364.6268554,
@@ -285,23 +285,23 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Campaigns.tsx": {
-    "mtime": 1787420364.62886,
-    "ast_hash": "8f2bf70d2af5481e6e60f6d681800201",
+    "mtime": 1788254397.460338,
+    "ast_hash": "0578be0dfacba9aadd28bd1b0b8776a0",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\CustomerProfile.tsx": {
-    "mtime": 1787420364.629857,
-    "ast_hash": "b7d62b83a7f0f017d28aab318c9c1059",
+    "mtime": 1787943903.7910683,
+    "ast_hash": "0d6dfda575c7d8e9138486e772fb7440",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Customers.tsx": {
-    "mtime": 1787420364.629857,
-    "ast_hash": "aa8f9152eb7c20cbf3c06077701b774c",
+    "mtime": 1788255076.12586,
+    "ast_hash": "6b51349f48f51c787b0c04c4620fd3a4",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Dashboard.tsx": {
-    "mtime": 1787420364.630852,
-    "ast_hash": "3e3f3e20b7e73229866f20a5e0ae5ad6",
+    "mtime": 1788017148.0644739,
+    "ast_hash": "99875f1a8d40784fa35e73f6b441ca27",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Login.tsx": {
@@ -325,13 +325,13 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Reminders.tsx": {
-    "mtime": 1787420364.6328537,
-    "ast_hash": "2b97e99b1988e4c3121c36baaaf7cdff",
+    "mtime": 1788116954.067517,
+    "ast_hash": "364fde4fc40fbaf992abdbc4a8860654",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Segments.tsx": {
-    "mtime": 1787420364.6358733,
-    "ast_hash": "4b8eb2bf8f15f9a41be4f153fac678fc",
+    "mtime": 1788119619.794727,
+    "ast_hash": "cec777ff31542c6389f0a340e5db00ed",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\Settings.tsx": {
@@ -455,13 +455,13 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\vercel.json": {
-    "mtime": 1787420364.6483717,
-    "ast_hash": "c66faa182f899e1ba80cee22e898cc24",
+    "mtime": 1787757590.7217474,
+    "ast_hash": "179d0f5c02ed6bbe8ac4b8d362a87ecb",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\vite.config.ts": {
-    "mtime": 1787420364.649374,
-    "ast_hash": "2977a0981ae84f5921b9663ddbf4b841",
+    "mtime": 1788363395.2348785,
+    "ast_hash": "181a2407f9cf9a9c98a7ee678064429c",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\rules\\graphify.md": {
@@ -529,11 +529,6 @@
     "ast_hash": "375eb937cac242cd5c56640f9d8d4d11",
     "semantic_hash": ""
   },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\medcrm_feature.md": {
-    "mtime": 1778483032.0457382,
-    "ast_hash": "e3ff3e1bac233f9b85b775a69686a3ec",
-    "semantic_hash": "e3ff3e1bac233f9b85b775a69686a3ec"
-  },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\medstocksy_connect_prd.md": {
     "mtime": 1778483032.053738,
     "ast_hash": "1995b9f1a6ce48d60f15ddb46995fb6c",
@@ -549,224 +544,24 @@
     "ast_hash": "9912aef085fbcad036ba06975e8a7355",
     "semantic_hash": "9912aef085fbcad036ba06975e8a7355"
   },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124451_uncaught_exception.png": {
-    "mtime": 1779866125.9317205,
-    "ast_hash": "1bb4439d4ad4bbe0bbf678fe5661e6ab",
-    "semantic_hash": "1bb4439d4ad4bbe0bbf678fe5661e6ab"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_auth_invalid_creds_no_error.png": {
-    "mtime": 1779866268.0580318,
-    "ast_hash": "3f7a8fc3e18136c5221593878aca1732",
-    "semantic_hash": "3f7a8fc3e18136c5221593878aca1732"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_auth_login_success.png": {
-    "mtime": 1779866274.5182493,
-    "ast_hash": "bfac3c652abae4f9743f5a465b380e05",
-    "semantic_hash": "bfac3c652abae4f9743f5a465b380e05"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_customers_add_dialog.png": {
-    "mtime": 1779866299.8308973,
-    "ast_hash": "8d42a4885e1032a992cfa2f4ec6e6724",
-    "semantic_hash": "8d42a4885e1032a992cfa2f4ec6e6724"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_customers_list.png": {
-    "mtime": 1779866293.7028232,
-    "ast_hash": "3c2680560a29772a9391c1069e01ae29",
-    "semantic_hash": "3c2680560a29772a9391c1069e01ae29"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_dashboard_home.png": {
-    "mtime": 1779866291.955255,
-    "ast_hash": "467f616cfa160522cc401ae26c6de934",
-    "semantic_hash": "467f616cfa160522cc401ae26c6de934"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_124742_uncaught_exception.png": {
-    "mtime": 1779866330.072215,
-    "ast_hash": "8d42a4885e1032a992cfa2f4ec6e6724",
-    "semantic_hash": "8d42a4885e1032a992cfa2f4ec6e6724"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_auth_invalid_creds_no_error.png": {
-    "mtime": 1779866444.640546,
-    "ast_hash": "3f7a8fc3e18136c5221593878aca1732",
-    "semantic_hash": "3f7a8fc3e18136c5221593878aca1732"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_auth_login_success.png": {
-    "mtime": 1779866457.9145212,
-    "ast_hash": "bfac3c652abae4f9743f5a465b380e05",
-    "semantic_hash": "bfac3c652abae4f9743f5a465b380e05"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_customers_add_dialog.png": {
-    "mtime": 1779866481.6586733,
-    "ast_hash": "8d42a4885e1032a992cfa2f4ec6e6724",
-    "semantic_hash": "8d42a4885e1032a992cfa2f4ec6e6724"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_customers_list.png": {
-    "mtime": 1779866475.5561452,
-    "ast_hash": "3c2680560a29772a9391c1069e01ae29",
-    "semantic_hash": "3c2680560a29772a9391c1069e01ae29"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_customers_submit_still_disabled.png": {
-    "mtime": 1779866482.4108725,
-    "ast_hash": "acfd8eaf30bf3d0fe8e9079ac6da09ab",
-    "semantic_hash": "acfd8eaf30bf3d0fe8e9079ac6da09ab"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_dashboard_home.png": {
-    "mtime": 1779866473.867566,
-    "ast_hash": "467f616cfa160522cc401ae26c6de934",
-    "semantic_hash": "467f616cfa160522cc401ae26c6de934"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125039_uncaught_exception.png": {
-    "mtime": 1779866512.6507673,
-    "ast_hash": "acfd8eaf30bf3d0fe8e9079ac6da09ab",
-    "semantic_hash": "acfd8eaf30bf3d0fe8e9079ac6da09ab"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_auth_invalid_creds_no_error.png": {
-    "mtime": 1779866636.4578478,
-    "ast_hash": "3f7a8fc3e18136c5221593878aca1732",
-    "semantic_hash": "3f7a8fc3e18136c5221593878aca1732"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_auth_login_failed.png": {
-    "mtime": 1779866653.812077,
-    "ast_hash": "e27f624d9ddc59c9f0ac7dc4f803477a",
-    "semantic_hash": "e27f624d9ddc59c9f0ac7dc4f803477a"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_customers_add_dialog.png": {
-    "mtime": 1779866689.8634295,
-    "ast_hash": "8d42a4885e1032a992cfa2f4ec6e6724",
-    "semantic_hash": "8d42a4885e1032a992cfa2f4ec6e6724"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_customers_list.png": {
-    "mtime": 1779866683.8085558,
-    "ast_hash": "3c2680560a29772a9391c1069e01ae29",
-    "semantic_hash": "3c2680560a29772a9391c1069e01ae29"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_dashboard_home.png": {
-    "mtime": 1779866681.9948258,
-    "ast_hash": "467f616cfa160522cc401ae26c6de934",
-    "semantic_hash": "467f616cfa160522cc401ae26c6de934"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125351_uncaught_exception.png": {
-    "mtime": 1779866690.224085,
-    "ast_hash": "6517398c6b66bb3249822f8660f4bc66",
-    "semantic_hash": "6517398c6b66bb3249822f8660f4bc66"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_activity_page.png": {
-    "mtime": 1779866826.7675977,
-    "ast_hash": "19297ed49d03ab2ea752ed65600e5c9b",
-    "semantic_hash": "19297ed49d03ab2ea752ed65600e5c9b"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_auth_login_success.png": {
-    "mtime": 1779866779.9981902,
-    "ast_hash": "bfac3c652abae4f9743f5a465b380e05",
-    "semantic_hash": "bfac3c652abae4f9743f5a465b380e05"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_auth_logout_no_redirect.png": {
-    "mtime": 1779866836.3091912,
-    "ast_hash": "21a936819c7e0b83727156cd0791bdc9",
-    "semantic_hash": "21a936819c7e0b83727156cd0791bdc9"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_campaigns_create_dialog.png": {
-    "mtime": 1779866820.2856538,
-    "ast_hash": "ecfcfc8b6bbda1893e5610c03235ea85",
-    "semantic_hash": "ecfcfc8b6bbda1893e5610c03235ea85"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_campaigns_page.png": {
-    "mtime": 1779866818.9940903,
-    "ast_hash": "e12f323a23aea430850d6e4be5d3e689",
-    "semantic_hash": "e12f323a23aea430850d6e4be5d3e689"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customer_profile_no_nav.png": {
-    "mtime": 1779866815.1815405,
-    "ast_hash": "673f4de1f3beff6c34c98c532c85d624",
-    "semantic_hash": "673f4de1f3beff6c34c98c532c85d624"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customers_add_dialog.png": {
-    "mtime": 1779866804.9358268,
-    "ast_hash": "8d42a4885e1032a992cfa2f4ec6e6724",
-    "semantic_hash": "8d42a4885e1032a992cfa2f4ec6e6724"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customers_after_create.png": {
-    "mtime": 1779866809.415215,
-    "ast_hash": "1efe5eac891870e8a99158d752957925",
-    "semantic_hash": "1efe5eac891870e8a99158d752957925"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customers_final.png": {
-    "mtime": 1779866810.027049,
-    "ast_hash": "2ac860c2be9eebebdcfef33ed34011dc",
-    "semantic_hash": "2ac860c2be9eebebdcfef33ed34011dc"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_customers_list.png": {
-    "mtime": 1779866798.8135378,
-    "ast_hash": "3c2680560a29772a9391c1069e01ae29",
-    "semantic_hash": "3c2680560a29772a9391c1069e01ae29"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_dashboard_home.png": {
-    "mtime": 1779866797.0828505,
-    "ast_hash": "467f616cfa160522cc401ae26c6de934",
-    "semantic_hash": "467f616cfa160522cc401ae26c6de934"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_not_found_page.png": {
-    "mtime": 1779866830.9458687,
-    "ast_hash": "aa65918b4d0900bdaa326d61e3e8d179",
-    "semantic_hash": "aa65918b4d0900bdaa326d61e3e8d179"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_reminders_page.png": {
-    "mtime": 1779866822.0742984,
-    "ast_hash": "7eb68afde02c93d0d1bf18f2b43bccb0",
-    "semantic_hash": "7eb68afde02c93d0d1bf18f2b43bccb0"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_responsive_mobile_dashboard.png": {
-    "mtime": 1779866832.5425954,
-    "ast_hash": "2a848c9c654aa23cb5c182eb43958aa3",
-    "semantic_hash": "2a848c9c654aa23cb5c182eb43958aa3"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_rx_page.png": {
-    "mtime": 1779866828.304451,
-    "ast_hash": "8f9539019103838437a977c22b13959d",
-    "semantic_hash": "8f9539019103838437a977c22b13959d"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_segments_page.png": {
-    "mtime": 1779866817.2872891,
-    "ast_hash": "053bce615c9d7edcdea2e78425bc561c",
-    "semantic_hash": "053bce615c9d7edcdea2e78425bc561c"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_settings_final.png": {
-    "mtime": 1779866829.8988526,
-    "ast_hash": "165a971c9425ebcea104bf3488afa976",
-    "semantic_hash": "165a971c9425ebcea104bf3488afa976"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_settings_page.png": {
-    "mtime": 1779866829.8066194,
-    "ast_hash": "165a971c9425ebcea104bf3488afa976",
-    "semantic_hash": "165a971c9425ebcea104bf3488afa976"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_templates_create_dialog.png": {
-    "mtime": 1779866824.984019,
-    "ast_hash": "8439b3ce43c223ac979f2e87be62f179",
-    "semantic_hash": "8439b3ce43c223ac979f2e87be62f179"
-  },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\Testing\\screenshots\\20260527_125612_templates_page.png": {
-    "mtime": 1779866823.652125,
-    "ast_hash": "a93f8cdf259f4317ce01c5c29c8320f2",
-    "semantic_hash": "a93f8cdf259f4317ce01c5c29c8320f2"
-  },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\assets\\brand\\medstocksy.png": {
     "mtime": 1778483032.5367372,
     "ast_hash": "64d3bd502d88fd5fc1f7f253c61a416d",
     "semantic_hash": "64d3bd502d88fd5fc1f7f253c61a416d"
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\CampaignSendDialog.tsx": {
-    "mtime": 1787420364.5954046,
-    "ast_hash": "ac01400881ffd28e650a2a9d32667958",
+    "mtime": 1788117543.1909237,
+    "ast_hash": "f450ec39db00560e6628bc35fac982c8",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\layout\\TodayRemindersPopup.tsx": {
-    "mtime": 1787420364.6014204,
-    "ast_hash": "7ad8883e2a6a76683bb671a53131183e",
+    "mtime": 1787944379.4960127,
+    "ast_hash": "e562a08767848f44cbd14026102fbd41",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\campaigns.ts": {
-    "mtime": 1787420364.6084244,
-    "ast_hash": "6a4e43668db707b595533ec33cbd06a3",
+    "mtime": 1788206873.1830604,
+    "ast_hash": "5c510f8f7041588146c357bb1a90e9b3",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\wa-bot\\package.json": {
@@ -910,13 +705,13 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\RUN_PENDING_MIGRATIONS.sql": {
-    "mtime": 1787420364.2217498,
-    "ast_hash": "a9195d549bcc26fb5a97a50847c15ef5",
+    "mtime": 1787936917.3364546,
+    "ast_hash": "8fc50a55aa015d2b3c10bebbe43ffb50",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\cron\\dispatch-reminders.ts": {
-    "mtime": 1787420364.22275,
-    "ast_hash": "060f2b4e965bce1146ac701384aed2b2",
+    "mtime": 1787756699.544656,
+    "ast_hash": "02df4ec570dc95cff8b71025c589c7ca",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\eslint.config.js": {
@@ -930,13 +725,13 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\CampaignAnalyticsDialog.tsx": {
-    "mtime": 1787420364.594411,
-    "ast_hash": "90e4cbf8db995dc45fa8e4c8f639fc34",
+    "mtime": 1788207263.620245,
+    "ast_hash": "ac7c9ca875efd9391fe9b8a9ac7c6200",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\MembersSection.tsx": {
-    "mtime": 1787420364.5964057,
-    "ast_hash": "e3fb1ffd0d91093eb23a4c336b4ce9c6",
+    "mtime": 1787944347.6908975,
+    "ast_hash": "7a82cc0e3cd366b21883d4d653f389e6",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\ui\\referral-card.tsx": {
@@ -945,13 +740,13 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\i18n\\en.ts": {
-    "mtime": 1787420364.603418,
-    "ast_hash": "404096c00ed59f7ca2a2d4673018870d",
+    "mtime": 1788206920.1798098,
+    "ast_hash": "dc5bf83c3fd7d2ccc8a7fc28660a336b",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\i18n\\hi.ts": {
-    "mtime": 1787420364.6054235,
-    "ast_hash": "6329d9efdc9e8d1a3c50c3f7d4a72227",
+    "mtime": 1788206936.1567538,
+    "ast_hash": "5a2deb88280ac0882063612a0543de28",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\aiKey.ts": {
@@ -1010,8 +805,8 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260809_01_rpc_tenant_guards.sql": {
-    "mtime": 1787420364.6444106,
-    "ast_hash": "4c17b13acb7302bf467c747b480983ac",
+    "mtime": 1787936924.7300549,
+    "ast_hash": "798190c55a860eb4e8e408531a43716f",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260809_02_staff_invites.sql": {
@@ -1374,11 +1169,6 @@
     "ast_hash": "c245c75de502c95e198a5da2b43d5823",
     "semantic_hash": ""
   },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\public\\pwa-192x192.svg": {
-    "mtime": 1787420364.5655465,
-    "ast_hash": "07f092ae2b81f102e6d947eb466a830c",
-    "semantic_hash": ""
-  },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\dev-dist\\registerSW.js": {
     "mtime": 1787413613.4556115,
     "ast_hash": "3ca0b8505b4bec776b69afdba2768812",
@@ -1400,8 +1190,8 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\email\\welcome.ts": {
-    "mtime": 1787420364.224755,
-    "ast_hash": "1337fe0f46f1b173a69d112dacf0fd26",
+    "mtime": 1788363382.6512513,
+    "ast_hash": "118c18f2bab37c73c885c5fe07f4127c",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\react-email-starter\\emails\\medstocksy-welcome.tsx": {
@@ -1440,8 +1230,8 @@
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\api\\email.ts": {
-    "mtime": 1787420364.6104524,
-    "ast_hash": "01b6684ed2f45aa465ffd3cef68cea5b",
+    "mtime": 1787558538.1763983,
+    "ast_hash": "0e8481ffe148fc0910c1448a708ecd10",
     "semantic_hash": ""
   },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\react-email-starter\\readme.md": {
@@ -1524,14 +1314,194 @@
     "ast_hash": "796e02ebe067889d89c8ed2e2241d317",
     "semantic_hash": ""
   },
-  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\email\\template.ts": {
-    "mtime": 1787420364.22375,
-    "ast_hash": "1a19290ecb7ce8ecbbcd4823877e804f",
-    "semantic_hash": ""
-  },
   "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\pages\\ResetPassword.tsx": {
     "mtime": 1787420364.6338549,
     "ast_hash": "21362237ea3f6a79f0fd5c1c271c8b4a",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\email\\_template.ts": {
+    "mtime": 1787757581.2428555,
+    "ast_hash": "1939c57768e7b0995596536fcd612664",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\email\\test-config.ts": {
+    "mtime": 1787468768.937845,
+    "ast_hash": "87c6e6c200f4f645c0e5b07400edbf4d",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\api\\email\\test-import.ts": {
+    "mtime": 1787559185.0801988,
+    "ast_hash": "1902ac583c261a8886981bb54fb9e0d5",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260823072031_cascade_user_deletes.sql": {
+    "mtime": 1787469631.3784542,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260823125000_fix_user_deletes.sql": {
+    "mtime": 1787469655.4449382,
+    "ast_hash": "e4ae2fe22fb60c574ac67de562f11ef7",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\api-security-testing\\SKILL.md": {
+    "mtime": 1787726357.0816827,
+    "ast_hash": "ca37eee8dd52473366a8e78fd1651afe",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\application-security-testing\\SKILL.md": {
+    "mtime": 1787726357.082868,
+    "ast_hash": "c20749290399999544abca41ab0b16f0",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\ci-security-scanning-with-strix\\SKILL.md": {
+    "mtime": 1787726357.0839465,
+    "ast_hash": "ef835f901fe4a3c41eb946e26a92422f",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\find-security-vulnerabilities-in-code\\SKILL.md": {
+    "mtime": 1787726357.0844693,
+    "ast_hash": "c33fcc1e2eb46f0847c3e740bb9f6a16",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\fix-security-vulnerabilities-with-strix\\SKILL.md": {
+    "mtime": 1787726357.0850909,
+    "ast_hash": "32a5c23ccdb8baf44991e9ad78d9021d",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\managed-pentesting-with-strix\\SKILL.md": {
+    "mtime": 1787726357.086154,
+    "ast_hash": "9d29d8cadc4bf33c59f7cfca5799b3e0",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\owasp-top-10-testing\\SKILL.md": {
+    "mtime": 1787726357.0872788,
+    "ast_hash": "ac3842151170fee80c35deb034aaffea",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\penetration-testing-with-strix\\SKILL.md": {
+    "mtime": 1787726357.0883114,
+    "ast_hash": "fe945803e9032a82edf97c95daeee083",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\security-master\\SKILL.md": {
+    "mtime": 1787726702.5102468,
+    "ast_hash": "fc07a3f8b45ce9d2768857ed47d388ed",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.agents\\skills\\web-app-penetration-testing\\SKILL.md": {
+    "mtime": 1787726357.088875,
+    "ast_hash": "e61a2955980d65b3859ee3830c8cc91b",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\SECURITY_AUDIT_REPORT.md": {
+    "mtime": 1787727371.5987182,
+    "ast_hash": "cff2b2b7391144b6afae28f4c2d5137a",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\medstocksy_connect_feature.md": {
+    "mtime": 1778483032.0457382,
+    "ast_hash": "e3ff3e1bac233f9b85b775a69686a3ec",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\lib\\circuitBreaker.ts": {
+    "mtime": 1787756645.120927,
+    "ast_hash": "0d9664dab605deecb3ba93c91dc24c31",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260828224000_fix_customer_search.sql": {
+    "mtime": 1787936908.2681434,
+    "ast_hash": "7d6148eb7f554b51e8603a29a41be741",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\.specify\\feature.json": {
+    "mtime": 1787943502.8964646,
+    "ast_hash": "748ae4524930314862131e1321e8b1e9",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\checklists\\requirements.md": {
+    "mtime": 1787941302.896409,
+    "ast_hash": "b07e5d00a177e838e3931d82cb933325",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\spec.md": {
+    "mtime": 1787941297.7835293,
+    "ast_hash": "18f0dd254f0398c8cecec1bc06aeced5",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\contracts\\dashboard-charts.contract.ts": {
+    "mtime": 1787941765.3446043,
+    "ast_hash": "100643878baa0df32857f7b0e4e153c9",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\data-model.md": {
+    "mtime": 1787941760.0598147,
+    "ast_hash": "cb7260514b3cd99905300e93692b87d2",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\plan.md": {
+    "mtime": 1787941779.4319923,
+    "ast_hash": "90eb06fe2e96f274c69913b38cb23e0b",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\quickstart.md": {
+    "mtime": 1787941771.0516424,
+    "ast_hash": "922d5b0e7d064d0e725ff09a986e9a26",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\research.md": {
+    "mtime": 1787941754.263697,
+    "ast_hash": "4c2685cb73445abd9e79f5980c1d8b81",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\PatientCohortChart.tsx": {
+    "mtime": 1787942730.1263459,
+    "ast_hash": "fd94932005b9b82f6fd5aefaf20d257d",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\crm\\RefillConversionChart.tsx": {
+    "mtime": 1787942519.0602481,
+    "ast_hash": "0b8cc4207f00610610811de7c838dcd5",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\ui\\chart.tsx": {
+    "mtime": 1787942511.2289226,
+    "ast_hash": "834aa6deb7c8f590443e90df474b2af6",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\hooks\\useDashboardCharts.ts": {
+    "mtime": 1787942491.2138724,
+    "ast_hash": "40a6ca591ba3144e1d1683343a7fceee",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\001-dashboard-charts\\tasks.md": {
+    "mtime": 1787942790.7717054,
+    "ast_hash": "0080eca2e3ed3afd2087810ab68b855f",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\src\\components\\ui\\confirm-dialog.tsx": {
+    "mtime": 1787943845.0615802,
+    "ast_hash": "aa5567d4fb573ee64b634681846df9ce",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\specs\\002-confirm-before-action\\spec.md": {
+    "mtime": 1787943492.685717,
+    "ast_hash": "e33b4becb1fffa1d6b95c1ccee374529",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260901020000_campaign_auto_delete_14d.sql": {
+    "mtime": 1788207000.5640461,
+    "ast_hash": "a00119f0e3f0f4b12b1cc447bd111196",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\supabase\\migrations\\20260901020001_campaigns_delete_policy.sql": {
+    "mtime": 1788207715.2060003,
+    "ast_hash": "fb97622e97220dd2d3311f4e329a4eec",
+    "semantic_hash": ""
+  },
+  "E:\\Pivot New Work\\Medstocksy-Connect 18-05-26\\APPLY_CAMPAIGN_FIX.sql": {
+    "mtime": 1788254384.5187805,
+    "ast_hash": "45ff631fcb9365057864d678fb1c50ef",
     "semantic_hash": ""
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Send, BarChart3 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Send, BarChart3, Trash2, AlertTriangle } from 'lucide-react';
 import { useActivePharmacy } from '@/contexts/PharmacyContext';
 import { useT } from '@/contexts/LanguageContext';
 import { supabase, type Tables } from '@/lib/supabase';
@@ -13,6 +13,7 @@ import { CampaignDialog } from '@/components/crm/CampaignDialog';
 import { CampaignSendDialog } from '@/components/crm/CampaignSendDialog';
 import { CampaignAnalyticsDialog } from '@/components/crm/CampaignAnalyticsDialog';
 import { getSegment } from '@/lib/crm/segments';
+import { deleteCampaign } from '@/lib/api/campaigns';
 
 type Campaign = Tables<'crm_campaigns'>;
 
@@ -30,13 +31,29 @@ type CampaignRow = Tables<'crm_campaigns'> & { template?: { name: string } | nul
 export default function Campaigns() {
   const t = useT();
   const { pharmacyId } = useActivePharmacy();
+  const qc = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
   const [sending, setSending] = useState<Campaign | null>(null);
   const [reporting, setReporting] = useState<Campaign | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null); // campaign id being deleted
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openEdit = (c: Campaign) => { setEditing(c); setDialogOpen(true); };
+
+  const handleDelete = async (campaignId: string) => {
+    if (!window.confirm(t('campaigns.delete.confirm'))) return;
+    setDeleting(campaignId);
+    try {
+      await deleteCampaign(campaignId);
+      await qc.invalidateQueries({ queryKey: ['campaigns'] });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Delete failed';
+      window.alert(`${t('campaigns.delete.label')} failed: ${msg}`);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const { data: campaigns, isLoading } = useQuery<CampaignRow[]>({
     queryKey: ['campaigns', pharmacyId],
@@ -63,6 +80,12 @@ export default function Campaigns() {
           {t('btn.create')}
         </Button>
       </header>
+
+      {/* 14-day auto-delete notice */}
+      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>{t('campaigns.auto_delete_notice')}</span>
+      </div>
 
       <div className="space-y-3">
         {isLoading ? (
@@ -113,27 +136,35 @@ export default function Campaigns() {
                       )}
                     </p>
                   </button>
-                  {editable ? (
-                    <div className="flex shrink-0 gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
-                        {t('btn.edit')}
-                      </Button>
-                      <Button size="sm" onClick={() => setSending(c)}>
-                        <Send className="h-3.5 w-3.5" />
-                        {t('campaigns.send_now')}
-                      </Button>
-                    </div>
-                  ) : (
-                    // Anything past draft/scheduled has recipient rows worth
-                    // reading — including 'failed', where the per-recipient
-                    // breakdown is the only way to see what actually went out.
-                    <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {editable ? (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => openEdit(c)}>
+                          {t('btn.edit')}
+                        </Button>
+                        <Button size="sm" onClick={() => setSending(c)}>
+                          <Send className="h-3.5 w-3.5" />
+                          {t('campaigns.send_now')}
+                        </Button>
+                      </>
+                    ) : (
                       <Button variant="outline" size="sm" onClick={() => setReporting(c)}>
                         <BarChart3 className="h-3.5 w-3.5" />
                         {t('campaigns.analytics.view')}
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {/* Delete — available for all statuses */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      disabled={deleting === c.id}
+                      onClick={() => handleDelete(c.id)}
+                      title={t('campaigns.delete.label')}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             );

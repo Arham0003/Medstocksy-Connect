@@ -16,6 +16,9 @@ import { markReminderSent, renderReminderMessage } from '@/lib/api/reminders';
 import { cn } from '@/lib/utils';
 import type { CustomerWithStats } from '@/lib/api/customers';
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate';
+import { RefillConversionChart } from '@/components/crm/RefillConversionChart';
+import { PatientCohortChart } from '@/components/crm/PatientCohortChart';
+import { useDashboardCharts } from '@/hooks/useDashboardCharts';
 
 /**
  * ── Dashboard visual rules ───────────────────────────────────────────────
@@ -253,11 +256,15 @@ export default function Dashboard() {
     },
   });
 
+  // ── Dashboard Visual Charts Data ─────────────────────────────────────
+  const { data: chartsData, isLoading: loadingCharts } = useDashboardCharts();
+
   // ── Realtime: invalidate dashboard on any relevant table change ──────
-  useRealtimeInvalidate({ table: 'crm_customers',           pharmacyId, queryKeys: [['dashboard', pharmacyId], ['customers', pharmacyId]] });
-  useRealtimeInvalidate({ table: 'crm_scheduled_reminders', pharmacyId, queryKeys: [['dashboard', pharmacyId], ['upcoming-reminders', pharmacyId], ['due-reminders', pharmacyId]] });
-  useRealtimeInvalidate({ table: 'crm_customer_sales',      pharmacyId, queryKeys: [['dashboard', pharmacyId]] });
-  useRealtimeInvalidate({ table: 'crm_prescription_refills',pharmacyId, queryKeys: [['dashboard', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_customers',           pharmacyId, queryKeys: [['dashboard', pharmacyId], ['customers', pharmacyId], ['dashboard-charts-metrics', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_scheduled_reminders', pharmacyId, queryKeys: [['dashboard', pharmacyId], ['upcoming-reminders', pharmacyId], ['due-reminders', pharmacyId], ['dashboard-charts-metrics', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_customer_sales',      pharmacyId, queryKeys: [['dashboard', pharmacyId], ['dashboard-charts-metrics', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_prescription_refills',pharmacyId, queryKeys: [['dashboard', pharmacyId], ['dashboard-charts-metrics', pharmacyId]] });
+  useRealtimeInvalidate({ table: 'crm_tags',                pharmacyId, queryKeys: [['dashboard-charts-metrics', pharmacyId]] });
 
   interface UpcomingRow {
     id: string;
@@ -421,6 +428,23 @@ export default function Dashboard() {
           onClick={() => navigate('/customers?segment=chronic')}
         />
       </Card>
+
+      {/* ── Visual Analytics: Refill Conversion & Cohorts ────────────── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RefillConversionChart
+          data={chartsData?.timeline}
+          overallConversionRate={chartsData?.overallConversionRate ?? 0}
+          totalReminders={chartsData?.totalReminders ?? 0}
+          totalRefills={chartsData?.totalRefills ?? 0}
+          isLoading={loadingCharts}
+        />
+        <PatientCohortChart
+          cohorts={chartsData?.cohorts}
+          chronicPercentage={chartsData?.chronicPercentage ?? 0}
+          totalCustomers={chartsData?.totalCustomers ?? 0}
+          isLoading={loadingCharts}
+        />
+      </div>
 
       {/* Upcoming reminders — full width */}
       <Card>

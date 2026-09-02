@@ -112,6 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             Authorization: `Bearer ${WHATSAPP_TOKEN}`,
             'Content-Type': 'application/json',
           },
+          signal: AbortSignal.timeout(10_000),
           body: JSON.stringify({
             messaging_product: 'whatsapp',
             to: customer.phone,

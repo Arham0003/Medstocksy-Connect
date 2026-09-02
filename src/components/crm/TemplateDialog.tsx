@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { TemplateKind } from '@/types/database';
 import { TEMPLATE_KINDS, VARIABLE_CHIPS } from '@/lib/crm/templates';
 import { SUPPORTED_LANGUAGES } from '@/i18n/translations';
@@ -55,6 +56,7 @@ export function TemplateDialog({ open, onOpenChange, template }: TemplateDialogP
   const [imageError, setImageError] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [translateError, setTranslateError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -201,6 +203,7 @@ export function TemplateDialog({ open, onOpenChange, template }: TemplateDialogP
   const canSubmit = !!name.trim() && !!body.trim() && !save.isPending && !uploading && !isBuiltIn;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!save.isPending && !uploading) onOpenChange(v); }}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
@@ -407,7 +410,7 @@ export function TemplateDialog({ open, onOpenChange, template }: TemplateDialogP
                 type="button"
                 variant="ghost"
                 className="text-destructive sm:mr-auto"
-                onClick={() => remove.mutate()}
+                onClick={() => setDeleteConfirm(true)}
                 disabled={save.isPending || remove.isPending}
               >
                 {remove.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -426,5 +429,17 @@ export function TemplateDialog({ open, onOpenChange, template }: TemplateDialogP
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={deleteConfirm}
+      title="Delete this template?"
+      description="This cannot be undone."
+      confirmLabel="Yes, delete"
+      cancelLabel="No"
+      isPending={remove.isPending}
+      onConfirm={() => { remove.mutate(); setDeleteConfirm(false); }}
+      onCancel={() => setDeleteConfirm(false)}
+    />
+  </>
   );
 }

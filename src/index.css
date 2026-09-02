@@ -82,6 +82,13 @@
     --tag-optout-bg:         0 93% 94%;          /* red-100 */
     --tag-optout-fg:         0 64% 35%;          /* red-700 */
 
+    /* ── Chart palette ────────────────────────────────────── */
+    --chart-1:             226 71% 55%;          /* #3B6EF7 Brand Blue / Reminders */
+    --chart-2:             152 69% 40%;          /* #16A34A Care Green / Refills */
+    --chart-3:             254 85% 65%;          /* #8B5CF6 Violet / Chronic */
+    --chart-4:              38 95% 48%;          /* #F59E0B Amber / High Value */
+    --chart-5:             220 10% 46%;          /* #6B7799 Slate / Inactive */
+
     /* ── Shadows — neutral cool-tinted ───────────────────── */
     --shadow-card:     0 1px 3px hsl(220 30% 12% / 0.07), 0 1px 2px hsl(220 30% 12% / 0.05);
     --shadow-popover:  0 8px 24px hsl(220 30% 12% / 0.10), 0 2px 8px hsl(220 30% 12% / 0.06);
@@ -118,6 +125,13 @@
     --border:              220 25% 18%;          /* #252D3F */
     --input:               220 25% 18%;
     --ring:                226 71% 62%;
+
+    /* ── Chart palette (dark mode) ────────────────────────── */
+    --chart-1:             226 71% 62%;          /* #5B86FF */
+    --chart-2:             152 69% 45%;          /* #22C55E */
+    --chart-3:             254 85% 70%;          /* #A78BFA */
+    --chart-4:              38 95% 55%;          /* #FBBF24 */
+    --chart-5:             220 15% 60%;          /* #94A3B8 */
 
     /* Sidebar stays same dark in dark mode */
     --sidebar-bg:          222 47% 6%;           /* slightly darker in dark mode */

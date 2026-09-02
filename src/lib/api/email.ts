@@ -34,4 +34,3 @@ export async function sendResetPasswordEmail(email: string): Promise<boolean> {
     return false;
   }
 }
-
